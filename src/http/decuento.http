@@ -1,0 +1,27 @@
+@api = http://127.0.0.1:3000/api/venta/descuentos
+
+POST {{api}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmN2I3OGFjMWI0Y2UyZWYzNTNkNCIsInVzZXJuYW1lIjoicm9vdCIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwNTgzNzIxLCJleHAiOjE3MzA2NzAxMjF9.c1xCFbS3-SxDnutB-e7BzGdykqhFQThvnAgigU1D0II
+Content-Type: application/json
+
+{
+  "nombre": "Fiesta de Otoño Sucursal",
+  "tipoDescuento": "porcentaje",
+  "valorDescuento": 30,
+  "fechaInicio": "2024-09-01T00:00:00.000Z",
+  "fechaFin": "2025-11-30T23:59:59.000Z",
+  "minimoCompra": 100,
+  "minimoCantidad": 2,
+  "activo": "true",
+  "moneda_id": "671342d4664051db7c1f8792",
+  "codigoDescuento": "FIESTAOTONO2025",
+  "codigoDescunto": "FIESTAOTONO2025",
+  "tipoDescuentoEntidad": "Group",
+  "sucursalId": "671ae0285c63b9b3b87a02c8",
+  "groupId": "671aca0ea6e0841fd34fde57"
+}
+
+###
+
+GET {{api}}/671ae0285c63b9b3b87a02c8/branch
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmN2I3OGFjMWI0Y2UyZWYzNTNkNCIsInVzZXJuYW1lIjoicm9vdCIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwNTY4OTY3LCJleHAiOjE3MzA2NTUzNjd9.TywKFuEey1xrDeqS0rZOMFxiBqydDgUb-7G9mSrAZ4U

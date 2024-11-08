@@ -1,0 +1,23 @@
+
+@api = http://127.0.0.1:3000/api/branches
+
+### ingresar usuario
+POST {{api}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MGI2YzExYmY1Y2IyZmFlZjE2YjAzZiIsInVzZXJuYW1lIjoiQ2FybG9zIGd1dGhlciIsInJvbGUiOiJDYWplcm8iLCJpYXQiOjE3Mjk4MjAwNTMsImV4cCI6MTcyOTgyMzY1M30.61GF4rjkgQ6AWnJx6LOi2uw2r7SB8Zo9Jel74rgL1vE
+Content-Type: application/json
+
+{
+    "nombre":"Tienda juigalpa",
+    "direccion":"Frente al zona",
+    "ciudad":"Boaco",
+    "pais":"Brasil",
+    "telefono":"123456789"
+}
+
+### get sucursales
+GET {{api}}/671c8b866632409cf0f3a753/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmYTNkOGFjMWI0Y2UyZWYzNTNkYyIsInVzZXJuYW1lIjoiQWRtaW5QYWxpIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMwNDEyODMwLCJleHAiOjE3MzA0OTkyMzB9.F48fDUSH_DTYMOZ_qh3Eu2zM0Sm3IPIJp4zRJHHIQQk
+
+### get productos faltantes en la sucursal
+GET {{api}}/67133f450dcdd2f9ee534c5c/products-shortages
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmYTNkOGFjMWI0Y2UyZWYzNTNkYyIsInVzZXJuYW1lIjoiQWRtaW5QYWxpIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMwMzI0NDU1LCJleHAiOjE3MzA0MTA4NTV9.rJsh7ISmtNrqd70eskHlmyqDxvfOZrPF4N2Djl1siYA

@@ -1,0 +1,4 @@
+@api = http://127.0.0.1:3000/api/venta
+
+GET http://localhost:3000/api/branches/6726aa037642ac5e1e89f04e/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmN2I3OGFjMWI0Y2UyZWYzNTNkNCIsInVzZXJuYW1lIjoicm9vdCIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwNTgzNzIxLCJleHAiOjE3MzA2NzAxMjF9.c1xCFbS3-SxDnutB-e7BzGdykqhFQThvnAgigU1D0II

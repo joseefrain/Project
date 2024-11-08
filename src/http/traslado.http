@@ -1,0 +1,86 @@
+@api = http://127.0.0.1:3000/api/transfer
+
+POST {{api}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MGI2YzExYmY1Y2IyZmFlZjE2YjAzZiIsInVzZXJuYW1lIjoiQ2FybG9zIGd1dGhlciIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwMDg4NzE1LCJleHAiOjE3MzAwOTIzMTV9.lbvx31PweEvlupV5kXsLjyDfNLy1qNltMsOn_JhnSkw
+Content-Type: application/json
+
+{
+  "sucursalOrigenId": "67133f450dcdd2f9ee534c5c",
+  "sucursalDestinoId": "671ae0285c63b9b3b87a02c8",
+  "listDetalleTraslado": [
+    {
+      "inventarioSucursalId": "671e5fa6ee2e8e2d1ebbf78a",
+      "cantidad": 4,
+      "archivosAdjuntos": null,
+      "comentarioEnvio": "asdasd"
+    },
+    {
+      "inventarioSucursalId": "671e5f91ee2e8e2d1ebbf77f",
+      "cantidad": 4,
+      "archivosAdjuntos": null,
+      "comentarioEnvio": "asdasd"
+    },
+    {
+      "inventarioSucursalId": "671e5f7bee2e8e2d1ebbf774",
+      "cantidad": 4,
+      "archivosAdjuntos": null,
+      "comentarioEnvio": "asdasd"
+    }
+  ],
+  "archivosAdjuntos": null,
+  "firmaEnvio": "asdasd",
+  "comentarioEnvio": "asdasd",
+  "usuarioIdEnvia": "670628c3437ff3ebf183193f"
+}
+
+### Recibir pedido
+POST {{api}}/RecibirPedido
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MGI2YzExYmY1Y2IyZmFlZjE2YjAzZiIsInVzZXJuYW1lIjoiQ2FybG9zIGd1dGhlciIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwMDg4NzE1LCJleHAiOjE3MzAwOTIzMTV9.lbvx31PweEvlupV5kXsLjyDfNLy1qNltMsOn_JhnSkw
+Content-Type: application/json
+
+{
+  "trasladoId": "67218ad91bddeb3dcac7623c",
+  "listDetalleTraslado": [
+    {
+      "inventarioSucursalId": "671e5fa6ee2e8e2d1ebbf78a",
+      "cantidad": 4,
+      "precio": 555.99,
+      "archivosAdjuntos": ["foto1.jpg", "foto2.jpg"],
+      "comentarioRecibido": "Comentario Recibido",
+      "recibido": true,
+      "estadoEquipo": "Bien"
+    },
+    {
+      "inventarioSucursalId": "671e5f91ee2e8e2d1ebbf77f",
+      "cantidad": 2,
+      "precio": 555.99,
+      "archivosAdjuntos": ["foto1.jpg", "foto2.jpg"],
+      "comentarioRecibido": "Comentario Recibido",
+      "recibido": true,
+      "estadoEquipo": "Bien"
+    },
+    {
+      "inventarioSucursalId": "671e5f7bee2e8e2d1ebbf774",
+      "cantidad": 0,
+      "precio": 555.99,
+      "archivosAdjuntos": ["foto1.jpg", "foto2.jpg"],
+      "comentarioRecibido": "Comentario Recibido",
+      "recibido": false,
+      "estadoEquipo": "Bien"
+    }
+  ],
+  "archivosAdjuntos": ["foto1.jpg", "foto2.jpg"],
+  "firmaRecepcion": "firmaRecepcion",
+  "comentarioRecepcion": "Comentario Recepcion",
+  "usuarioIdRecibe": "67062bd1437ff3ebf183194c"
+}
+
+### Get pedidos enviados
+Get {{api}}/67133f450dcdd2f9ee534c5c/enviados
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmN2I3OGFjMWI0Y2UyZWYzNTNkNCIsInVzZXJuYW1lIjoicm9vdCIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwMjE4MDk1LCJleHAiOjE3MzAyMjE2OTV9.5RBoseJdKDPuxKRpBgybTvyux05GHI7TtpBx_wYYC78
+Content-Type: application/json
+
+### get pedidos por id
+Get {{api}}/671c8dcc971ac5c1f1796444/itemdepedido
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MGI2YzExYmY1Y2IyZmFlZjE2YjAzZiIsInVzZXJuYW1lIjoiQ2FybG9zIGd1dGhlciIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwMDM3Mzc4LCJleHAiOjE3MzAwNDA5Nzh9.CR5q49jWccl9xavtHr5JXg9gjaqOcT6PwkfJQKDlQA0
+Content-Type: application/json

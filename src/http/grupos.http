@@ -1,0 +1,14 @@
+@api = http://127.0.0.1:3000/api/inventory/groups
+
+POST {{api}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MGI2YzExYmY1Y2IyZmFlZjE2YjAzZiIsInVzZXJuYW1lIjoiQ2FybG9zIGd1dGhlciIsInJvbGUiOiJDYWplcm8iLCJpYXQiOjE3MjkzMTQ2MTAsImV4cCI6MTcyOTMxODIxMH0.yZ5Bx_YQyCS3sc7mCzbh1ED_6L_xDCc1UkclRMpVSJk
+Content-Type: application/json
+
+{
+    "nombre":"Auriculares",
+    "descripcion":"Experimenta un sonido claro y envolvente con nuestros auriculares cómodos y de alta calidad."
+}
+
+### get sucursales
+GET {{api}}/671aca0ea6e0841fd34fde57/products
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjBmN2I3OGFjMWI0Y2UyZWYzNTNkNCIsInVzZXJuYW1lIjoicm9vdCIsInJvbGUiOiJyb290IiwiaWF0IjoxNzMwNjU0NTkwLCJleHAiOjE3MzA3NDA5OTB9.nGFPK_hKNU-MP4ITemgsUbT6bcXcQmdddJvsryMR78c
