@@ -55,9 +55,6 @@ export class VentaService {
         listInventarioSucursalId: listInventarioSucursalIds
       }
 
-      console.log(listInventarioSucursalIds);
-      
-
       await this.inventoryManagementService.init(dataInit);
 
       let sucursalId = new mongoose.Types.ObjectId(venta.sucursalId!);
@@ -236,21 +233,24 @@ export class VentaService {
     let products: IVentaProducto[] = [];
 
     for await (const detalle of detalleVenta) {
-      let descuentoAplicado = await this.repository.findVentaDescuentosAplicadosByDetalleVentaId((detalle._id as mongoose.Types.ObjectId).toString());
-
       let descuento:IVentaDescuento | null = null;
 
-      if (descuentoAplicado) {
-        let tipoAplicacion = descuentoAplicado.tipoAplicacion;
-        let descuentoTipo = descuentoAplicado.descuentosProductosId ? descuentoAplicado.descuentosProductosId : descuentoAplicado.descuentoGrupoId;
-        let descuentoId = ((descuentoTipo as IDescuentosProductos).descuentoId as IDescuento);
+      if (detalle.descuento.toString() !== "0") {
         
-        descuento = {
-          id: (descuentoId._id as mongoose.Types.ObjectId).toString(),
-          name: descuentoId.nombre,
-          amount: Number(descuentoAplicado.valor),
-          percentage: descuentoId.valorDescuento,
-          type: tipoAplicacion === "Product" ? "producto" : "grupo",
+        let descuentoAplicado = await this.repository.findVentaDescuentosAplicadosByDetalleVentaId((detalle._id as mongoose.Types.ObjectId).toString());
+
+        if (descuentoAplicado) {
+          let tipoAplicacion = descuentoAplicado.tipoAplicacion;
+          let descuentoTipo = descuentoAplicado.descuentosProductosId ? descuentoAplicado.descuentosProductosId : descuentoAplicado.descuentoGrupoId;
+          let descuentoId = ((descuentoTipo as IDescuentosProductos).descuentoId as IDescuento);
+          
+          descuento = {
+            id: (descuentoId._id as mongoose.Types.ObjectId).toString(),
+            name: descuentoId.nombre,
+            amount: Number(descuentoAplicado.valor),
+            percentage: descuentoId.valorDescuento,
+            type: tipoAplicacion === "Product" ? "producto" : "grupo",
+          }
         }
       }
 
