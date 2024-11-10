@@ -3,7 +3,7 @@ import { redisConfig } from "../config/redis";
 import { Queue } from "./lib/queue";
 import { container } from "tsyringe";
 
-const inventarioQueue  = new Queue('actualizacionInventario', process.env.REDIS_URL as string);
+const inventarioQueue  = new Queue('actualizacionInventario', process.env.MODE === "DEVELOPMENT" ? redisConfig : process.env.REDIS_URL as string);
 
 // Definir el proceso para los trabajos
 inventarioQueue .process(async (job) => {

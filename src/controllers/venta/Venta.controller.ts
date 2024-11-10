@@ -26,6 +26,8 @@ export class VentaController {
       const ventas = await this.service.getVentasBySucursal(req.params.id);
       res.status(200).json(ventas);
     } catch (error) {
+      console.log(error.message);
+      
       next(error);
     }
   }
