@@ -2,19 +2,20 @@ import { injectable, inject } from 'tsyringe';
 import { VentaRepository } from '../../repositories/venta/venta.repository';
 import mongoose, { Types } from 'mongoose';
 import { IVenta, IVentaCreate, IVentaDescuento, IVentaProducto } from '../../models/Ventas/Venta.model';
-import { ITipoAplicacion, ITipoDescuento, IVentaDescuentosAplicados } from '../../models/Ventas/VentaDescuentosAplicados.model';
+import { ITipoDescuento } from '../../models/Ventas/VentaDescuentosAplicados.model';
 import { IDetalleVenta } from '../../models/Ventas/DetalleVenta.model';
 import { IProducto } from '../../models/inventario/Producto.model';
-import { InventarioSucursalRepository } from '../../repositories/inventary/inventarioSucursal.repository';
-import { MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
-import { notifyWhatsappReorderThreshold } from '../utils/twilioMessageServices';
 import { IUser } from '../../models/usuarios/User.model';
 import { CustomJwtPayload } from '../../utils/jwt';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { inventarioQueue } from '../../queues/inventarioQueue';
 import { InventoryManagementService } from '../traslado/InventoryManagement.service';
-import { IInit, ISubtractQuantity } from 'src/interface/IInventario';
+import { IInit, ISubtractQuantity } from '../../interface/IInventario';
+import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento.model';
+import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
+import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
+import { IDescuentosProductos } from 'src/models/Ventas/DescuentosProductos.model';
 
 
 export interface ICreateVentaProps {
@@ -26,8 +27,8 @@ export interface ICreateVentaProps {
 export class VentaService {
   constructor(
     @inject(VentaRepository) private repository: VentaRepository,
-    @inject(InventarioSucursalRepository) private inventarioSucursalRepo: InventarioSucursalRepository,
     @inject(InventoryManagementService) private inventoryManagementService: InventoryManagementService,
+    @inject(DescuentoRepository) private descuentoRepository: DescuentoRepository,
   ) {}
 
   addSaleToQueue(data: ICreateVentaProps) {
@@ -76,9 +77,10 @@ export class VentaService {
       for await (const element of venta.products!) {
 
         let subtotal = element.price * element.quantity;
-        let descuento = element.discount?.amount! || 0;
-        let total = subtotal - descuento;
+        let descuentoMonto = element.discount?.amount! || 0;
+        let total = subtotal - descuentoMonto;
         let productoId = new mongoose.Types.ObjectId(element.productId);
+        let tipoAplicacion:ITipoDescuentoEntidad = element.discount?.type === "grupo" ? 'Group' : 'Product';
 
         let detalleVenta = {
           ventaId: (newSale._id as mongoose.Types.ObjectId),
@@ -87,30 +89,57 @@ export class VentaService {
           cantidad: element.quantity,
           subtotal: new mongoose.Types.Decimal128(subtotal.toString()),
           total: new mongoose.Types.Decimal128(total.toString()),
-          descuento: new mongoose.Types.Decimal128(descuento.toString()),
+          descuento: new mongoose.Types.Decimal128(descuentoMonto.toString()),
           deleted_at: null,
           tipoCliente: element.clientType,
+          tipoDescuentoEntidad: tipoAplicacion,
         }
 
         let newdDetalleVenta = await this.repository.createDetalleVenta(detalleVenta, session);
+        
+        let descuentoElement = element.discount;
 
-        let tipoAplicacion:ITipoAplicacion = element.discount?.type === "grupo" ? 'GRUPO' : 'PRODUCTO';
-        let tipo:ITipoDescuento = "PORCENTAJE";
-        let valor = element.discount?.amount! / element.quantity;
-        let descuentosProductosId = element.productId ? new mongoose.Types.ObjectId(element.productId) : undefined;
-        let descuentoGrupoId = element.groupId ? new mongoose.Types.ObjectId(element.groupId) : undefined;
+        if(descuentoElement) {
+          let descuentosProductosId: mongoose.Types.ObjectId | undefined;
+          let descuentoGrupoId: mongoose.Types.ObjectId | undefined;
 
-        let ventaDescuentosAplicados = {
-          detalleVentaId: (newdDetalleVenta._id as mongoose.Types.ObjectId),
-          descuentosProductosId: descuentosProductosId,
-          descuentoGrupoId: descuentoGrupoId,
-          tipoAplicacion: tipoAplicacion,
-          valor: new mongoose.Types.Decimal128(valor.toString()!),
-          tipo: tipo,
-          monto: new mongoose.Types.Decimal128(descuento.toString()!),
+          if (tipoAplicacion === 'Product') {
+            descuentoGrupoId = undefined;
+
+            let descuentoProducto = await this.descuentoRepository.getDescuentoProductoByDescuentoId(descuentoElement.id);
+
+            if(descuentoProducto) {
+              descuentosProductosId = (descuentoProducto._id as mongoose.Types.ObjectId);
+            } else {
+              descuentosProductosId = undefined;
+            }
+          } else if (tipoAplicacion === 'Group') {
+            descuentosProductosId = undefined;
+
+            let descuentoGrupo = await this.descuentoRepository.getDescuentoGrupoByDescuentoId(descuentoElement.id);
+
+            if(descuentoGrupo) {
+              descuentoGrupoId = (descuentoGrupo.descuentoId as mongoose.Types.ObjectId);
+            } else {
+              descuentoGrupoId = undefined;
+            }
+          }
+
+          let tipo:ITipoDescuento = "PORCENTAJE";
+          let valor = element.discount?.amount! / element.quantity;
+
+          let ventaDescuentosAplicados = {
+            detalleVentaId: (newdDetalleVenta._id as mongoose.Types.ObjectId),
+            descuentosProductosId: descuentosProductosId,
+            descuentoGrupoId: descuentoGrupoId,
+            tipoAplicacion: tipoAplicacion,
+            valor: new mongoose.Types.Decimal128(valor.toString()!),
+            tipo: tipo,
+            monto: new mongoose.Types.Decimal128(descuentoMonto.toString()!),
+          }
+  
+          await this.repository.createVentaDescuentosAplicados(ventaDescuentosAplicados, session);
         }
-
-        await this.repository.createVentaDescuentosAplicados(ventaDescuentosAplicados, session);
 
         let dataSubTractQuantity:ISubtractQuantity = {
           inventarioSucursalId: new mongoose.mongo.ObjectId(element.inventarioSucursalId) ,
@@ -137,8 +166,13 @@ export class VentaService {
           reorderPoint: item.puntoReCompra,
         }));
 
-        productListReOrder.length > 0 && notifyWhatsappReorderThreshold(user.username, (listInventarioSucursal[0].sucursalId as ISucursal).nombre, productListReOrder);
-
+      productListReOrder.length > 0 &&
+        notifyTelergramReorderThreshold(
+          user.username,
+          (listInventarioSucursal[0].sucursalId as ISucursal).nombre,
+          productListReOrder,
+          user.chatId
+        );
       await session.commitTransaction();
       session.endSession();
 
@@ -201,12 +235,20 @@ export class VentaService {
     for await (const detalle of detalleVenta) {
       let descuentoAplicado = await this.repository.findVentaDescuentosAplicadosByDetalleVentaId((detalle._id as mongoose.Types.ObjectId).toString());
 
-      let descuento:IVentaDescuento = {
-        id: "",
-        name: "",
-        amount: Number(descuentoAplicado.valor),
-        percentage: 100,
-        type: "producto",
+      let descuento:IVentaDescuento | null = null;
+
+      if (descuentoAplicado) {
+        let tipoAplicacion = descuentoAplicado.tipoAplicacion;
+        let descuentoTipo = descuentoAplicado.descuentosProductosId ? descuentoAplicado.descuentosProductosId : descuentoAplicado.descuentoGrupoId;
+        let descuentoId = ((descuentoTipo as IDescuentosProductos).descuentoId as IDescuento);
+        
+        descuento = {
+          id: (descuentoId._id as mongoose.Types.ObjectId).toString(),
+          name: descuentoId.nombre,
+          amount: Number(descuentoAplicado.valor),
+          percentage: descuentoId.valorDescuento,
+          type: tipoAplicacion === "Product" ? "producto" : "grupo",
+        }
       }
 
       let producto = {
