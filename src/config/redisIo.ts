@@ -4,7 +4,7 @@ const Redis = require('ioredis');
 dotenv.config();
 
 const redis = new Redis({
-  host: process.env.REDIS_URL,
+  host: process.env.REDISHOST,
   port: process.env.REDISPORT,
   password: process.env.REDISPASSWORD,
   maxRetriesPerRequest: 5, // Número de reintentos
