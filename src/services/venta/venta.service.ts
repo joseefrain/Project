@@ -15,7 +15,7 @@ import { IInit, ISubtractQuantity } from '../../interface/IInventario';
 import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento.model';
 import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
-import { IDescuentosProductos } from 'src/models/Ventas/DescuentosProductos.model';
+import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
 
 
 export interface ICreateVentaProps {

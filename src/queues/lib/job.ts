@@ -1,4 +1,3 @@
-// src/job.ts
 import { v4 as uuidv4 } from 'uuid';
 
 export type JobStatus = 'waiting' | 'active' | 'completed' | 'failed';
