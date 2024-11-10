@@ -11,7 +11,7 @@ const redis = new Redis(process.env.REDIS_URL);
 
 // Configurar la cola de Bull con la instancia de Redis
 const inventarioQueue = new Queue('actualizacionInventario', {
-  redis: redis,
+  redis: process.env.REDIS_URL,
 });
 
 // Verificar la conexión de Redis directamente con el evento "ready" de la cola
