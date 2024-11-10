@@ -4,15 +4,17 @@ const Redis = require('ioredis');
 dotenv.config();
 
 const redis = new Redis({
-  host: process.env.REDISHOST,
-  port: process.env.REDISPORT,
-  password: process.env.REDISPASSWORD,
-  maxRetriesPerRequest: 5, // Número de reintentos
-  connectTimeout: 30000,    // Tiempo de espera de conexión en ms
-  retryStrategy(times) {
-    // Define el tiempo de reintento exponencial
-    return Math.min(times * 50, 2000);
-  },
+  sentinels: [
+    { host: process.env.SENTINEL1_PRIVATE_DOMAIN, port: 26379 },
+    { host: process.env.SENTINEL2_PRIVATE_DOMAIN, port: 26379 },
+    { host: process.env.SENTINEL3_PRIVATE_DOMAIN, port: 26379 },
+  ],
+  name: process.env.REDIS_PRIMARY_NAME,
+  family: 0,
+  sentinelPassword: process.env.REDIS_PRIMARY_PASSWORD,
+  sentinelUsername: "default",
+  password: process.env.REDIS_PRIMARY_PASSWORD,
+  username: "default"
 });
 
 redis.on('connect', () => {
