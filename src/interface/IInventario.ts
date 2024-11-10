@@ -18,12 +18,10 @@ export interface IAddQuantity {
   quantity: number;
   inventarioSucursal: IInventarioSucursal;
   session: mongoose.mongo.ClientSession;
-  list: IInventarioSucursal[];
   isNoSave?: boolean;
 }
 
 export interface ICreateInventarioSucursal {
-  list: IInventarioSucursal[];
   inventarioSucursal: IInventarioSucursal;
   session: mongoose.mongo.ClientSession;
   isNoSave?: boolean;
