@@ -3,17 +3,7 @@ const Redis = require('ioredis');
 
 dotenv.config();
 
-const redis = new Redis({
-  host: process.env.REDISHOST,
-  port: process.env.REDISPORT,
-  password: process.env.REDISPASSWORD,
-  maxRetriesPerRequest: 5, // Número de reintentos
-  connectTimeout: 30000,    // Tiempo de espera de conexión en ms
-  retryStrategy(times) {
-    // Define el tiempo de reintento exponencial
-    return Math.min(times * 50, 2000);
-  },
-});
+const redis = new Redis(process.env.REDIS_URL);
 
 redis.on('connect', () => {
   console.log('Conectado a Redis');
