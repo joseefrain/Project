@@ -13,7 +13,6 @@ import { inventarioQueue } from './queues/inventarioQueue';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullAdapter } from '@bull-board/api/bullAdapter'; // Si usas Bull
 import { createBullBoard } from '@bull-board/api';
-import './config/redisIo';
 
 const express = require('express');
 const cors = require('cors');

@@ -4,7 +4,7 @@ import { container } from 'tsyringe';
 import { VentaService } from '../services/venta/venta.service';
 
 const inventarioQueue = new Queue('actualizacionInventario', {
-  redis: redisConfig,
+  redis: process.env.REDIS_URL,
 });
 
 inventarioQueue.process(async (job) => {
