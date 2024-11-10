@@ -3,19 +3,7 @@ const Redis = require('ioredis');
 
 dotenv.config();
 
-const redis = new Redis({
-  sentinels: [
-    { host: process.env.SENTINEL1_PRIVATE_DOMAIN, port: 26379 },
-    { host: process.env.SENTINEL2_PRIVATE_DOMAIN, port: 26379 },
-    { host: process.env.SENTINEL3_PRIVATE_DOMAIN, port: 26379 },
-  ],
-  name: process.env.REDIS_PRIMARY_NAME,
-  family: 0,
-  sentinelPassword: process.env.REDIS_PRIMARY_PASSWORD,
-  sentinelUsername: "default",
-  password: process.env.REDIS_PRIMARY_PASSWORD,
-  username: "default"
-});
+const redis = new Redis(process.env.REDIS_URL);
 
 redis.on('connect', () => {
   console.log('Conectado a Redis');
