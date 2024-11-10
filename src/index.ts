@@ -47,29 +47,29 @@ app.use('/api/venta', ventaRoutes);
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues'); // Ruta del tablero
 
-createBullBoard({
-  queues: [new BullAdapter(inventarioQueue)], // Si usas Bull. Usa `BullMQAdapter` si usas BullMQ.
-  serverAdapter,
-});
+// createBullBoard({
+//   queues: [new BullAdapter(inventarioQueue)], // Si usas Bull. Usa `BullMQAdapter` si usas BullMQ.
+//   serverAdapter,
+// });
 
 // Montar el tablero en la ruta '/admin/queues'
-app.use('/admin/queues', serverAdapter.getRouter());
+// app.use('/admin/queues', serverAdapter.getRouter());
 
-app.delete('/admin/queues/clear', async (req, res) => {
-  try {
-    await inventarioQueue.empty();
+// app.delete('/admin/queues/clear', async (req, res) => {
+//   try {
+//     await inventarioQueue.empty();
 
-    await inventarioQueue.clean(0, 'completed'); // Limpia todos los trabajos completados
-    await inventarioQueue.clean(0, 'failed');    // Limpia todos los trabajos fallidos
+//     await inventarioQueue.clean(0, 'completed'); // Limpia todos los trabajos completados
+//     await inventarioQueue.clean(0, 'failed');    // Limpia todos los trabajos fallidos
 
-    await inventarioQueue.obliterate({ force: true });
+//     await inventarioQueue.obliterate({ force: true });
 
-    res.status(200).json({ message: 'Cola limpiada correctamente.' });
-  } catch (error) {
-    console.error("Error al limpiar la cola:", error);
-    res.status(500).json({ message: 'Hubo un error al limpiar la cola.' });
-  }
-});
+//     res.status(200).json({ message: 'Cola limpiada correctamente.' });
+//   } catch (error) {
+//     console.error("Error al limpiar la cola:", error);
+//     res.status(500).json({ message: 'Hubo un error al limpiar la cola.' });
+//   }
+// });
 
 // Middleware de manejo de errores
 app.use(errorHandler);
