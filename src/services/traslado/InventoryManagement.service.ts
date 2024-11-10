@@ -40,6 +40,8 @@ export class InventoryManagementService implements IManageHerramientaModel {
   }
 
   async subtractQuantity({ quantity, inventarioSucursalId, session, isNoSave = false }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
+    console.log(this._listInventarioSucursal);
+    
     const inventarioSucursal = this._listInventarioSucursal.find(
       (sucursal) =>
         (sucursal._id as mongoose.Types.ObjectId).toString() ===

@@ -55,6 +55,9 @@ export class VentaService {
         listInventarioSucursalId: listInventarioSucursalIds
       }
 
+      console.log(listInventarioSucursalIds);
+      
+
       this.inventoryManagementService.init(dataInit);
 
       let sucursalId = new mongoose.Types.ObjectId(venta.sucursalId!);

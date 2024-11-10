@@ -52,10 +52,10 @@ serverAdapter.setBasePath('/admin/queues'); // Ruta del tablero
 //   serverAdapter,
 // });
 
-inventarioQueue.on('waiting', (job) => console.log(`Job ${job.id} is waiting.`));
-inventarioQueue.on('active', (job) => console.log(`Job ${job.id} is active.`));
-inventarioQueue.on('completed', (job) => console.log(`Job ${job.id} completed successfully.`));
-inventarioQueue.on('failed', (job) => console.log(`Job ${job.id} failed.`));
+// inventarioQueue.on('waiting', (job) => console.log(`Job ${job.id} is waiting.`));
+// inventarioQueue.on('active', (job) => console.log(`Job ${job.id} is active.`));
+// inventarioQueue.on('completed', (job) => console.log(`Job ${job.id} completed successfully.`));
+// inventarioQueue.on('failed', (job) => console.log(`Job ${job.id} failed.`));
 
 // Montar el tablero en la ruta '/admin/queues'
 // app.use('/admin/queues', serverAdapter.getRouter());
