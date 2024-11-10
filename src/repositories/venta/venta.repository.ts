@@ -35,7 +35,24 @@ export class VentaRepository {
     return detalleVenta;
   }
   async findVentaDescuentosAplicadosByDetalleVentaId(detalleVentaId: string): Promise<IVentaDescuentosAplicados> {
-    const ventaDescuentosAplicados = (await this.modelVentaDescuentosAplicados.findOne({ detalleVentaId: detalleVentaId }) as IVentaDescuentosAplicados)
+    const ventaDescuentosAplicados = (
+      (await this.modelVentaDescuentosAplicados.findOne({
+        detalleVentaId: detalleVentaId,
+      })) as IVentaDescuentosAplicados
+    ).populate([
+      {
+        path: 'descuentosProductosId',
+        populate: {
+          path: 'descuentoId',
+        },
+      },
+      {
+        path: 'descuentoGrupoId',
+        populate: {
+          path: 'descuentoId',
+        },
+      },
+    ]);
 
     return ventaDescuentosAplicados;
   }

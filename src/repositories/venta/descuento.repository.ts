@@ -142,4 +142,10 @@ export class DescuentoRepository {
       .findByIdAndUpdate(id, { deleted_at: null }, { new: true })
       .exec();
   }
+  async getDescuentoGrupoByDescuentoId(id: string): Promise<IDescuentoGrupo | null> {
+    return await this.modelDescuentoGrupo.findOne({ descuentoId: id });
+  }
+  async getDescuentoProductoByDescuentoId(id: string): Promise<IDescuentosProductos | null> {
+    return await this.modelDescuentoProducto.findOne({ descuentoId: id });
+  }
 }
