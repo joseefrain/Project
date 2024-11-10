@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IVenta } from './Venta.model';
 import { IProducto } from '../inventario/Producto.model';
+import { ITipoDescuentoEntidad } from './Descuento.model';
 
 export interface IDetalleVenta extends Document {
   ventaId: mongoose.Types.ObjectId | IVenta;
@@ -12,6 +13,7 @@ export interface IDetalleVenta extends Document {
   tipoCliente: 'Regular' | 'Proveedor';
   descuento: mongoose.Types.Decimal128;
   deleted_at: Date | null;
+  tipoDescuentoEntidad: ITipoDescuentoEntidad,
 }
 
 const detalleVentaSchema: Schema = new Schema(
@@ -32,6 +34,7 @@ const detalleVentaSchema: Schema = new Schema(
     subtotal: { type: Schema.Types.Decimal128, required: true },
     total: { type: Schema.Types.Decimal128, required: true },
     descuento: { type: Schema.Types.Decimal128, default: 0 },
+    tipoDescuentoEntidad: { type: String, enum: ['Product', 'Group'], required: true },
     deleted_at: { type: Date, default: null },
   },
   {

@@ -9,7 +9,7 @@ Content-Type: application/json
     "descripcion": "Un teléfono robusto diseñado para durar, con cámara dual de 48MP y pantalla de 6.67 pulgadas, ideal para actividades al aire libre.",
     "precio": 499.99,
     "monedaId": "671342d4664051db7c1f8792",
-    "grupoId": "671aca0ea6e0841fd34fde57",
+    "grupoId": "672e815f334ec3a2347aaa85",
     "stock": 30,
     "puntoReCompra": 10
 }

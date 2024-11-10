@@ -76,7 +76,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
     return inventarioSucursal;
   }
 
-  async addQuantity({ quantity, inventarioSucursal, session, list, isNoSave = false }: IAddQuantity): Promise<void> {
+  async addQuantity({ quantity, inventarioSucursal, session, isNoSave = false }: IAddQuantity): Promise<void> {
     let movimientoInventario = new MovimientoInventario({
       inventarioSucursalId: inventarioSucursal._id,
       cantidadCambiada: quantity,
@@ -93,10 +93,10 @@ export class InventoryManagementService implements IManageHerramientaModel {
     inventarioSucursal.ultimo_movimiento = new Date();
     inventarioSucursal.deleted_at = null;
 
-    isNoSave ? list.push(inventarioSucursal) : await inventarioSucursal.save({ session });
+    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save({ session });
   }
 
-  async createInventarioSucursal({ list, isNoSave = false, inventarioSucursal, session }: ICreateInventarioSucursal): Promise<void> {
+  async createInventarioSucursal({ isNoSave = false, inventarioSucursal, session }: ICreateInventarioSucursal): Promise<void> {
 
     let movimientoInventario = new MovimientoInventario({
       inventarioSucursalId: inventarioSucursal._id,
@@ -110,7 +110,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
 
     isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save({ session });
 
-    isNoSave ? list.push(inventarioSucursal) : await inventarioSucursal.save({ session });
+    isNoSave ? this._listBranchInventoryAdded.push(inventarioSucursal) : await inventarioSucursal.save({ session });
   }
 
   async handleStockProductBranch({ session, model, quantity }: IHandleStockProductBranch): Promise<void> {
@@ -120,12 +120,10 @@ export class InventoryManagementService implements IManageHerramientaModel {
       quantity: quantity,
       inventarioSucursal: inventarioSucursal,
       session: session,
-      list: this._listUpdatedBranchInventory,
       isNoSave: true
     };
 
    let dataCretaeInventarioSucursal:ICreateInventarioSucursal = {
-      list: this._listBranchInventoryAdded,
       inventarioSucursal: model,
       session: session,
       isNoSave: true

@@ -3,6 +3,8 @@ import { IMoneda } from '../moneda/Moneda.model';
 import { IDescuentosProductos } from './DescuentosProductos.model';
 import { IDescuentoGrupo } from './DescuentoGrupo.model';
 
+export type ITipoDescuentoEntidad = 'Product' | 'Group';
+
 export interface IDescuento extends Document {
   nombre: string;
   tipoDescuento: 'porcentaje' | 'valor';
@@ -29,7 +31,7 @@ export interface IDescuentoCreate {
   moneda_id: mongoose.Types.ObjectId;
   codigoDescunto: string
   deleted_at: Date | null;
-  tipoDescuentoEntidad: 'Product' | 'Group',
+  tipoDescuentoEntidad: ITipoDescuentoEntidad,
   productId?: mongoose.Types.ObjectId,
   groupId?: mongoose.Types.ObjectId,
   sucursalId?: mongoose.Types.ObjectId,

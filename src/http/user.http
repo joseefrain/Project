@@ -1,4 +1,4 @@
-@api = http://127.0.0.1:3000/api/users
+@api = https://project-production-6ce8.up.railway.app/api/users
 
 @api2 = http://127.0.0.1:3000/api/auth
 
