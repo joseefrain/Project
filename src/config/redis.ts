@@ -4,9 +4,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const redisConfig: RedisOptions = {
-  host: process.env.REDISHOST || 'localhost',
-  port: Number(process.env.REDISPORT) || 6379,
-  password: process.env.REDISPASSWORD || '',
-  url: process.env.REDIS_URL || '',
-  username: process.env.REDISUSER || '',
+  sentinels: [
+    { host: process.env.SENTINEL1_PRIVATE_DOMAIN, port: 26379 },
+    { host: process.env.SENTINEL2_PRIVATE_DOMAIN, port: 26379 },
+    { host: process.env.SENTINEL3_PRIVATE_DOMAIN, port: 26379 },
+  ],
+  name: process.env.REDIS_PRIMARY_NAME,
+  family: 0,
+  sentinelPassword: process.env.REDIS_PRIMARY_PASSWORD,
+  sentinelUsername: "default",
+  password: process.env.REDIS_PRIMARY_PASSWORD,
+  username: "default"
 }
