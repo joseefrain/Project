@@ -6,7 +6,7 @@ import { container } from "tsyringe";
 const inventarioQueue  = new Queue('actualizacionInventario', process.env.MODE === "DEVELOPMENT" ? redisConfig : process.env.REDIS_URL as string);
 
 // Definir el proceso para los trabajos
-inventarioQueue .process(async (job) => {
+inventarioQueue.process(async (job) => {
   const salesService = container.resolve(VentaService);
   await salesService.createVenta(job.data as any);
   // console.log(`Processing job ${job.id} with data:`, job.data);
