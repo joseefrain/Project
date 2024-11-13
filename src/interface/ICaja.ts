@@ -81,7 +81,6 @@ export interface IActualizarMontoEsperado {
 }
 
 export interface IActualizarMontoEsperadoByVenta {
-  cajaId: string;
   data: IVentaCreateCaja;
   session: mongo.ClientSession
 }

@@ -22,7 +22,6 @@ import { IVentaCreateCaja } from '../../interface/ICaja';
 export interface ICreateVentaProps {
   venta: Partial<IVentaCreate>;
   user: CustomJwtPayload;
-  cajaId: string
 }
 
 @injectable()
@@ -35,16 +34,15 @@ export class VentaService {
   ) {}
 
   addSaleToQueue(data: ICreateVentaProps) {
-    const { venta, user, cajaId } = data;
+    const { venta, user } = data;
     return inventarioQueue.add({
       venta: venta,
       user: user,
-      cajaId
     });
   }
 
   async createVenta(data: ICreateVentaProps): Promise<Partial<IVentaCreate>> {
-    const { venta, user, cajaId } = data;
+    const { venta, user } = data;
 
     const session = await mongoose.startSession();
 
@@ -165,7 +163,6 @@ export class VentaService {
       let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString()} as IVentaCreateCaja);
 
       const datosActualizar = {
-        cajaId: cajaId,
         data: ventaActualizar,
         session
       }

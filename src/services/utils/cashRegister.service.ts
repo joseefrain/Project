@@ -105,7 +105,8 @@ export class CashRegisterService {
 
   async actualizarMontoEsperadoByVenta(props:IActualizarMontoEsperadoByVenta): Promise<ICaja | null> {
    
-    const { cajaId, data, session} = props;
+    const { data, session} = props;
+    let cajaId = data.cajaId!
     
     let monto = new Types.Decimal128(data.monto!.toString());
     let cambio = new Types.Decimal128(data.cambioCliente!.toString());
