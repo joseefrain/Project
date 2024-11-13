@@ -29,7 +29,7 @@ import { SucursalRepository } from '../../repositories/sucursal/sucursal.reposit
 import { CustomJwtPayload } from '../../utils/jwt';
 import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
-import { IInit } from '../../interface/IInventario';
+import { IInit, tipoMovimientoInventario } from '../../interface/IInventario';
 
 @injectable()
 export class TrasladoService {
@@ -486,7 +486,8 @@ export class TrasladoService {
           quantity: item.cantidad,
           inventarioSucursalId: item.inventarioSucursalId._id as mongoose.Types.ObjectId,
           session: session,
-          isNoSave: true
+          isNoSave: true,
+          tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA,
         }
       );
     }
