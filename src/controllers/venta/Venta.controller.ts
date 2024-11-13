@@ -14,8 +14,8 @@ export class VentaController {
         venta: req.body,
         user: (req.user as CustomJwtPayload),
       }
-      const venta = await this.service.addSaleToQueue(data);
-      res.status(201).json(venta);
+      const result = await this.service.addSaleToQueue(data);
+      res.status(201).json(result); // Enviar el resultado
     } catch (error) {
       next(error);
     }

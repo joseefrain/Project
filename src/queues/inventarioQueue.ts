@@ -7,12 +7,11 @@ const inventarioQueue  = new Queue('actualizacionInventario', process.env.MODE =
 
 // Definir el proceso para los trabajos
 inventarioQueue.process(async (job) => {
-  console.log("proceso de inventario");
-  
+  console.log("Procesando actualización de inventario...");
+
   const salesService = container.resolve(VentaService);
-  await salesService.createVenta(job.data as any);
-  // console.log(`Processing job ${job.id} with data:`, job.data);
-  // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulación de trabajo
+  const result = await salesService.createVenta(job.data as any); // Retornar el resultado de la venta
+  return result;
 });
 
 export { inventarioQueue };

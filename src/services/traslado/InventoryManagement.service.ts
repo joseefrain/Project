@@ -3,7 +3,7 @@ import { InventarioSucursalRepository } from '../../repositories/inventary/inven
 import { inject, injectable } from 'tsyringe';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
-import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop } from '../../interface/IInventario';
+import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, tipoMovimientoInventario } from '../../interface/IInventario';
 
 @injectable()
 export class InventoryManagementService implements IManageHerramientaModel {
@@ -39,9 +39,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
     this.userId = new mongoose.Types.ObjectId(userId);
   }
 
-  async subtractQuantity({ quantity, inventarioSucursalId, session, isNoSave = false }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
-    console.log(this._listInventarioSucursal);
-    
+  async subtractQuantity({ quantity, inventarioSucursalId, session, isNoSave = false, tipoMovimiento }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
     const inventarioSucursal = this._listInventarioSucursal.find(
       (sucursal) =>
         (sucursal._id as mongoose.Types.ObjectId).toString() ===
@@ -59,7 +57,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
       cantidadCambiada: quantity,
       cantidadInicial: inventarioSucursal.stock,
       cantidadFinal: inventarioSucursal.stock - quantity,
-      tipoMovimiento: 'transferencia',
+      tipoMovimiento: tipoMovimiento,
       fechaMovimiento: new Date(),
       usuarioId: this.userId,
     });
@@ -152,7 +150,8 @@ export class InventoryManagementService implements IManageHerramientaModel {
           quantity: item.cantidad,
           inventarioSucursalId: item.inventarioSucursalId,
           session: session,
-          isNoSave: true
+          isNoSave: true,
+          tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA
         }
       );
     }
