@@ -22,7 +22,7 @@ export class CashRegisterService {
 
       const cajaAbierta = await this.repository.obtenerCajaAbiertaPorSucursal(sucursalId);
     
-      if (cajaAbierta) throw new Error('Ya hay una caja abierta para esta sucursal');
+      if (cajaAbierta) return cajaAbierta;
 
       let dataOpenCash = {
         sucursalId,
