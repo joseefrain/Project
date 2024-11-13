@@ -4,7 +4,7 @@ import { UserService } from '../../services/user/User.service';
 import { CashRegisterService } from '../../services/utils/cashRegister.service';
 import { Types } from 'mongoose';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
-import { ISucursal } from 'src/models/sucursales/Sucursal.model';
+import { ISucursal } from '../../models/sucursales/Sucursal.model';
 
 @injectable()
 export class UserController {
@@ -37,7 +37,7 @@ export class UserController {
           sucursalId,
           usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
         });
-        
+
         cajaId = (caja._id as Types.ObjectId).toString();
       }
 

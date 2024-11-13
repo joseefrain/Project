@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
-import { CashRegisterService } from 'src/services/utils/cashRegister.service';
+import { CashRegisterService } from '../../services/utils/cashRegister.service';
 
 @injectable()
 export class CashRegisterController {
