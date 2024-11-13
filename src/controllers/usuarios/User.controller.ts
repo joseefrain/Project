@@ -1,9 +1,9 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../../services/user/User.service';
-import { CashRegisterService } from 'src/services/utils/cashRegister.service';
+import { CashRegisterService } from '../../services/utils/cashRegister.service';
 import { Types } from 'mongoose';
-import { ICaja } from 'src/models/cashRegister/CashRegister.model';
+import { ICaja } from '../../models/cashRegister/CashRegister.model';
 
 @injectable()
 export class UserController {

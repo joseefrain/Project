@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import { IVentaCreate } from '../Ventas/Venta.model';
-import { IVentaCreateCaja } from 'src/interface/ICaja';
+import { IVentaCreateCaja } from '../../interface/ICaja';
 
 export interface IResumenCajaDiario extends Document {
   sucursalId: mongoose.Types.ObjectId;
@@ -133,11 +133,9 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
                   percentage: Number,
                   type: String,
                 },
-                required: false,
               },
             },
           ],
-          required: true,
         },
       },
     ],

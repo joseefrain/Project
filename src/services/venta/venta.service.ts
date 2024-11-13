@@ -17,8 +17,7 @@ import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
 import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
-import { IVentaCreateCaja } from 'src/interface/ICaja';
-
+import { IVentaCreateCaja } from '../../interface/ICaja';
 
 export interface ICreateVentaProps {
   venta: Partial<IVentaCreate>;

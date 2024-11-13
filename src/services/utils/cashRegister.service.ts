@@ -2,9 +2,9 @@ import { CajaRepository } from '../../repositories/caja/cashRegister.repository'
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { inject, injectable } from 'tsyringe';
 import mongoose, { mongo, Types } from 'mongoose';
-import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, IOpenCashService, tipeCashRegisterMovement } from 'src/interface/ICaja';
-import { MovimientoCajaRepository } from 'src/repositories/caja/movimientoCaja.repository';
-import { ResumenCajaDiarioRepository } from 'src/repositories/caja/DailyCashSummary.repository';
+import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
+import { MovimientoCajaRepository } from '../../repositories/caja/movimientoCaja.repository';
+import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 
 @injectable()
 export class CashRegisterService {

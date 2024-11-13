@@ -1,5 +1,5 @@
 import mongoose, { mongo, Types } from "mongoose";
-import { IVentaCreate } from "src/models/Ventas/Venta.model";
+import { IVentaCreate, IVentaProducto } from "../models/Ventas/Venta.model";
 
 export interface IOpenCash {
   sucursalId: string;
@@ -59,8 +59,18 @@ export interface IAddExpenseDailySummary {
   cajaId: string;
 }
 
-export interface IVentaCreateCaja extends IVentaCreate {
+export interface IVentaCreateCaja {
   id: string;
+  userId: string;
+  sucursalId: string;
+  products: IVentaProducto[];
+  subtotal: number;
+  total: number;
+  discount: number;
+  fechaRegistro?: Date;
+  monto?:number;
+  cambioCliente?:number;
+  cajaId?:string;
 }
 
 export interface IActualizarMontoEsperado {

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
-import { TypeEstatusSales } from 'src/interface/ICaja';
+import { TypeEstatusSales } from '../../interface/ICaja';
 
 export interface IVenta extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;

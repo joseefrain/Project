@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
-import { ITypeCashRegisterMovement } from 'src/interface/ICaja';
+import { ITypeCashRegisterMovement } from '../../interface/ICaja';
 
 export interface IMovimientoCaja extends Document {
   cajaId: mongoose.Types.ObjectId;

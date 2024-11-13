@@ -1,7 +1,7 @@
 import mongoose, { Model, mongo, Types } from 'mongoose';
 import Caja, { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { injectable } from 'tsyringe';
-import { IActualizarMontoEsperado, IOpenCash } from 'src/interface/ICaja';
+import { IActualizarMontoEsperado, IOpenCash } from '../../interface/ICaja';
 
 @injectable()
 export class CajaRepository {

@@ -1,7 +1,6 @@
 import mongoose, { Model, FilterQuery, Types } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
-import { IVentaCreate } from 'src/models/Ventas/Venta.model';
-import { IAddExpenseDailySummary, IAddIncomeDailySummary, IVentaCreateCaja } from 'src/interface/ICaja';
+import { IAddExpenseDailySummary, IAddIncomeDailySummary, IVentaCreateCaja } from '../../interface/ICaja';
 
 export class ResumenCajaDiarioRepository {
   private model: Model<IResumenCajaDiario>;

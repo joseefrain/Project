@@ -40,7 +40,6 @@ const arqueoCajaSchema: Schema<IArqueoCaja> = new Schema({
   },
   comentarios: {
     type: String,
-    required: false,
   },
 });
 
