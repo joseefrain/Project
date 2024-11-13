@@ -1,10 +1,16 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../../services/user/User.service';
+import { CashRegisterService } from 'src/services/utils/cashRegister.service';
+import { Types } from 'mongoose';
+import { ICaja } from 'src/models/cashRegister/CashRegister.model';
 
 @injectable()
 export class UserController {
-  constructor(@inject(UserService) private service: UserService) {}
+  constructor(
+    @inject(UserService) private service: UserService,
+    @inject(CashRegisterService) private cashRegisterService: CashRegisterService
+  ) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -18,7 +24,20 @@ export class UserController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const token = await this.service.loginUser(req.body);
-      res.status(200).json(token);
+
+      const { cajaId } = req.body;
+      let caja: ICaja | null = null;
+      let sucursalId = (token.user.sucursalId as Types.ObjectId).toString();
+
+      if (!cajaId && sucursalId) {
+        caja = await this.cashRegisterService.abrirCaja({
+          montoInicial: 2000,
+          sucursalId,
+          usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
+        });
+      }
+
+      res.status(200).json({ ...token, caja });
     } catch (error) {
       next(error);
     }

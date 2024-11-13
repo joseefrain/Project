@@ -12,7 +12,8 @@ export class VentaController {
     try {
       let data: ICreateVentaProps = {
         venta: req.body,
-        user: (req.user as CustomJwtPayload)
+        user: (req.user as CustomJwtPayload),
+        cajaId: (req.body.cajaId as string)
       }
       const venta = await this.service.addSaleToQueue(data);
       res.status(201).json(venta);
