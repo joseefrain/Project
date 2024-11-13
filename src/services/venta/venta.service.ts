@@ -160,7 +160,7 @@ export class VentaService {
       await this.inventoryManagementService.updateAllBranchInventory(session);
       await this.inventoryManagementService.saveAllMovimientoInventario(session);
 
-      let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString()} as IVentaCreateCaja);
+      let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString(), } as IVentaCreateCaja);
 
       const datosActualizar = {
         data: ventaActualizar,
@@ -177,13 +177,13 @@ export class VentaService {
           reorderPoint: item.puntoReCompra,
         }));
 
-      productListReOrder.length > 0 &&
-        notifyTelergramReorderThreshold(
-          user.username,
-          (listInventarioSucursal[0].sucursalId as ISucursal).nombre,
-          productListReOrder,
-          user.chatId
-        );
+      // productListReOrder.length > 0 &&
+      //   notifyTelergramReorderThreshold(
+      //     user.username,
+      //     (listInventarioSucursal[0].sucursalId as ISucursal).nombre,
+      //     productListReOrder,
+      //     user.chatId
+      //   );
       await session.commitTransaction();
       session.endSession();
 

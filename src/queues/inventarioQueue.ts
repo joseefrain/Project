@@ -7,6 +7,8 @@ const inventarioQueue  = new Queue('actualizacionInventario', process.env.MODE =
 
 // Definir el proceso para los trabajos
 inventarioQueue.process(async (job) => {
+  console.log("proceso de inventario");
+  
   const salesService = container.resolve(VentaService);
   await salesService.createVenta(job.data as any);
   // console.log(`Processing job ${job.id} with data:`, job.data);

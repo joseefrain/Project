@@ -94,7 +94,6 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
             {
               ventaId: {
                 type: String,
-                required: true,
               },
               productId: {
                 type: String,
@@ -102,7 +101,6 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
               },
               groupId: {
                 type: String,
-                required: true,
               },
               clientType: {
                 type: String,

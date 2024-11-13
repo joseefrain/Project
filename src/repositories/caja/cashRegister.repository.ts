@@ -63,10 +63,14 @@ export class CajaRepository {
 
     const { cajaId, monto, session, aumentar = true } = data;
 
-    return await this.cajaModel.findByIdAndUpdate(
+    const adjustedMonto = aumentar ? +Number(monto) : -Number(monto);
+
+    let caja = await this.cajaModel.findByIdAndUpdate(
       cajaId,
-      { $inc: { montoEsperado: aumentar ? monto : -monto } },
+      { $inc: { montoEsperado: adjustedMonto } },
       { new: true, session }
     );
+
+    return caja;
   }
 }

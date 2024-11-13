@@ -83,14 +83,19 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async findByDateAndBranch(branchId: Types.ObjectId, session: mongoose.mongo.ClientSession): Promise<IResumenCajaDiario> {
+  async findByDateAndBranch(branchId: Types.ObjectId, session: mongoose.ClientSession): Promise<IResumenCajaDiario | null> {
     try {
-      let date = new Date;
-      return await this.model.findOne({ fecha: date, sucursalId: branchId }, { session }) as IResumenCajaDiario;
+      const date = new Date();
+      return await this.model.findOne(
+        { fecha: date, sucursalId: branchId },
+        {}, // Objeto de proyección (puede estar vacío si necesitas todos los campos)
+        { session } // Opciones de la consulta, incluyendo session
+      ) as IResumenCajaDiario;
     } catch (error) {
       throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
     }
   }
+
 
   // Método para obtener los resúmenes de una sucursal específica
   async findBySucursal(sucursalId: string, limit: number = 10, skip: number = 0): Promise<IResumenCajaDiario[]> {
@@ -123,7 +128,7 @@ export class ResumenCajaDiarioRepository {
           totalEgresos: new Types.Decimal128('0'),
           ventas: [ data ],
         }
-        
+
         let resumenDiario = await this.create(dataResumen, session);
 
         return resumenDiario;
