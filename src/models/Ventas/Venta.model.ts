@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
+import { TypeEstatusSales } from 'src/interface/ICaja';
 
 export interface IVenta extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;
@@ -10,6 +11,7 @@ export interface IVenta extends Document {
   descuento: mongoose.Types.Decimal128;
   fechaRegistro: Date;
   deleted_at: Date | null;
+  estadoVenta: TypeEstatusSales;  
 }
 
 export interface IVentaProducto {
@@ -39,6 +41,9 @@ export interface IVentaCreate {
   total: number;
   discount: number;
   fechaRegistro?: Date;
+  monto?:number;
+  cambioCliente?:number;
+  cajaId?:string;
 }
 
 const ventaSchema: Schema = new Schema(
@@ -54,6 +59,12 @@ const ventaSchema: Schema = new Schema(
     total: { type: Schema.Types.Decimal128, required: true },
     descuento: { type: Schema.Types.Decimal128, default: 0 },
     deleted_at: { type: Date, default: null },
+    estadoVenta: {
+      type: String,
+      enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA'],
+      required: true,
+      default: 'PENDIENTE',
+    }
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'update_at' },

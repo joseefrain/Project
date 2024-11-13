@@ -2,7 +2,7 @@ import mongoose, { Document, Schema, Model } from 'mongoose';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { IUser } from '../usuarios/User.model';
 
-interface ICaja extends Document {
+export interface ICaja extends Document {
   sucursalId: mongoose.Types.ObjectId | ISucursal;
   usuarioAperturaId: mongoose.Types.ObjectId | IUser;
   montoInicial: mongoose.Types.Decimal128;

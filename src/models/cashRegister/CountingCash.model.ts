@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 
-interface IArqueoCaja extends Document {
+export interface IArqueoCaja extends Document {
   cajaId: mongoose.Types.ObjectId;
   usuarioArqueoId: mongoose.Types.ObjectId;
   montoDeclarado: mongoose.Types.Decimal128;

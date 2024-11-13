@@ -16,11 +16,14 @@ import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento
 import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
 import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
+import { CashRegisterService } from '../utils/cashRegister.service';
+import { IVentaCreateCaja } from 'src/interface/ICaja';
 
 
 export interface ICreateVentaProps {
   venta: Partial<IVentaCreate>;
   user: CustomJwtPayload;
+  cajaId: string
 }
 
 @injectable()
@@ -29,18 +32,20 @@ export class VentaService {
     @inject(VentaRepository) private repository: VentaRepository,
     @inject(InventoryManagementService) private inventoryManagementService: InventoryManagementService,
     @inject(DescuentoRepository) private descuentoRepository: DescuentoRepository,
+    @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
   ) {}
 
   addSaleToQueue(data: ICreateVentaProps) {
-    const { venta, user } = data;
+    const { venta, user, cajaId } = data;
     return inventarioQueue.add({
       venta: venta,
-      user: user
+      user: user,
+      cajaId
     });
   }
 
   async createVenta(data: ICreateVentaProps): Promise<Partial<IVentaCreate>> {
-    const { venta, user } = data;
+    const { venta, user, cajaId } = data;
 
     const session = await mongoose.startSession();
 
@@ -157,6 +162,16 @@ export class VentaService {
 
       await this.inventoryManagementService.updateAllBranchInventory(session);
       await this.inventoryManagementService.saveAllMovimientoInventario(session);
+
+      let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString()} as IVentaCreateCaja);
+
+      const datosActualizar = {
+        cajaId: cajaId,
+        data: ventaActualizar,
+        session
+      }
+
+      await this.cashRegisterService.actualizarMontoEsperadoByVenta(datosActualizar!)
 
       let productListReOrder = listInventarioSucursal
         .filter((item) => item.stock < item.puntoReCompra)

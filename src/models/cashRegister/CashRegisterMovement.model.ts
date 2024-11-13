@@ -1,8 +1,9 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
+import { ITypeCashRegisterMovement } from 'src/interface/ICaja';
 
-interface IMovimientoCaja extends Document {
+export interface IMovimientoCaja extends Document {
   cajaId: mongoose.Types.ObjectId;
-  tipoMovimiento: 'venta' | 'ingreso' | 'egreso';
+  tipoMovimiento: ITypeCashRegisterMovement;
   usuarioId: mongoose.Types.ObjectId;
   monto: mongoose.Types.Decimal128;
   cambioCliente?: mongoose.Types.Decimal128 | null;  // Nuevo campo opcional para cambio al cliente
@@ -18,7 +19,7 @@ const movimientoCajaSchema: Schema<IMovimientoCaja> = new Schema({
   },
   tipoMovimiento: {
     type: String,
-    enum: ['venta', 'ingreso', 'egreso'],
+    enum: ['VENTA', 'INGRESO', 'EGRESO', "COMPRA", "APERTURA"],
     required: true,
   },
   usuarioId: {

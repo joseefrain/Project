@@ -1,8 +1,10 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import { IVentaCreate } from '../Ventas/Venta.model';
+import { IVentaCreateCaja } from 'src/interface/ICaja';
 
-interface IResumenCajaDiario extends Document {
+export interface IResumenCajaDiario extends Document {
   sucursalId: mongoose.Types.ObjectId;
+  cajaId: mongoose.Types.ObjectId;
   fecha: Date;
   totalVentas: mongoose.Types.Decimal128;
   totalIngresos: mongoose.Types.Decimal128;
@@ -10,13 +12,19 @@ interface IResumenCajaDiario extends Document {
   montoFinalSistema: mongoose.Types.Decimal128;
   montoDeclaradoPorUsuario?: mongoose.Types.Decimal128 | null;
   diferencia?: mongoose.Types.Decimal128 | null;
-  ventas: IVentaCreate[];
+  ventas: IVentaCreateCaja[];
 }
 
 const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
+
   sucursalId: {
     type: Schema.Types.ObjectId,
     ref: 'Sucursal',
+    required: true,
+  },
+  cajaId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Caja',
     required: true,
   },
   fecha: {
@@ -50,6 +58,10 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
   ventas: {
     type: [
       {
+        id: {
+          type: String,
+          required: true,
+        },
         userId: {
           type: Schema.Types.ObjectId,
           ref: 'Usuario',
