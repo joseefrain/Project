@@ -43,7 +43,7 @@ app.use('/api/transfer', productTransfer);
 //rutas de venta
 app.use('/api/venta/descuentos', descuentos);
 app.use('/api/venta', ventaRoutes);
-app.use('/api/venta/cashRegister', cashRegisterRoutes);
+app.use('/api/cashRegister', cashRegisterRoutes);
 
 // rutas de administracion de la tienda
 const serverAdapter = new ExpressAdapter();
