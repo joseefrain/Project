@@ -108,12 +108,13 @@ export class CashRegisterService {
     const { data, session} = props;
     let cajaId = data.cajaId!
     
-    let monto = new Types.Decimal128(data.total!.toString());
+    let total = new Types.Decimal128(data.total!.toString());
+    let monto = new Types.Decimal128(data.monto!.toString());
     let cambio = new Types.Decimal128(data.cambioCliente!.toString());
 
     let dataAcualizacion = {
       cajaId,
-      monto,
+      monto: total,
       session,
     }
     let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
@@ -122,7 +123,7 @@ export class CashRegisterService {
 
     let movimiento = {
       tipoMovimiento: tipeCashRegisterMovement.VENTA,
-      monto,
+      monto: monto,
       fecha: new Date(),
       descripcion: 'Venta',
       usuarioId: new Types.ObjectId(data.userId),

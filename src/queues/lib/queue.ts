@@ -3,12 +3,12 @@ import { EventEmitter } from 'events';
 import { Job } from './job';
 import { RedisOptions, Redis } from 'ioredis';
 
-type ProcessFunction = (job: Job) => Promise<void>;
+type ProcessFunction<T = any> = (job: Job) => Promise<T>;
 
-export class Queue extends EventEmitter {
+export class Queue<T = any> extends EventEmitter {
   private redis: Redis;
   private queueName: string;
-  private processFunction: ProcessFunction | null = null;
+  private processFunction: ProcessFunction<T> | null = null;
   private isProcessing = false;
 
   constructor(queueName: string, redisConfig: RedisOptions | string) {
@@ -18,22 +18,29 @@ export class Queue extends EventEmitter {
   }
 
   // Define el proceso para los trabajos de esta cola
-  process(processFunction: ProcessFunction) {
+  async process(processFunction: ProcessFunction<T>) {
     this.processFunction = processFunction;
     if (!this.isProcessing) {
-      this.startProcessing();
+      await this.startProcessing();
     }
   }
 
   // Agregar un trabajo a la cola
-  async add(data: any, options: { delay?: number; maxAttempts?: number; backoff?: number; ttl?: number } = {}) {
+  async add(data: any, options: { delay?: number; maxAttempts?: number; backoff?: number; ttl?: number } = {}): Promise<T> {
     const job = new Job(data, options);
+
     if (job.delay > 0) {
       await this.scheduleDelayedJob(job);
     } else {
       await this.redis.rpush(`${this.queueName}:waiting`, JSON.stringify(job));
     }
     this.emit('waiting', job);
+
+    return new Promise((resolve, reject) => {
+      // Resolver la promesa cuando el trabajo se complete
+      this.once(`completed:${job.id}`, (result: T) => resolve(result));
+      this.once(`failed:${job.id}`, (error) => reject(error));
+    });
   }
 
   // Ejecuta trabajos de la cola
@@ -54,7 +61,7 @@ export class Queue extends EventEmitter {
   // Procesar cada trabajo con gestión de estado y reintentos
   private async handleJob(job: Job) {
     if (job.isExpired()) {
-      this.emit('failed', job);
+      this.emit(`failed:${job.id}`, new Error('Job expired'));
       return;
     }
 
@@ -62,18 +69,22 @@ export class Queue extends EventEmitter {
       job.incrementAttempts();
       this.emit('active', job);
 
-      await this.processFunction?.(job);
+      // Procesa el trabajo y emite el resultado en caso de éxito
+      const result = await this.processFunction?.(job);
       job.status = 'completed';
+      this.emit(`completed:${job.id}`, result); // Emitir el resultado de forma genérica
       this.emit('completed', job);
     } catch (error) {
       if (job.attempts < job.maxAttempts) {
         await this.scheduleDelayedJob(job, job.backoff);
       } else {
         job.status = 'failed';
+        this.emit(`failed:${job.id}`, error);
         this.emit('failed', job);
       }
     }
   }
+
 
   // Agrega trabajos con retraso al zset de retrasos
   private async scheduleDelayedJob(job: Job, customDelay?: number) {

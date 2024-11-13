@@ -11,7 +11,7 @@ import { CustomJwtPayload } from '../../utils/jwt';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { inventarioQueue } from '../../queues/inventarioQueue';
 import { InventoryManagementService } from '../traslado/InventoryManagement.service';
-import { IInit, ISubtractQuantity } from '../../interface/IInventario';
+import { IInit, ISubtractQuantity, tipoMovimientoInventario } from '../../interface/IInventario';
 import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento.model';
 import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
@@ -33,12 +33,9 @@ export class VentaService {
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
   ) {}
 
-  addSaleToQueue(data: ICreateVentaProps) {
-    const { venta, user } = data;
-    return inventarioQueue.add({
-      venta: venta,
-      user: user,
-    });
+  async addSaleToQueue(data: ICreateVentaProps) {
+    const result = await inventarioQueue.add(data, { delay: 0, maxAttempts: 3, backoff: 10000, ttl: 300000 });
+    return result;
   }
 
   async createVenta(data: ICreateVentaProps): Promise<Partial<IVentaCreate>> {
@@ -147,7 +144,8 @@ export class VentaService {
           inventarioSucursalId: new mongoose.mongo.ObjectId(element.inventarioSucursalId) ,
           quantity: element.quantity,
           session,
-          isNoSave:true
+          isNoSave:true,
+          tipoMovimiento: tipoMovimientoInventario.VENTA
         }
         
        let inventarioSucursal = (await this.inventoryManagementService.subtractQuantity(dataSubTractQuantity) as IInventarioSucursal)
@@ -156,7 +154,7 @@ export class VentaService {
           listInventarioSucursal.push(inventarioSucursal);
         }
       }
-
+ 
       await this.inventoryManagementService.updateAllBranchInventory(session);
       await this.inventoryManagementService.saveAllMovimientoInventario(session);
 

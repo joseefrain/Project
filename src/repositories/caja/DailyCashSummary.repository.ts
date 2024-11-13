@@ -86,6 +86,7 @@ export class ResumenCajaDiarioRepository {
   async findByDateAndBranch(branchId: Types.ObjectId, session: mongoose.ClientSession): Promise<IResumenCajaDiario | null> {
     try {
       const date = new Date();
+      date.setHours(0, 0, 0, 0);
       return await this.model.findOne(
         { fecha: date, sucursalId: branchId },
         {}, // Objeto de proyección (puede estar vacío si necesitas todos los campos)
@@ -116,13 +117,15 @@ export class ResumenCajaDiarioRepository {
 
       let existResumen = await this.findByDateAndBranch(sucursalId, session);
 
-      if (!existResumen) {
+      const fecha = new Date();
+      fecha.setHours(0, 0, 0, 0);
 
+      if (!existResumen) {
         let dataResumen = {
           sucursalId,
           totalVentas: totalIncrement,
           montoFinalSistema: totalIncrement,
-          fecha: new Date(),
+          fecha: fecha,
           cajaId: new Types.ObjectId(data.cajaId),
           totalIngresos: new Types.Decimal128('0'),
           totalEgresos: new Types.Decimal128('0'),
@@ -135,7 +138,7 @@ export class ResumenCajaDiarioRepository {
       }
   
       const resumenHoy = await this.model.findOneAndUpdate(
-        { fecha: new Date(), sucursalId: new Types.ObjectId(sucursalId) },
+        { fecha: fecha, sucursalId: new Types.ObjectId(sucursalId) },
         { $inc: { totalVentas: totalIncrement, montoFinalSistema: totalIncrement } },
         { new: true, upsert: true, session } 
       ).exec();

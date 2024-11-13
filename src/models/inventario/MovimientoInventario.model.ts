@@ -1,28 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { IInventarioSucursal } from './InventarioSucursal.model';
+import { TipoMovimientoInventario } from '../../interface/IInventario';
 
-type tipoMovimiento =
-  | 'entrada'
-  | 'salida'
-  | 'ajuste'
-  | 'devolución'
-  | 'transferencia'
-  | 'compra'
-  | 'venta'
-  | 'destrucción'
-  | 'ajuste por inventario'
-  | 'consumo interno'
-  | 'promoción'
-  | 'reabastecimiento'
-  | 'ajuste por daño';
   
 export interface IMovimientoInventario extends Document {
   inventarioSucursalId: mongoose.Types.ObjectId | IInventarioSucursal;
   cantidadCambiada: number;
   cantidadInicial: number;
   cantidadFinal: number; 
-  tipoMovimiento: tipoMovimiento;
+  tipoMovimiento: TipoMovimientoInventario;
   fechaMovimiento: Date;
   usuarioId: mongoose.Types.ObjectId | IUser;
   deleted_at: Date | null;
