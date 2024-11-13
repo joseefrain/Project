@@ -1,4 +1,4 @@
-import mongoose, { Model, FilterQuery, Types } from 'mongoose';
+import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 import { IAddExpenseDailySummary, IAddIncomeDailySummary, IVentaCreateCaja } from '../../interface/ICaja';
 
@@ -10,10 +10,10 @@ export class ResumenCajaDiarioRepository {
   }
 
   // Método para crear un nuevo resumen de caja diario
-  async create(data: Partial<IResumenCajaDiario>): Promise<IResumenCajaDiario> {
+  async create(data: Partial<IResumenCajaDiario>, session: mongo.ClientSession): Promise<IResumenCajaDiario> {
     try {
       const resumen = new this.model(data);
-      return await resumen.save();
+      return await resumen.save({ session });
     } catch (error) {
       throw new Error(`Error al crear ResumenCajaDiario: ${error.message}`);
     }
@@ -83,10 +83,10 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async findByDateAndBranch(branchId: string, session: mongoose.mongo.ClientSession): Promise<IResumenCajaDiario> {
+  async findByDateAndBranch(branchId: Types.ObjectId, session: mongoose.mongo.ClientSession): Promise<IResumenCajaDiario> {
     try {
       let date = new Date;
-      return await this.model.findOne({ fecha: date, sucursalId: branchId }) as IResumenCajaDiario;
+      return await this.model.findOne({ fecha: date, sucursalId: branchId }, { session }) as IResumenCajaDiario;
     } catch (error) {
       throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
     }
@@ -108,11 +108,31 @@ export class ResumenCajaDiarioRepository {
     try {
       const sucursalId = new Types.ObjectId(data.sucursalId);
       const totalIncrement = new Types.Decimal128(data.total!.toString());
+
+      let existResumen = await this.findByDateAndBranch(sucursalId, session);
+
+      if (!existResumen) {
+
+        let dataResumen = {
+          sucursalId,
+          totalVentas: totalIncrement,
+          montoFinalSistema: totalIncrement,
+          fecha: new Date(),
+          cajaId: new Types.ObjectId(data.cajaId),
+          totalIngresos: new Types.Decimal128('0'),
+          totalEgresos: new Types.Decimal128('0'),
+          ventas: [ data ],
+        }
+        
+        let resumenDiario = await this.create(dataResumen, session);
+
+        return resumenDiario;
+      }
   
       const resumenHoy = await this.model.findOneAndUpdate(
         { fecha: new Date(), sucursalId: new Types.ObjectId(sucursalId) },
         { $inc: { totalVentas: totalIncrement, montoFinalSistema: totalIncrement } },
-        { new: true, upsert: true } 
+        { new: true, upsert: true, session } 
       ).exec();
   
       if (!resumenHoy) {

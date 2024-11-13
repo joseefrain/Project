@@ -13,6 +13,7 @@ import { inventarioQueue } from './queues/inventarioQueue';
 import { ExpressAdapter } from '@bull-board/express';
 import { BullAdapter } from '@bull-board/api/bullAdapter'; // Si usas Bull
 import { createBullBoard } from '@bull-board/api';
+import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 
 const express = require('express');
 const cors = require('cors');
@@ -42,6 +43,7 @@ app.use('/api/transfer', productTransfer);
 //rutas de venta
 app.use('/api/venta/descuentos', descuentos);
 app.use('/api/venta', ventaRoutes);
+app.use('/api/venta/cashRegister', cashRegisterRoutes);
 
 // rutas de administracion de la tienda
 const serverAdapter = new ExpressAdapter();

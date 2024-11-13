@@ -26,7 +26,8 @@ export class UserController {
     try {
       const token = await this.service.loginUser(req.body);
 
-      const { cajaId } = req.body;
+      let { cajaId } = req.body;
+
       let caja: ICaja | null = null;
       let sucursalId = ((token.user.sucursalId as ISucursal)._id as Types.ObjectId).toString();
 
@@ -36,9 +37,11 @@ export class UserController {
           sucursalId,
           usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
         });
+        
+        cajaId = (caja._id as Types.ObjectId).toString();
       }
 
-      res.status(200).json({ ...token, caja });
+      res.status(200).json({ ...token, cajaId });
     } catch (error) {
       next(error);
     }
