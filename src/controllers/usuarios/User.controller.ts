@@ -4,6 +4,7 @@ import { UserService } from '../../services/user/User.service';
 import { CashRegisterService } from '../../services/utils/cashRegister.service';
 import { Types } from 'mongoose';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
+import { ISucursal } from 'src/models/sucursales/Sucursal.model';
 
 @injectable()
 export class UserController {
@@ -27,7 +28,7 @@ export class UserController {
 
       const { cajaId } = req.body;
       let caja: ICaja | null = null;
-      let sucursalId = (token.user.sucursalId as Types.ObjectId).toString();
+      let sucursalId = ((token.user.sucursalId as ISucursal)._id as Types.ObjectId).toString();
 
       if (!cajaId && sucursalId) {
         caja = await this.cashRegisterService.abrirCaja({
