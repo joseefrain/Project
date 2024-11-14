@@ -11,14 +11,14 @@ export interface IOpenCash {
 export type IOpenCashService = Omit<IOpenCash, 'session'>;
 
 export type ITypeCashRegisterMovement =  'VENTA' | 'INGRESO' | 'EGRESO' | 'COMPRA' | 'APERTURA';
-export type TypeEstatusSales = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA';
+export type TypeEstatusTransaction = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA';
 
 export interface ITypeEstatusSales {
-  PENDIENE: TypeEstatusSales,
-  PARCIALMENTE: TypeEstatusSales,
-  ENMORA: TypeEstatusSales,
-  PAGADA: TypeEstatusSales,
-  CANCELADA: TypeEstatusSales,
+  PENDIENE: TypeEstatusTransaction,
+  PARCIALMENTE: TypeEstatusTransaction,
+  ENMORA: TypeEstatusTransaction,
+  PAGADA: TypeEstatusTransaction,
+  CANCELADA: TypeEstatusTransaction,
 }
 
 export const tipoEstatusSales:ITypeEstatusSales = {

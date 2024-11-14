@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { VentaRepository } from '../../repositories/venta/venta.repository';
 import mongoose, { Types } from 'mongoose';
-import { IVenta, IVentaCreate, IVentaDescuento, IVentaProducto } from '../../models/Ventas/Venta.model';
+import { ITrasaccion, IVentaCreate, IVentaDescuento, IVentaProducto } from '../../models/Ventas/Venta.model';
 import { ITipoDescuento } from '../../models/Ventas/VentaDescuentosAplicados.model';
 import { IDetalleVenta } from '../../models/Ventas/DetalleVenta.model';
 import { IProducto } from '../../models/inventario/Producto.model';
@@ -224,12 +224,12 @@ export class VentaService {
     return ventasDto;
   }
 
-  async getAllVentasBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<IVenta[]> {
+  async getAllVentasBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITrasaccion[]> {
     return this.repository.findAllVentaBySucursalIdAndUserId(sucursalId, userId);
   }
 
   async getVentaById(id: string): Promise<IVentaCreate | null> {
-    let venta = (await this.repository.findVentaById(id) as IVenta);
+    let venta = (await this.repository.findVentaById(id) as ITrasaccion);
 
     let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
 
@@ -238,7 +238,7 @@ export class VentaService {
     return ventaDto;
   }
 
- async mapperData(venta: IVenta, detalleVenta: IDetalleVenta[]): Promise<IVentaCreate | null> {
+ async mapperData(venta: ITrasaccion, detalleVenta: IDetalleVenta[]): Promise<IVentaCreate | null> {
     let products: IVentaProducto[] = [];
 
     for await (const detalle of detalleVenta) {

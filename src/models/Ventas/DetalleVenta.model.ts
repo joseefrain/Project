@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IVenta } from './Venta.model';
+import { ITrasaccion } from './Venta.model';
 import { IProducto } from '../inventario/Producto.model';
 import { ITipoDescuentoEntidad } from './Descuento.model';
 
 export interface IDetalleVenta extends Document {
-  ventaId: mongoose.Types.ObjectId | IVenta;
+  ventaId: mongoose.Types.ObjectId | ITrasaccion;
   productoId: mongoose.Types.ObjectId | IProducto;
   precio: mongoose.Types.Decimal128;
   cantidad: number;
