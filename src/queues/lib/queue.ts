@@ -7,6 +7,7 @@ type ProcessFunction<T = any> = (job: Job) => Promise<T>;
 
 export class Queue<T = any> extends EventEmitter {
   private redis: Redis;
+  private subscriber: Redis;  // Añade un suscriptor de Redis para Pub/Sub
   private queueName: string;
   private processFunction: ProcessFunction<T> | null = null;
   private isProcessing = false;
@@ -15,6 +16,14 @@ export class Queue<T = any> extends EventEmitter {
     super();
     this.queueName = queueName;
     this.redis = new Redis(redisConfig as string);
+    this.subscriber = new Redis(redisConfig as string); // Inicializa el suscriptor
+
+    // Configura el listener para el canal de Pub/Sub
+    this.subscriber.subscribe(`${this.queueName}:events`);
+    this.subscriber.on('message', (channel, message) => {
+      const event = JSON.parse(message);
+      this.emit(event.type, event.job);
+    });
   }
 
   // Define el proceso para los trabajos de esta cola
@@ -28,13 +37,8 @@ export class Queue<T = any> extends EventEmitter {
   // Agregar un trabajo a la cola
   async add(data: any, options: { delay?: number; maxAttempts?: number; backoff?: number; ttl?: number } = {}): Promise<T> {
     const job = new Job(data, options);
-
-    if (job.delay > 0) {
-      await this.scheduleDelayedJob(job);
-    } else {
-      await this.redis.rpush(`${this.queueName}:waiting`, JSON.stringify(job));
-    }
-    this.emit('waiting', job);
+    await this.redis.rpush(`${this.queueName}:waiting`, JSON.stringify(job));
+    this.publishEvent('waiting', job);
 
     return new Promise((resolve, reject) => {
       // Resolver la promesa cuando el trabajo se complete
@@ -52,16 +56,15 @@ export class Queue<T = any> extends EventEmitter {
         const job: Job = Object.assign(new Job({}), JSON.parse(jobData));
         await this.handleJob(job);
       } else {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Espera de 1 segundo si no hay trabajos
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       await this.processDelayedJobs();
     }
   }
 
-  // Procesar cada trabajo con gestión de estado y reintentos
   private async handleJob(job: Job) {
     if (job.isExpired()) {
-      this.emit(`failed:${job.id}`, new Error('Job expired'));
+      this.publishEvent('failed', job);
       return;
     }
 
@@ -69,20 +72,25 @@ export class Queue<T = any> extends EventEmitter {
       job.incrementAttempts();
       this.emit('active', job);
 
-      // Procesa el trabajo y emite el resultado en caso de éxito
       const result = await this.processFunction?.(job);
       job.status = 'completed';
-      this.emit(`completed:${job.id}`, result); // Emitir el resultado de forma genérica
+      this.publishEvent('completed', job);
+      this.publishEvent(`completed:${job.id}`, result);
       this.emit('completed', job);
     } catch (error) {
       if (job.attempts < job.maxAttempts) {
         await this.scheduleDelayedJob(job, job.backoff);
       } else {
         job.status = 'failed';
-        this.emit(`failed:${job.id}`, error);
+        this.publishEvent('failed', job);
+        this.publishEvent(`failed:${job.id}`, job);
         this.emit('failed', job);
       }
     }
+  }
+
+  private async publishEvent(type: string, job: any) {
+    await this.redis.publish(`${this.queueName}:events`, JSON.stringify({ type, job }));
   }
 
 
