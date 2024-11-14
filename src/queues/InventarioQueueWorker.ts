@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { VentaService } from "../services/venta/venta.service";
 import { redisConfig } from "../config/redis";
 import { Queue } from "./lib/queue";
