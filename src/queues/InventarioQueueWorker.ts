@@ -1,8 +1,12 @@
+
 import 'reflect-metadata';
 import { VentaService } from "../services/venta/venta.service";
 import { redisConfig } from "../config/redis";
 import { Queue } from "./lib/queue";
 import { container } from "tsyringe";
+import connectDB from '../config/database';
+
+connectDB();
 
 const inventarioQueueWorker  = new Queue('actualizacionInventario', process.env.MODE === "DEVELOPMENT" ? redisConfig : process.env.REDIS_URL as string);
 
@@ -15,7 +19,6 @@ inventarioQueueWorker.process(async (job) => {
   return result;
 });
 
-console.log("Worker inicializado y listo para procesar trabajos...");
 
 inventarioQueueWorker.on('waiting', (job) => console.log(`Job ${job.id} is waiting.`));
 inventarioQueueWorker.on('active', (job) => console.log(`Job ${job.id} is active.`));
