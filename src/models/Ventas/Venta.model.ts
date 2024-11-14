@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
-import { TypeEstatusSales } from '../../interface/ICaja';
+import { TypeEstatusTransaction } from '../../interface/ICaja';
 
-export interface IVenta extends Document {
+export interface ITrasaccion extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;
   sucursalId: mongoose.Types.ObjectId | ISucursal;
   subtotal: mongoose.Types.Decimal128;
@@ -11,7 +11,7 @@ export interface IVenta extends Document {
   descuento: mongoose.Types.Decimal128;
   fechaRegistro: Date;
   deleted_at: Date | null;
-  estadoVenta: TypeEstatusSales;  
+  estadoTrasaccion: TypeEstatusTransaction;  
 }
 
 export interface IVentaProducto {
@@ -46,7 +46,7 @@ export interface IVentaCreate {
   cajaId?:string;
 }
 
-const ventaSchema: Schema = new Schema(
+const transaccionSchema: Schema = new Schema(
   {
     usuarioId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     sucursalId: {
@@ -71,4 +71,4 @@ const ventaSchema: Schema = new Schema(
   }
 );
 
-export const Venta = mongoose.model<IVenta>('Venta', ventaSchema);
+export const Trasaccion = mongoose.model<ITrasaccion>('Venta', transaccionSchema);
