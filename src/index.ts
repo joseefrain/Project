@@ -1,19 +1,17 @@
-import 'reflect-metadata';
+import { ExpressAdapter } from '@bull-board/express';
 import * as dotenv from 'dotenv';
+import 'reflect-metadata';
 import connectDB from './config/database';
-import userRoutes from './routes/user.routes';
-import branchRoutes from './routes/branch.routes';
-import productRoutes from './routes/inventario/producto.routes';
 import { errorHandler } from './middlewares/errorHandler';
+import branchRoutes from './routes/branch.routes';
+import entityRoutes from './routes/entity/entity.routes';
 import grupoRoutes from './routes/inventario/grupo.routes';
+import productRoutes from './routes/inventario/producto.routes';
 import productTransfer from './routes/traslado/traslado.routes';
+import userRoutes from './routes/user.routes';
+import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 import descuentos from './routes/venta/descuento.routes';
 import ventaRoutes from './routes/venta/venta.routes';
-import { inventarioQueue } from './queues/inventarioQueue';
-import { ExpressAdapter } from '@bull-board/express';
-import { BullAdapter } from '@bull-board/api/bullAdapter'; // Si usas Bull
-import { createBullBoard } from '@bull-board/api';
-import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 
 const express = require('express');
 const cors = require('cors');
@@ -30,6 +28,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Rutas
+app.use('/api/entity', entityRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/branches', branchRoutes);
 
