@@ -20,7 +20,7 @@ export class EntityRepository {
   }
 
   async findByIdentification(identification: string): Promise<IEntity | null> {
-    const query = this.model.findOne({ identificationNumber: identification });
+    const query = Entity.findOne({ 'generalInformation.identificationNumber': identification });
     return await query.exec();
   }
 
