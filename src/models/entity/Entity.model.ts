@@ -6,6 +6,7 @@ export interface IEntityGeneralInfo {
   country: string;
   address: string;
   name: string;
+  identificationNumber: string;
 }
 
 export interface IEntityContactInfo {
@@ -24,7 +25,6 @@ export interface IEntity extends Document {
   contactInformation: IEntityContactInfo;
   commercialInformation: IEntityCommercialInfo;
   type: IEntityType;
-  identificationNumber: string;
   state?: IClientState;
   Products?: IBranchProducts[];
   entities?: string;
@@ -51,10 +51,6 @@ export const EntitySchema: Schema<IEntity> = new Schema({
     type: Schema.Types.Mixed,
   },
   type: {
-    type: String,
-    required: true,
-  },
-  identificationNumber: {
     type: String,
     required: true,
   },
