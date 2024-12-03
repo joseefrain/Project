@@ -8,7 +8,7 @@ export class EntityService {
 
   async createEntity(data: Partial<IEntity>): Promise<IEntity> {
     const entityExists = await this.repository.findByIdentification(
-      data.identificationNumber!
+      data.generalInformation?.identificationNumber!
     );
 
     if (entityExists) {
