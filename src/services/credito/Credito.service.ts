@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 import { parse } from "path";
-import { ICredito, ICuotasCredito } from "src/models/credito/Credito.model";
-import { IMovimientoFinanciero } from "src/models/credito/MovimientoFinanciero.model";
-import { CreditoRepository } from "src/repositories/credito/Credito.repository";
-import { MovimientoFinancieroRepository } from "src/repositories/credito/MovimientoFinanciero.repository";
+import { ICredito, ICuotasCredito } from "../../models/credito/Credito.model";
+import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero.model";
+import { CreditoRepository } from "../../repositories/credito/Credito.repository";
+import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
 
 @injectable()

@@ -18,7 +18,7 @@ import { DescuentoRepository } from '../../repositories/venta/descuento.reposito
 import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
 import { IVentaCreateCaja } from '../../interface/ICaja';
-import { ICredito, ModalidadCredito } from 'src/models/credito/Credito.model';
+import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
 
 export interface ICreateVentaProps {
