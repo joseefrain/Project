@@ -83,7 +83,28 @@ const transaccionSchema: Schema = new Schema(
       enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA'],
       required: true,
       default: 'PENDIENTE',
-    }
+    },
+    estadoTrasaccion: {
+      type: String,
+      enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA'],
+      required: true,
+      default: 'PENDIENTE',
+    },
+    tipoTransaccion: {
+      type: String,
+      enum: ['VENTA', 'COMPRA', 'INGRESO', 'EGRESO', 'APERTURA'],
+      required: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ['cash', 'credit'],
+      required: true,
+    },
+    entidadId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Entity',
+      required: true,
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'update_at' },
