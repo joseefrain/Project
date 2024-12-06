@@ -43,7 +43,7 @@ export class VentaService {
 
   async createVenta(data: ICreateVentaProps): Promise<Partial<IVentaCreate>> {
     const { venta, user } = data;
-    venta.tipoTransaccion = "VENTA";
+    // venta.tipoTransaccion = "VENTA";
 
     const session = await mongoose.startSession();
 
@@ -180,7 +180,7 @@ export class VentaService {
           transaccionId: new mongoose.Types.ObjectId(newSale._id as mongoose.Types.ObjectId),
           tipoCredito: venta.tipoTransaccion as 'VENTA' | 'COMPRA',
           modalidadCredito: venta.credito?.modalidadCredito as ModalidadCredito,
-          saldoCredito: new mongoose.Types.Decimal128(`${venta.monto}`),
+          saldoCredito: new mongoose.Types.Decimal128(`${venta.total}`),
           plazoCredito: venta.credito?.plazoCredito as number,
           cuotaMensual: venta.credito?.cuotaMensual as mongoose.Types.Decimal128,
           pagoMinimoMensual: venta.credito?.pagoMinimoMensual as mongoose.Types.Decimal128,
