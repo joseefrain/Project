@@ -17,7 +17,7 @@ import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
 import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
-import { IVentaCreateCaja } from '../../interface/ICaja';
+import { IVentaCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
 import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
 
@@ -73,8 +73,10 @@ export class VentaService {
         descuento: new mongoose.Types.Decimal128(venta.discount?.toString()! || "0"),
         deleted_at: null,
         fechaRegistro: new Date(),
-        tipoTransaccion: 'VENTA' as TypeTransaction
-
+        tipoTransaccion: 'VENTA' as TypeTransaction,
+        paymentMethod: venta.paymentMethod,
+        entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
+        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'Pendiente' : 'Pagada') as TypeEstatusTransaction
       }
 
       const newSale = await this.repository.create(newVenta, session);
