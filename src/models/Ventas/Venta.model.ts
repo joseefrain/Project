@@ -2,8 +2,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
+import { IEntity } from '../entity/Entity.model';
+import { ModalidadCredito } from '../credito/Credito.model';
 
-export interface ITrasaccion extends Document {
+export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA';
+type TypePaymentMethod = 'cash' | 'credit';
+
+export interface ITransaccion extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;
   sucursalId: mongoose.Types.ObjectId | ISucursal;
   subtotal: mongoose.Types.Decimal128;
@@ -11,7 +16,10 @@ export interface ITrasaccion extends Document {
   descuento: mongoose.Types.Decimal128;
   fechaRegistro: Date;
   deleted_at: Date | null;
-  estadoTrasaccion: TypeEstatusTransaction;  
+  estadoTrasaccion: TypeEstatusTransaction;
+  tipoTransaccion: TypeTransaction;
+  entidadId: mongoose.Types.ObjectId | IEntity | null;
+  paymentMethod: TypePaymentMethod;
 }
 
 export interface IVentaProducto {
@@ -33,6 +41,13 @@ export interface IVentaDescuento {
   percentage: number;
   type:"grupo" | "producto";
 } 
+
+interface ICreditoCreate {
+  modalidadCredito: ModalidadCredito;
+  plazoCredito: number;
+  cuotaMensual: mongoose.Types.Decimal128;
+  pagoMinimoMensual: mongoose.Types.Decimal128;
+}
 export interface IVentaCreate {
   userId: string;
   sucursalId: string;
@@ -44,6 +59,10 @@ export interface IVentaCreate {
   monto?:number;
   cambioCliente?:number;
   cajaId?:string;
+  entidadId?: string; // nuevo
+  paymentMethod: TypePaymentMethod; // nuevo
+  credito?: ICreditoCreate; // nuevo
+  tipoTransaccion: TypeTransaction;
 }
 
 const transaccionSchema: Schema = new Schema(
@@ -71,4 +90,4 @@ const transaccionSchema: Schema = new Schema(
   }
 );
 
-export const Trasaccion = mongoose.model<ITrasaccion>('Venta', transaccionSchema);
+export const Transaccion = mongoose.model<ITransaccion>('Venta', transaccionSchema);
