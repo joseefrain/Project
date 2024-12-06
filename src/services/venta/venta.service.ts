@@ -177,10 +177,10 @@ export class VentaService {
 
       if (newSale.paymentMethod === 'credit') {
         let credito:Partial<ICredito> = {
-          sucursalId: new mongoose.Types.ObjectId(venta.sucursalId!),
-          entidadId: new mongoose.Types.ObjectId(venta.entidadId!),
-          transaccionId: new mongoose.Types.ObjectId(newSale._id as mongoose.Types.ObjectId),
-          tipoCredito: venta.tipoTransaccion as 'VENTA' | 'COMPRA',
+          sucursalId: newSale.sucursalId,
+          entidadId: newSale.entidadId as mongoose.Types.ObjectId,
+          transaccionId: newSale._id as mongoose.Types.ObjectId,
+          tipoCredito: newSale.tipoTransaccion as 'VENTA' | 'COMPRA',
           modalidadCredito: venta.credito?.modalidadCredito as ModalidadCredito,
           saldoCredito: new mongoose.Types.Decimal128(`${venta.total}`),
           plazoCredito: venta.credito?.plazoCredito as number,
