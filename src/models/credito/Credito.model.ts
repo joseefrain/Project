@@ -4,7 +4,7 @@ import { Entity, IEntity } from '../entity/Entity.model';
 import { ITransaccion, Transaccion } from '../Ventas/Venta.model';
 
 type TypeCredito = 'VENTA' | 'COMPRA';
-type ModalidadCredito = 'PLAZO' | 'PAGO';
+export type ModalidadCredito = 'PLAZO' | 'PAGO';
 type TypeEstadoCredito = 'ABIERTO' | 'CERRADO';
 type EstadoPagoCuata = 'PENDIENTE' | 'PAGADO' | 'ATRASADO';
 
@@ -23,9 +23,6 @@ export interface ICuotasCredito {
   fechaCuota: Date;
 }
 
-// precio 
-// entidad
-
 export interface ICredito extends Document {
   sucursalId: mongoose.Types.ObjectId | ISucursal;
   entidadId: mongoose.Types.ObjectId | IEntity;
@@ -37,14 +34,14 @@ export interface ICredito extends Document {
   transaccionId: mongoose.Types.ObjectId | ITransaccion;
   deleted_at: Date | null;
   //variables para el credio de plazo
-  plazoCredito: mongoose.Types.Decimal128; // En meses
+  plazoCredito: number; // En meses
   cuotaMensual: mongoose.Types.Decimal128;
   fechaVencimiento: Date;
 
   //variables para el credito de pago
   pagoMinimoMensual: mongoose.Types.Decimal128;
   // pagos por tipo de credito
-  
+
   pagosCredito: IPagoCredito[];
   cuotasCredito: ICuotasCredito[];
 }

@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
 import { Credito, ICredito } from '../../models/credito/Credito.model';
+import mongoose from 'mongoose';
 
 @injectable()
 export class CreditoRepository {
@@ -9,9 +10,14 @@ export class CreditoRepository {
     this.model = Credito;
   }
 
-  async create(data: Partial<ICredito>): Promise<ICredito> {
+  async create(data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito> {
     const credit = new this.model(data);
-    return await credit.save();
+    return await credit.save({ session });
+  }
+
+  async findByIdWithSession(id: string, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
+    const credit = this.model.findById(id, session)
+    return await credit.exec();
   }
 
   async findById(id: string): Promise<ICredito | null> {
@@ -26,6 +32,10 @@ export class CreditoRepository {
   ): Promise<ICredito[]> {
     const credit = this.model.find({ ...filters, deleted_at: null });
     return await credit.limit(limit).skip(skip).exec();
+  }
+
+  async updateWithSession(id: string, data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
   }
 
   async update(id: string, data: Partial<ICredito>): Promise<ICredito | null> {
