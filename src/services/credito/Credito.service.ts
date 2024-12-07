@@ -9,7 +9,7 @@ import { VentaRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
-import { IClientState } from "src/models/entity/Entity.model";
+import { IClientState } from "../../models/entity/Entity.model";
 
 @injectable()
 export class CreditoService {
