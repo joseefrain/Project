@@ -34,7 +34,7 @@ interface IClientState {
   amountReceivable: mongoose.Types.Decimal128;
   advancesReceipts: mongoose.Types.Decimal128;
   advancesDelivered: mongoose.Types.Decimal128;
-  amountPayable: mongoose.Types.Decimal128;
+  amountPayable: mongoose.Types.Decimal128; // monto que se debe pagar a la entidad
 }
 
 export type IEntityType = 'customer' | 'supplier';

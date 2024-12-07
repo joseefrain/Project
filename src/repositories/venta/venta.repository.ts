@@ -75,4 +75,7 @@ export class VentaRepository {
 
     return venta;
   }
+  async update(id: string, data: Partial<ITransaccion>, session: mongoose.mongo.ClientSession): Promise<ITransaccion | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  }
 }

@@ -31,7 +31,7 @@ export class CreditoRepository {
   }
 
   async findBySucursalId(sucursalId: string): Promise<ICredito[] | null> {
-    const credit = this.model.find({ sucursalId: new mongoose.Types.ObjectId(sucursalId) });
+    const credit = this.model.find({ sucursalId: new mongoose.Types.ObjectId(sucursalId) }).populate(["entidadId", "transaccionId"]);
     return await credit.exec();
   }
 

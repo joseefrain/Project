@@ -8,6 +8,7 @@ import { inject, injectable } from "tsyringe";
 import { VentaRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
+import { sumarDecimal128 } from "src/gen/handleDecimal128";
 
 @injectable()
 export class CreditoService {
@@ -32,8 +33,16 @@ export class CreditoService {
 
       if (data.tipoCredito === 'VENTA') {
 
-        
-        // entidad.state.amountReceivable = data.saldoCredito; 
+        let id = (entidad._id as mongoose.Types.ObjectId).toString();
+        let amountReceivable = (data.saldoCredito as mongoose.Types.Decimal128);
+        await this.entityRepository.updateStateClientAmountReceivable(id, amountReceivable, session);
+
+      } else if (data.tipoCredito === 'COMPRA') {
+
+        let id = (entidad._id as mongoose.Types.ObjectId).toString();
+        let amountPayable = (data.saldoCredito as mongoose.Types.Decimal128);
+        await this.entityRepository.updateStateClientAmountPayable(id, amountPayable, session);
+
       }
 
       if (data.modalidadCredito === 'PLAZO') {
@@ -101,6 +110,12 @@ export class CreditoService {
       if (!credito) {
         throw new Error("Crédito no encontrado");
       }
+
+      let entidad = await this.entityRepository.findById((credito.entidadId as mongoose.Types.ObjectId).toString());
+
+      if (!entidad) {
+        throw new Error("Entidad no encontrada");
+      }
     
       if (credito.modalidadCredito !== 'PAGO') {
         throw new Error("El crédito no está en modalidad de PAGO");
@@ -144,16 +159,34 @@ export class CreditoService {
           estadoPago: 'PENDIENTE',
           fechaCuota: new Date()
         });
+
+        if (credito.tipoCredito === 'VENTA') {
+
+          let id = (entidad._id as mongoose.Types.ObjectId).toString();
+          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
+        } else if (credito.tipoCredito === 'COMPRA') {
+  
+          let id = (entidad._id as mongoose.Types.ObjectId).toString();
+          let advancesDelivered = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
+        }
+
       } else {
         let venta = (await this.ventaRepository.findVentaById(credito.transaccionId.toString()) as ITransaccion);
 
+        let montoCredito = new mongoose.Types.Decimal128(`0`);
+
+        credito.pagosCredito.forEach(pago => {
+          montoCredito = sumarDecimal128(montoCredito, pago.montoPago);   
+        });
+
         if (venta.estadoTrasaccion === 'PENDIENTE') {
           credito.estadoCredito = 'CERRADO';
+          venta.estadoTrasaccion = 'PAGADA';
         }
-
-        credito.estadoCredito = 'CERRADO';
+        await this.ventaRepository.update(credito.transaccionId.toString(), venta, session);
       }
-    
       // Guardar los cambios en la base de datos
       await this.creditoRepository.updateWithSession((credito._id as mongoose.Types.ObjectId).toString(), credito, session);
 
