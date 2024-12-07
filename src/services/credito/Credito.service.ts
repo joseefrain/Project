@@ -276,7 +276,9 @@ export class CreditoService {
     
       // Validar el monto del pago
       const montoCuota = cuotaPendiente.montoCuota;
-      if (new mongoose.Types.Decimal128(montoPago.toString()) < montoCuota) {
+      let montoPago128 = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+
+      if (montoPago128 < montoCuota) {
         throw new Error("El monto pagado es insuficiente para cubrir la cuota");
       }
     
