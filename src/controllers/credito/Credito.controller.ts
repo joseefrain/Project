@@ -29,6 +29,15 @@ export class CreditoController {
     }
   }
 
+  async findCreditoBySucursalId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const entities = await this.service.findCreditoBySucursalId(req.params.sucursalId);
+      res.status(200).json(entities);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const entity = await this.service.updateCredito(req.params.id, req.body);

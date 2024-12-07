@@ -30,6 +30,11 @@ export class CreditoRepository {
     return await credit.exec();
   }
 
+  async findBySucursalId(sucursalId: string): Promise<ICredito[] | null> {
+    const credit = this.model.find({ sucursalId: new mongoose.Types.ObjectId(sucursalId) });
+    return await credit.exec();
+  }
+
   async updateWithSession(id: string, data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
     return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
   }

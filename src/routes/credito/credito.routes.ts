@@ -18,6 +18,8 @@ router.get(
 
 router.get('/byEntity/:entidadId', creditoController.getAllByEntity.bind(creditoController));
 
+router.get('/bySucursalId/:sucursalId', creditoController.findCreditoBySucursalId.bind(creditoController));
+
 router.put(
   '/:id',
   authMiddleware,

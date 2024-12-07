@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
 import { Entity, IEntity } from '../../models/entity/Entity.model';
+import mongoose from 'mongoose';
 
 @injectable()
 export class EntityRepository {
@@ -41,5 +42,16 @@ export class EntityRepository {
     return await this.model
       .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
       .exec();
+  }
+
+  async updateStateClient(id:string, amountReceivable: mongoose.Types.Decimal128, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+
+    let entidad = await this.model.findByIdAndUpdate(
+      id,
+      { $inc: { amountReceivable: +amountReceivable } },
+      { new: true, session }
+    );
+
+    return entidad;
   }
 }

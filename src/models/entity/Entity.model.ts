@@ -31,10 +31,10 @@ export interface IEntity extends Document {
 }
 
 interface IClientState {
-  amountReceivable: number;
-  advancesReceipts: number;
-  advancesDelivered: number;
-  amountPayable: number;
+  amountReceivable: mongoose.Types.Decimal128;
+  advancesReceipts: mongoose.Types.Decimal128;
+  advancesDelivered: mongoose.Types.Decimal128;
+  amountPayable: mongoose.Types.Decimal128;
 }
 
 export type IEntityType = 'customer' | 'supplier';

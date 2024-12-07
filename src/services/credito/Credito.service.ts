@@ -5,12 +5,17 @@ import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
+import { VentaRepository } from "src/repositories/venta/venta.repository";
+import { ITransaccion } from "src/models/Ventas/Venta.model";
+import { EntityRepository } from "src/repositories/entity/Entity.repository";
 
 @injectable()
 export class CreditoService {
   constructor(
     @inject(CreditoRepository) private creditoRepository: CreditoRepository,
     @inject(MovimientoFinancieroRepository) private MovimientoRepository: MovimientoFinancieroRepository,
+    @inject(VentaRepository) private ventaRepository: VentaRepository,
+    @inject(EntityRepository) private entityRepository: EntityRepository,
   ) {}
 
   async createCredito(data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito> {
@@ -18,7 +23,19 @@ export class CreditoService {
 
       data.fecheInicio = new Date();
       data.estadoCredito = 'ABIERTO';
-    
+
+      let entidad = await this.entityRepository.findById((data.entidadId as mongoose.Types.ObjectId).toString());
+
+      if (!entidad) {
+        throw new Error("Entidad no encontrada");
+      }
+
+      if (data.tipoCredito === 'VENTA') {
+
+        
+        // entidad.state.amountReceivable = data.saldoCredito; 
+      }
+
       if (data.modalidadCredito === 'PLAZO') {
         // Cálculo de la cuota mensual
         const saldoCredito = parseFloat((data.saldoCredito?.toString() as string));
@@ -128,7 +145,12 @@ export class CreditoService {
           fechaCuota: new Date()
         });
       } else {
-        // Marcar el crédito como CERRADO si no queda saldo pendiente
+        let venta = (await this.ventaRepository.findVentaById(credito.transaccionId.toString()) as ITransaccion);
+
+        if (venta.estadoTrasaccion === 'PENDIENTE') {
+          credito.estadoCredito = 'CERRADO';
+        }
+
         credito.estadoCredito = 'CERRADO';
       }
     
@@ -238,6 +260,11 @@ export class CreditoService {
   
   async findCreditoById(id: string): Promise<ICredito | null> {
     const credito = await this.creditoRepository.findById(id);
+    return credito;
+  }
+
+  async findCreditoBySucursalId(sucursalId: string): Promise<ICredito[] | null> {
+    const credito = await this.creditoRepository.findBySucursalId(sucursalId);
     return credito;
   }
 

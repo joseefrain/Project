@@ -81,8 +81,6 @@ export class VentaService {
 
       const newSale = await this.repository.create(newVenta, session);
 
-      console.log(newSale);
-
       for await (const element of venta.products!) {
 
         let subtotal = element.price * element.quantity;
