@@ -68,7 +68,7 @@ export class CreditoService {
             montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
             fechaVencimiento: fechaVencimiento,
             estadoPago: 'PENDIENTE',
-            fechaCuota: fechaVencimiento // Fecha de creación de la cuota
+            fechaCuota: new Date() // Fecha de creación de la cuota
           });
         }
     
@@ -77,6 +77,20 @@ export class CreditoService {
         const saldoCredito = parseFloat((data.saldoCredito?.toString() as string));
         const porcentajePagoMinimo = 0.20; // Porcentaje del 20% como ejemplo
         const nuevoPagoMinimo = saldoCredito * porcentajePagoMinimo;
+
+        data.cuotasCredito = [];
+
+        const fechaInicio = new Date(data.fecheInicio); // Copia de la fecha de inicio
+        const fechaVencimiento = new Date(fechaInicio.setMonth(fechaInicio.getMonth() +  1));
+
+        data.cuotasCredito.push({
+          numeroCuota:  1,
+          montoCuota: new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2)),
+          montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
+          fechaVencimiento: fechaVencimiento,
+          estadoPago: 'PENDIENTE',
+          fechaCuota: new Date() // Fecha de creación de la cuota
+        });
 
         data.pagoMinimoMensual = new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2));
       }
