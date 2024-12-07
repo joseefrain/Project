@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe";
 import { VentaRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { sumarDecimal128 } from "src/gen/handleDecimal128";
+import { sumarDecimal128 } from "../../gen/handleDecimal128";
 
 @injectable()
 export class CreditoService {
