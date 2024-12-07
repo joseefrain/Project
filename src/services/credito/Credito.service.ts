@@ -5,9 +5,9 @@ import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
-import { VentaRepository } from "src/repositories/venta/venta.repository";
-import { ITransaccion } from "src/models/Ventas/Venta.model";
-import { EntityRepository } from "src/repositories/entity/Entity.repository";
+import { VentaRepository } from "../../repositories/venta/venta.repository";
+import { ITransaccion } from "../../models/Ventas/Venta.model";
+import { EntityRepository } from "../../repositories/entity/Entity.repository";
 
 @injectable()
 export class CreditoService {
