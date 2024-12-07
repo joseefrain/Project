@@ -20,9 +20,9 @@ export class CreditoController {
     }
   }
 
-  async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllByEntity(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const entities = await this.service.findAllCreditos(req.params.entidadId);
+      const entities = await this.service.findAllCreditosByEntity(req.params.entidadId);
       res.status(200).json(entities);
     } catch (error) {
       next(error);
@@ -62,6 +62,15 @@ export class CreditoController {
       let creditoId = new mongoose.Types.ObjectId(req.params.id);
       const entity = await this.service.realizarPagoPlazo(creditoId, req.body.monto);
       res.status(200).json(entity);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async handlePagoCredito(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const credito = await this.service.handlePagoCredito(req.body.creditoId, req.body.monto, req.body.modalidadCredito);
+      res.status(200).json(credito);
     } catch (error) {
       next(error);
     }

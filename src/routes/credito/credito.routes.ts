@@ -8,8 +8,7 @@ const router = express.Router();
 const creditoController = container.resolve(CreditoController);
 
 // Definir las rutas
-router.post('/realizarPago', creditoController.realizarPago.bind(creditoController));
-router.post('/realizarPagoPlazo', creditoController.realizarPagoPlazo.bind(creditoController));
+router.post('/pagoCredito', creditoController.handlePagoCredito.bind(creditoController));
 
 router.get(
   '/:id',
@@ -17,7 +16,7 @@ router.get(
   creditoController.getById.bind(creditoController)
 );
 
-router.get('/byEntity/:entidadId', creditoController.getAll.bind(creditoController));
+router.get('/byEntity/:entidadId', creditoController.getAllByEntity.bind(creditoController));
 
 router.put(
   '/:id',

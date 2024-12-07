@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { parse } from "path";
-import { ICredito, ICuotasCredito } from "../../models/credito/Credito.model";
+import { ICredito, ICuotasCredito, ModalidadCredito } from "../../models/credito/Credito.model";
 import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero.model";
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
@@ -59,6 +59,16 @@ export class CreditoService {
       return credito;
     } catch (error) {
       throw new Error(error.message);
+    }
+  }
+
+  async handlePagoCredito(creditoIdStr: string, montoPago: number, modalidadCredito: ModalidadCredito): Promise<ICredito> {
+    let creditoId = new mongoose.Types.ObjectId(creditoIdStr);
+
+    if (modalidadCredito === 'PLAZO') {
+      return this.realizarPagoPlazo(creditoId, montoPago);
+    } else {
+      return this.realizarPago(creditoId, montoPago);
     }
   }
 
@@ -231,8 +241,8 @@ export class CreditoService {
     return credito;
   }
 
-  async findAllCreditos(entidadId: string): Promise<ICredito[]> {
-    const credito = await this.creditoRepository.findAll(entidadId);
+  async findAllCreditosByEntity(entidadId: string): Promise<ICredito[]> {
+    const credito = await this.creditoRepository.findAllByEntity(entidadId);
     return credito;
   }
 
