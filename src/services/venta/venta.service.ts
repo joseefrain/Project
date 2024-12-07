@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { VentaRepository } from '../../repositories/venta/venta.repository';
 import mongoose, { Types } from 'mongoose';
-import { ITrasaccion, IVentaCreate, IVentaDescuento, IVentaProducto } from '../../models/Ventas/Venta.model';
+import { ITransaccion, IVentaCreate, IVentaDescuento, IVentaProducto, TypeTransaction } from '../../models/Ventas/Venta.model';
 import { ITipoDescuento } from '../../models/Ventas/VentaDescuentosAplicados.model';
 import { IDetalleVenta } from '../../models/Ventas/DetalleVenta.model';
 import { IProducto } from '../../models/inventario/Producto.model';
@@ -17,7 +17,9 @@ import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
 import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
-import { IVentaCreateCaja } from '../../interface/ICaja';
+import { IVentaCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
+import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
+import { CreditoService } from '../credito/Credito.service';
 
 export interface ICreateVentaProps {
   venta: Partial<IVentaCreate>;
@@ -31,6 +33,7 @@ export class VentaService {
     @inject(InventoryManagementService) private inventoryManagementService: InventoryManagementService,
     @inject(DescuentoRepository) private descuentoRepository: DescuentoRepository,
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
+    @inject(CreditoService) private creditoService: CreditoService,
   ) {}
 
   async addSaleToQueue(data: ICreateVentaProps) {
@@ -40,6 +43,7 @@ export class VentaService {
 
   async createVenta(data: ICreateVentaProps): Promise<Partial<IVentaCreate>> {
     const { venta, user } = data;
+    // venta.tipoTransaccion = "VENTA";
 
     const session = await mongoose.startSession();
 
@@ -69,9 +73,15 @@ export class VentaService {
         descuento: new mongoose.Types.Decimal128(venta.discount?.toString()! || "0"),
         deleted_at: null,
         fechaRegistro: new Date(),
+        tipoTransaccion: 'VENTA' as TypeTransaction,
+        paymentMethod: venta.paymentMethod,
+        entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
+        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction
       }
 
       const newSale = await this.repository.create(newVenta, session);
+
+      console.log(newSale);
 
       for await (const element of venta.products!) {
 
@@ -165,7 +175,24 @@ export class VentaService {
         session
       }
 
-      await this.cashRegisterService.actualizarMontoEsperadoByVenta(datosActualizar!)
+      await this.cashRegisterService.actualizarMontoEsperadoByVenta(datosActualizar!);
+
+      if (newSale.paymentMethod === 'credit') {
+        let credito:Partial<ICredito> = {
+          sucursalId: newSale.sucursalId,
+          entidadId: newSale.entidadId as mongoose.Types.ObjectId,
+          transaccionId: newSale._id as mongoose.Types.ObjectId,
+          tipoCredito: newSale.tipoTransaccion as 'VENTA' | 'COMPRA',
+          modalidadCredito: venta.credito?.modalidadCredito as ModalidadCredito,
+          saldoCredito: new mongoose.Types.Decimal128(`${venta.total}`),
+          plazoCredito: venta.credito?.plazoCredito as number,
+          cuotaMensual: venta.credito?.cuotaMensual as mongoose.Types.Decimal128,
+          pagoMinimoMensual: venta.credito?.pagoMinimoMensual as mongoose.Types.Decimal128,
+          fechaVencimiento: new Date()
+        }
+
+        await this.creditoService.createCredito(credito, session);
+      }
 
       let productListReOrder = listInventarioSucursal
         .filter((item) => item.stock < item.puntoReCompra)
@@ -224,12 +251,12 @@ export class VentaService {
     return ventasDto;
   }
 
-  async getAllVentasBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITrasaccion[]> {
+  async getAllVentasBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITransaccion[]> {
     return this.repository.findAllVentaBySucursalIdAndUserId(sucursalId, userId);
   }
 
   async getVentaById(id: string): Promise<IVentaCreate | null> {
-    let venta = (await this.repository.findVentaById(id) as ITrasaccion);
+    let venta = (await this.repository.findVentaById(id) as ITransaccion);
 
     let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
 
@@ -238,7 +265,7 @@ export class VentaService {
     return ventaDto;
   }
 
- async mapperData(venta: ITrasaccion, detalleVenta: IDetalleVenta[]): Promise<IVentaCreate | null> {
+ async mapperData(venta: ITransaccion, detalleVenta: IDetalleVenta[]): Promise<IVentaCreate | null> {
     let products: IVentaProducto[] = [];
 
     for await (const detalle of detalleVenta) {
@@ -286,6 +313,8 @@ export class VentaService {
       discount: Number(venta.descuento),
       fechaRegistro: venta.fechaRegistro,
       products: products,
+      paymentMethod: venta.paymentMethod,
+      tipoTransaccion: venta.tipoTransaccion
     }
 
     return ventaDto;
