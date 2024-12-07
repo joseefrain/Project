@@ -60,7 +60,7 @@ export class CreditoService {
     
         for (let i = 0; i < plazoCredito; i++) {
           const fechaInicio = new Date(data.fecheInicio); // Copia de la fecha de inicio
-          const fechaVencimiento = new Date(fechaInicio.setMonth(fechaInicio.getMonth() + i));
+          const fechaVencimiento = new Date(fechaInicio.setMonth(fechaInicio.getMonth() + (i + 1)));
     
           cuotasCredito.push({
             numeroCuota: i + 1,
@@ -68,7 +68,7 @@ export class CreditoService {
             montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
             fechaVencimiento: fechaVencimiento,
             estadoPago: 'PENDIENTE',
-            fechaCuota: new Date() // Fecha de creación de la cuota
+            fechaCuota: fechaVencimiento // Fecha de creación de la cuota
           });
         }
     
