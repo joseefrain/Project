@@ -255,6 +255,12 @@ export class CreditoService {
       if (credito.modalidadCredito !== 'PLAZO') {
         throw new Error("El crédito no está en modalidad de PLAZO");
       }
+
+      let entidad = await this.entityRepository.findById((credito.entidadId as mongoose.Types.ObjectId).toString());
+
+      if (!entidad) {
+        throw new Error("Entidad no encontrada");
+      }
     
       // Verificar si quedan cuotas pendientes
       const cuotaPendiente = credito.cuotasCredito.find(cuota => cuota.estadoPago === 'PENDIENTE');
@@ -287,8 +293,43 @@ export class CreditoService {
       // Verificar si todas las cuotas han sido pagadas
       const cuotasPendientes = credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE');
       if (cuotasPendientes.length === 0) {
-        // Si no quedan cuotas pendientes, cerrar el crédito
-        credito.estadoCredito = 'CERRADO';
+        let venta = (await this.ventaRepository.findVentaById(credito.transaccionId.toString()) as ITransaccion);
+
+        let montoCredito = new mongoose.Types.Decimal128(`0`);
+
+        credito.pagosCredito.forEach(pago => {
+          montoCredito = sumarDecimal128(montoCredito, pago.montoPago);   
+        });
+
+        if (credito.tipoCredito === 'VENTA') {
+          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          (entidad.state as IClientState).advancesReceipts = sumarDecimal128((entidad.state as IClientState).advancesReceipts, advancesReceipts);
+          (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
+          (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
+        } else if (credito.tipoCredito === 'COMPRA') {
+          (entidad.state as IClientState).amountPayable = restarDecimal128((entidad.state as IClientState).amountPayable, montoCredito);
+          (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
+        }
+
+        await this.entityRepository.updateWithSession(credito.entidadId.toString(), entidad, session);
+
+        if (venta.estadoTrasaccion === 'PENDIENTE') {
+          credito.estadoCredito = 'CERRADO';
+          venta.estadoTrasaccion = 'PAGADA';
+        }
+        await this.ventaRepository.update(credito.transaccionId.toString(), venta, session);
+      } else {
+        if (credito.tipoCredito === 'VENTA') {
+
+          let id = (entidad._id as mongoose.Types.ObjectId).toString();
+          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
+        } else if (credito.tipoCredito === 'COMPRA') {
+  
+          let id = (entidad._id as mongoose.Types.ObjectId).toString();
+          let advancesDelivered = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
+        }
       }
     
       // Guardar los cambios en la base de datos
