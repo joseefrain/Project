@@ -76,7 +76,7 @@ export class VentaService {
         tipoTransaccion: 'VENTA' as TypeTransaction,
         paymentMethod: venta.paymentMethod,
         entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
-        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'Pendiente' : 'Pagada') as TypeEstatusTransaction
+        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction
       }
 
       const newSale = await this.repository.create(newVenta, session);
