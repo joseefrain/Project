@@ -122,7 +122,12 @@ export class CreditoService {
     try {
       session.startTransaction();
 
-      let montoPago128 = new mongoose.Types.Decimal128(montoPago);
+      if (isNaN(parseFloat(montoPago))) {
+        throw new Error("El monto del pago es incorrecto");
+      }
+
+
+      let montoPago128 = new mongoose.Types.Decimal128(parseFloat(montoPago).toFixed(2));
 
       const credito = await this.creditoRepository.findByIdWithSession(creditoId.toString(), session);
   
@@ -273,10 +278,14 @@ export class CreditoService {
       if (!cuotaPendiente) {
         throw new Error("No hay cuotas pendientes para este crédito");
       }
+
+      if (isNaN(parseFloat(montoPago))) {
+        throw new Error("El monto del pago es incorrecto");
+      }
     
       // Validar el monto del pago
       const montoCuota = cuotaPendiente.montoCuota;
-      let montoPago128 = new mongoose.Types.Decimal128(montoPago);
+      let montoPago128 = new mongoose.Types.Decimal128(parseFloat(montoPago).toFixed(2));
 
       if (montoPago128 < montoCuota) {
         throw new Error("El monto pagado es insuficiente para cubrir la cuota");
