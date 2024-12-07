@@ -292,7 +292,7 @@ export class CreditoService {
     
       // Registrar el pago realizado en el historial de pagos
       credito.pagosCredito.push({
-        montoPago: new mongoose.Types.Decimal128(montoPago.toFixed(2)),
+        montoPago: montoPago128,
         saldoPendiente: nuevoSaldo,
         fechaPago: new Date()
       });
@@ -309,7 +309,7 @@ export class CreditoService {
         });
 
         if (credito.tipoCredito === 'VENTA') {
-          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          let advancesReceipts = montoPago128;
           (entidad.state as IClientState).advancesReceipts = sumarDecimal128((entidad.state as IClientState).advancesReceipts, advancesReceipts);
           (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
           (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
@@ -329,12 +329,12 @@ export class CreditoService {
         if (credito.tipoCredito === 'VENTA') {
 
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
-          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          let advancesReceipts = montoPago128;
           await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
         } else if (credito.tipoCredito === 'COMPRA') {
   
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
-          let advancesDelivered = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          let advancesDelivered = montoPago128;
           await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
         }
       }
@@ -345,7 +345,7 @@ export class CreditoService {
       let movimiento:Partial<IMovimientoFinanciero> = {
         fechaMovimiento: new Date(),
         tipoMovimiento: credito.tipoCredito === 'VENTA' ? "ABONO" : "CARGO",
-        monto: new mongoose.Types.Decimal128(montoPago.toFixed(2)),
+        monto: montoPago128,
         creditoId: (credito._id as mongoose.Types.ObjectId)
       }
 
