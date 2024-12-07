@@ -8,7 +8,8 @@ import { inject, injectable } from "tsyringe";
 import { VentaRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { sumarDecimal128 } from "../../gen/handleDecimal128";
+import { restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
+import { IClientState } from "src/models/entity/Entity.model";
 
 @injectable()
 export class CreditoService {
@@ -180,6 +181,16 @@ export class CreditoService {
         credito.pagosCredito.forEach(pago => {
           montoCredito = sumarDecimal128(montoCredito, pago.montoPago);   
         });
+
+        if (credito.tipoCredito === 'VENTA') {
+          (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
+          (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
+        } else if (credito.tipoCredito === 'COMPRA') {
+          (entidad.state as IClientState).amountPayable = restarDecimal128((entidad.state as IClientState).amountPayable, montoCredito);
+          (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
+        }
+
+        await this.entityRepository.updateWithSession(credito.entidadId.toString(), entidad, session);
 
         if (venta.estadoTrasaccion === 'PENDIENTE') {
           credito.estadoCredito = 'CERRADO';

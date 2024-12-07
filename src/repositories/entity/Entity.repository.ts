@@ -38,6 +38,10 @@ export class EntityRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
+  async updateWithSession(id: string, data: Partial<IEntity>, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  }
+
   async delete(id: string): Promise<IEntity | null> {
     return await this.model
       .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
