@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe";
 import { VentaRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
+import { dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
 
 @injectable()
@@ -49,11 +49,12 @@ export class CreditoService {
 
       if (data.modalidadCredito === 'PLAZO') {
         // Cálculo de la cuota mensual
-        const saldoCredito = parseFloat((data.saldoCredito?.toString() as string));
+        const saldoCredito = new mongoose.Types.Decimal128(data.saldoCredito?.toString() as string);
+        const plazoCredito128 = new mongoose.Types.Decimal128(data.plazoCredito?.toString() as string);
         const plazoCredito = data.plazoCredito as number;
-        const montoCuota = saldoCredito / plazoCredito;
+        const montoCuota = dividirDecimal128(saldoCredito, plazoCredito128)
     
-        data.cuotaMensual = new mongoose.Types.Decimal128(montoCuota.toFixed(2));
+        data.cuotaMensual = montoCuota
     
         // Generación de todas las cuotas
         const cuotasCredito: ICuotasCredito[] = [];
@@ -64,7 +65,7 @@ export class CreditoService {
     
           cuotasCredito.push({
             numeroCuota: i + 1,
-            montoCuota: new mongoose.Types.Decimal128(montoCuota.toFixed(2)),
+            montoCuota: montoCuota,
             montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
             fechaVencimiento: fechaVencimiento,
             estadoPago: 'PENDIENTE',
@@ -74,9 +75,9 @@ export class CreditoService {
     
         data.cuotasCredito = cuotasCredito;
       } else if (data.modalidadCredito === 'PAGO') {
-        const saldoCredito = parseFloat((data.saldoCredito?.toString() as string));
+        const saldoCredito = new mongoose.Types.Decimal128(data.saldoCredito?.toString() as string);
         const porcentajePagoMinimo = 0.20; // Porcentaje del 20% como ejemplo
-        const nuevoPagoMinimo = saldoCredito * porcentajePagoMinimo;
+        const nuevoPagoMinimo = multiplicarDecimal128(saldoCredito, new mongoose.Types.Decimal128(porcentajePagoMinimo.toString()));
 
         data.cuotasCredito = [];
 
@@ -85,14 +86,14 @@ export class CreditoService {
 
         data.cuotasCredito.push({
           numeroCuota:  1,
-          montoCuota: new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2)),
+          montoCuota: nuevoPagoMinimo,
           montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
           fechaVencimiento: fechaVencimiento,
           estadoPago: 'PENDIENTE',
           fechaCuota: new Date() // Fecha de creación de la cuota
         });
 
-        data.pagoMinimoMensual = new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2));
+        data.pagoMinimoMensual = nuevoPagoMinimo;
       }
     
       const credito = await this.creditoRepository.create(data, session);
@@ -121,6 +122,8 @@ export class CreditoService {
     try {
       session.startTransaction();
 
+      let montoPago128 = new mongoose.Types.Decimal128(montoPago.toString());
+
       const credito = await this.creditoRepository.findByIdWithSession(creditoId.toString(), session);
   
       if (!credito) {
@@ -137,40 +140,42 @@ export class CreditoService {
         throw new Error("El crédito no está en modalidad de PAGO");
       }
     
-      const saldoPendiente = parseFloat((credito.saldoPendiente.toString() as string));
-      const nuevoSaldo = saldoPendiente - montoPago;
+      const nuevoSaldo = restarDecimal128(credito.saldoPendiente, montoPago128);
     
-      if (nuevoSaldo < 0) {
+      if (nuevoSaldo < new mongoose.Types.Decimal128('0')) {
         throw new Error("El monto del pago excede el saldo pendiente del crédito");
       }
     
       // Actualizar el saldo del crédito
-      credito.saldoPendiente = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
+      credito.saldoPendiente = nuevoSaldo;
     
       // Registrar el pago realizado
       credito.pagosCredito.push({
-        montoPago: new mongoose.Types.Decimal128(montoPago.toFixed(2)),
-        saldoPendiente: new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2)),
+        montoPago: montoPago128,
+        saldoPendiente: nuevoSaldo,
         fechaPago: new Date()
       });
     
       // Actualizar el estado de la cuota actual (la última cuota generada)
       const cuotaActual = credito.cuotasCredito[credito.cuotasCredito.length - 1];
       cuotaActual.estadoPago = 'PAGADO';
+
+      let cero = new mongoose.Types.Decimal128('0.00');
+      let isNextCredit = nuevoSaldo > cero
     
       // Generar una nueva cuota si aún queda saldo pendiente
-      if (nuevoSaldo > 0) {
+      if (isNextCredit) {
         const porcentajePagoMinimo = 0.20; // Porcentaje del 20% como ejemplo
-        const nuevoPagoMinimo = nuevoSaldo * porcentajePagoMinimo;
-        credito.pagoMinimoMensual = new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2));
+        const nuevoPagoMinimo = multiplicarDecimal128(nuevoSaldo, new mongoose.Types.Decimal128(porcentajePagoMinimo.toString()));
+        credito.pagoMinimoMensual = nuevoPagoMinimo;
     
         const fechaVencimiento = new Date(cuotaActual.fechaVencimiento);
         fechaVencimiento.setMonth(fechaVencimiento.getMonth() + 1); // Siguiente mes
     
         credito.cuotasCredito.push({
           numeroCuota: cuotaActual.numeroCuota + 1,
-          montoCuota: new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2)),
-          montoCapital: new mongoose.Types.Decimal128(nuevoPagoMinimo.toFixed(2)),
+          montoCuota: nuevoPagoMinimo,
+          montoCapital: nuevoPagoMinimo,
           fechaVencimiento: fechaVencimiento,
           estadoPago: 'PENDIENTE',
           fechaCuota: new Date()
@@ -179,12 +184,12 @@ export class CreditoService {
         if (credito.tipoCredito === 'VENTA') {
 
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
-          let advancesReceipts = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          let advancesReceipts = montoPago128;
           await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
         } else if (credito.tipoCredito === 'COMPRA') {
   
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
-          let advancesDelivered = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+          let advancesDelivered = montoPago128
           await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
         }
 
@@ -198,6 +203,7 @@ export class CreditoService {
         });
 
         if (credito.tipoCredito === 'VENTA') {
+          (entidad.state as IClientState).advancesReceipts = sumarDecimal128((entidad.state as IClientState).advancesReceipts, montoPago128);
           (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
           (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
         } else if (credito.tipoCredito === 'COMPRA') {
@@ -219,7 +225,7 @@ export class CreditoService {
       let movimiento:Partial<IMovimientoFinanciero> = {
         fechaMovimiento: new Date(),
         tipoMovimiento: credito.tipoCredito === 'VENTA' ? "ABONO" : "CARGO",
-        monto: new mongoose.Types.Decimal128(montoPago.toFixed(2)),
+        monto: montoPago128,
         creditoId: (credito._id as mongoose.Types.ObjectId)
       }
 
@@ -269,8 +275,8 @@ export class CreditoService {
       }
     
       // Validar el monto del pago
-      const montoCuota = parseFloat(cuotaPendiente.montoCuota.toString());
-      if (montoPago < montoCuota) {
+      const montoCuota = cuotaPendiente.montoCuota;
+      if (new mongoose.Types.Decimal128(montoPago.toString()) < montoCuota) {
         throw new Error("El monto pagado es insuficiente para cubrir la cuota");
       }
     
@@ -279,14 +285,13 @@ export class CreditoService {
       cuotaPendiente.fechaCuota = new Date(); // Fecha del pago realizado
     
       // Actualizar el saldo pendiente del crédito
-      const saldoActual = parseFloat(credito.saldoPendiente.toString());
-      const nuevoSaldo = saldoActual - montoCuota;
-      credito.saldoPendiente = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
+      const nuevoSaldo = restarDecimal128(credito.saldoPendiente, montoCuota);
+      credito.saldoPendiente = nuevoSaldo;
     
       // Registrar el pago realizado en el historial de pagos
       credito.pagosCredito.push({
         montoPago: new mongoose.Types.Decimal128(montoPago.toFixed(2)),
-        saldoPendiente: new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2)),
+        saldoPendiente: nuevoSaldo,
         fechaPago: new Date()
       });
     
