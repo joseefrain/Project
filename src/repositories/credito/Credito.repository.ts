@@ -16,13 +16,13 @@ export class CreditoRepository {
   }
 
   async findByIdWithSession(id: string, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
-    const credit = this.model.findById(id, session)
+    const credit = this.model.findById(id, null, { session })
     return await credit.exec();
   }
 
   async findById(id: string): Promise<ICredito | null> {
-    const credit = this.model.findById(id)
-    return await credit.exec();
+    const credit = await this.model.findById(id)
+    return credit;
   }
 
   async findAllByEntity(entidadId: string): Promise<ICredito[]> {

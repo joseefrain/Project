@@ -78,7 +78,7 @@ export class CreditoController {
 
   async handlePagoCredito(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const credito = await this.service.handlePagoCredito(req.body.creditoId, req.body.monto, req.body.modalidadCredito);
+      const credito = await this.service.handlePagoCredito(req.body.creditoIdStr, req.body.montoPago, req.body.modalidadCredito);
       res.status(200).json(credito);
     } catch (error) {
       next(error);
