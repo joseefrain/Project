@@ -105,7 +105,7 @@ export class CreditoService {
     }
   }
 
-  async handlePagoCredito(creditoIdStr: string, montoPago: number, modalidadCredito: ModalidadCredito): Promise<ICredito> {
+  async handlePagoCredito(creditoIdStr: string, montoPago: string, modalidadCredito: ModalidadCredito): Promise<ICredito> {
     let creditoId = new mongoose.Types.ObjectId(creditoIdStr);
 
     if (modalidadCredito === 'PLAZO') {
@@ -115,14 +115,14 @@ export class CreditoService {
     }
   }
 
-  async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: number): Promise<ICredito> {
+  async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
 
     const session = await mongoose.startSession();
 
     try {
       session.startTransaction();
 
-      let montoPago128 = new mongoose.Types.Decimal128(montoPago.toString());
+      let montoPago128 = new mongoose.Types.Decimal128(montoPago);
 
       const credito = await this.creditoRepository.findByIdWithSession(creditoId.toString(), session);
   
@@ -246,7 +246,7 @@ export class CreditoService {
     
   }
 
-  async realizarPagoPlazo(creditoId: mongoose.Types.ObjectId, montoPago: number): Promise<ICredito> {
+  async realizarPagoPlazo(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
     const session = await mongoose.startSession();
 
     try {
@@ -276,7 +276,7 @@ export class CreditoService {
     
       // Validar el monto del pago
       const montoCuota = cuotaPendiente.montoCuota;
-      let montoPago128 = new mongoose.Types.Decimal128(montoPago.toFixed(2));
+      let montoPago128 = new mongoose.Types.Decimal128(montoPago);
 
       if (montoPago128 < montoCuota) {
         throw new Error("El monto pagado es insuficiente para cubrir la cuota");
