@@ -52,7 +52,7 @@ export class EntityRepository {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
-      { $inc: { amountReceivable: +amountReceivable } },
+      { $inc: { 'state.amountReceivable': +amountReceivable } },
       { new: true, session }
     );
 
@@ -63,7 +63,7 @@ export class EntityRepository {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
-      { $inc: { amountPayable: +amountPayable } },
+      { $inc: { "state.amountPayable": +amountPayable } },
       { new: true, session }
     );
 
@@ -74,7 +74,7 @@ export class EntityRepository {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
-      { $inc: { advancesDelivered: +advancesDelivered } },
+      { $inc: { 'state.advancesDelivered': +advancesDelivered } },
       { new: true, session }
     );
 
@@ -85,7 +85,7 @@ export class EntityRepository {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
-      { $inc: { advancesReceipts: +advancesReceipts } },
+      { $inc: { 'state.advancesReceipts': +advancesReceipts } },
       { new: true, session }
     );
 
