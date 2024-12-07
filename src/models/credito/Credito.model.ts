@@ -6,7 +6,7 @@ import { ITransaccion, Transaccion } from '../Ventas/Venta.model';
 type TypeCredito = 'VENTA' | 'COMPRA';
 export type ModalidadCredito = 'PLAZO' | 'PAGO';
 type TypeEstadoCredito = 'ABIERTO' | 'CERRADO';
-type EstadoPagoCuata = 'PENDIENTE' | 'PAGADO' | 'ATRASADO';
+type EstadoPagoCuota = 'PENDIENTE' | 'PAGADO' | 'ATRASADO';
 
 export interface IPagoCredito {
   montoPago: mongoose.Types.Decimal128;
@@ -19,7 +19,7 @@ export interface ICuotasCredito {
   montoCuota: mongoose.Types.Decimal128;
   montoCapital: mongoose.Types.Decimal128;
   fechaVencimiento: Date;
-  estadoPago: EstadoPagoCuata
+  estadoPago: EstadoPagoCuota
   fechaCuota: Date;
 }
 
