@@ -12,6 +12,7 @@ import userRoutes from './routes/user.routes';
 import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 import descuentos from './routes/venta/descuento.routes';
 import ventaRoutes from './routes/venta/venta.routes';
+import creditoRoutes from './routes/credito/credito.routes';
 
 const express = require('express');
 const cors = require('cors');
@@ -43,6 +44,7 @@ app.use('/api/transfer', productTransfer);
 app.use('/api/venta/descuentos', descuentos);
 app.use('/api/venta', ventaRoutes);
 app.use('/api/cashRegister', cashRegisterRoutes);
+app.use('/api/credito', creditoRoutes);
 
 // rutas de administracion de la tienda
 const serverAdapter = new ExpressAdapter();
