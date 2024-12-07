@@ -231,12 +231,8 @@ export class CreditoService {
     return credito;
   }
 
-  async findAllCreditos(
-    filters: any = {},
-    limit: number = 10,
-    skip: number = 0
-  ): Promise<ICredito[]> {
-    const credito = await this.creditoRepository.findAll(filters, limit, skip);
+  async findAllCreditos(entidadId: string): Promise<ICredito[]> {
+    const credito = await this.creditoRepository.findAll(entidadId);
     return credito;
   }
 
