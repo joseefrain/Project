@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
-import { IEntity } from '../../models/entity/Entity.model';
+import { IClientState, IEntity } from '../../models/entity/Entity.model';
 import { EntityRepository } from '../../repositories/entity/Entity.repository';
+import mongoose from 'mongoose';
 
 @injectable()
 export class EntityService {
@@ -14,6 +15,15 @@ export class EntityService {
     if (entityExists) {
       throw new Error('Entity already exists');
     }
+
+    let state:IClientState = {
+      amountReceivable: new mongoose.Types.Decimal128('0'),
+      advancesReceipts: new mongoose.Types.Decimal128('0'),
+      advancesDelivered: new mongoose.Types.Decimal128('0'),
+      amountPayable: new mongoose.Types.Decimal128('0'),
+    }
+
+    data.state = state;
 
     const newEntity = await this.repository.create(data);
     return newEntity;
