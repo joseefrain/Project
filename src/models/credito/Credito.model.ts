@@ -29,6 +29,7 @@ export interface ICredito extends Document {
   tipoCredito: TypeCredito;
   modalidadCredito: ModalidadCredito;
   saldoCredito: mongoose.Types.Decimal128;
+  saldoPendiente: mongoose.Types.Decimal128;
   estadoCredito: TypeEstadoCredito;
   fecheInicio: Date;
   transaccionId: mongoose.Types.ObjectId | ITransaccion;
@@ -89,6 +90,10 @@ const creditoSchema: Schema<ICredito> = new Schema({
     required: true,
   },
   saldoCredito: {
+    type: Schema.Types.Decimal128,
+    required: true,
+  },
+  saldoPendiente: {
     type: Schema.Types.Decimal128,
     required: true,
   },

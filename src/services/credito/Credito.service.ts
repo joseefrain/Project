@@ -25,6 +25,7 @@ export class CreditoService {
 
       data.fecheInicio = new Date();
       data.estadoCredito = 'ABIERTO';
+      data.saldoPendiente = data.saldoCredito;
 
       let entidad = await this.entityRepository.findById((data.entidadId as mongoose.Types.ObjectId).toString());
 
@@ -122,7 +123,7 @@ export class CreditoService {
         throw new Error("El crédito no está en modalidad de PAGO");
       }
     
-      const saldoPendiente = parseFloat((credito.saldoCredito.toString() as string));
+      const saldoPendiente = parseFloat((credito.saldoPendiente.toString() as string));
       const nuevoSaldo = saldoPendiente - montoPago;
     
       if (nuevoSaldo < 0) {
@@ -130,7 +131,7 @@ export class CreditoService {
       }
     
       // Actualizar el saldo del crédito
-      credito.saldoCredito = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
+      credito.saldoPendiente = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
     
       // Registrar el pago realizado
       credito.pagosCredito.push({
@@ -258,9 +259,9 @@ export class CreditoService {
       cuotaPendiente.fechaCuota = new Date(); // Fecha del pago realizado
     
       // Actualizar el saldo pendiente del crédito
-      const saldoActual = parseFloat(credito.saldoCredito.toString());
+      const saldoActual = parseFloat(credito.saldoPendiente.toString());
       const nuevoSaldo = saldoActual - montoCuota;
-      credito.saldoCredito = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
+      credito.saldoPendiente = new mongoose.Types.Decimal128(nuevoSaldo.toFixed(2));
     
       // Registrar el pago realizado en el historial de pagos
       credito.pagosCredito.push({
