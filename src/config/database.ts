@@ -12,6 +12,8 @@ function resetIdleTimeout() {
 }
 
 const connectDB = async () => {
+  console.log("Iniciando conexión a MongoDB...");
+  
   const mongoURI =
     process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase';
 
