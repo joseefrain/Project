@@ -40,10 +40,24 @@ const connectDB = async () => {
   }
 };
 
-export const ensureDatabaseConnection = async () => {
+let idleTimeout;
+
+function resetIdleTimeout() {
+  clearTimeout(idleTimeout);
+  idleTimeout = setTimeout(async () => {
+      console.log("No hay actividad, cerrando la conexión...");
+      await mongoose.connection.close();
+      console.log("Conexión cerrada por inactividad.");
+  }, 30000); // 30 segundos de inactividad
+}
+
+export const ensureDatabaseConnection = async (req, res, next) => {
   if (!mongoose.connection.readyState) {
     await connectDB();
   }
+
+  resetIdleTimeout(); // Reinicia el temporizador de inactividad
+  next();
 }
 
 export default connectDB;

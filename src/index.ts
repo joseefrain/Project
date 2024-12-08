@@ -23,11 +23,11 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT;
 
+connectDB();
+
 mongoose.connection.on("disconnected", () => {
   console.log("Conexión a MongoDB perdida.");
 });
-
-connectDB();
 
 app.use(cors());
 app.use(ensureDatabaseConnection)
