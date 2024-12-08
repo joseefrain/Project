@@ -11,6 +11,8 @@ export class Queue<T = any> extends EventEmitter {
   private queueName: string;
   private processFunction: ProcessFunction<T> | null = null;
   private isProcessing = false;
+  private inactivityTimeout: NodeJS.Timeout | null = null;
+  private readonly inactivityTime: number = 30000; // 30 segundos (configurable)
 
   constructor(queueName: string, redisConfig: RedisOptions | string) {
     super();
@@ -23,7 +25,42 @@ export class Queue<T = any> extends EventEmitter {
     this.subscriber.on('message', (channel, message) => {
       const event = JSON.parse(message);
       this.emit(event.type, event.job);
+      this.resetInactivityTimer(); // Reinicia el temporizador
     });
+
+    this.resetInactivityTimer(); // Inicia el temporizador
+  }
+
+  private resetInactivityTimer() {
+    if (this.inactivityTimeout) {
+      clearTimeout(this.inactivityTimeout);
+    }
+
+    this.inactivityTimeout = setTimeout(() => {
+      this.disconnectRedis();
+    }, this.inactivityTime);
+  }
+
+  private async disconnectRedis() {
+    if (this.isProcessing) return; // No desconectar si se está procesando
+
+    console.log('Desconectando Redis por inactividad...');
+    await this.redis.quit();
+    await this.subscriber.quit();
+  }
+
+  private async reconnectRedis() {
+    if (this.redis.status !== 'ready') {
+      this.redis = new Redis();
+    }
+    if (this.subscriber.status !== 'ready') {
+      this.subscriber = new Redis();
+      this.subscriber.subscribe(`${this.queueName}:events`);
+      this.subscriber.on('message', (channel, message) => {
+        const event = JSON.parse(message);
+        this.emit(event.type, event.job);
+      });
+    }
   }
 
   // Define el proceso para los trabajos de esta cola
@@ -36,6 +73,9 @@ export class Queue<T = any> extends EventEmitter {
 
   // Agregar un trabajo a la cola
   async add(data: any, options: { delay?: number; maxAttempts?: number; backoff?: number; ttl?: number } = {}): Promise<T> {
+    await this.reconnectRedis(); // Reconecta antes de añadir un trabajo
+    this.resetInactivityTimer(); // Reinicia el temporizador
+
     const job = new Job(data, options);
     await this.redis.rpush(`${this.queueName}:waiting`, JSON.stringify(job));
     this.publishEvent('waiting', job);
@@ -49,12 +89,16 @@ export class Queue<T = any> extends EventEmitter {
 
   // Ejecuta trabajos de la cola
   private async startProcessing() {
+    await this.reconnectRedis(); // Reconecta antes de procesar
+    this.resetInactivityTimer(); // Reinicia el temporizador
+
     this.isProcessing = true;
     while (this.isProcessing) {
       const jobData = await this.redis.lpop(`${this.queueName}:waiting`);
       if (jobData) {
         const job: Job = Object.assign(new Job({}), JSON.parse(jobData));
         await this.handleJob(job);
+        this.resetInactivityTimer(); // Reinicia el temporizador en cada trabajo
       } else {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -113,5 +157,6 @@ export class Queue<T = any> extends EventEmitter {
   // Detiene el procesamiento
   stop() {
     this.isProcessing = false;
+    this.resetInactivityTimer(); // Asegura que se inicie el temporizador tras detener
   }
 }
