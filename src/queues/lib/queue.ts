@@ -50,6 +50,8 @@ export class Queue<T = any> extends EventEmitter {
   }
 
   private async reconnectRedis() {
+    console.log("reconect")
+    
     if (this.redis.status !== 'ready') {
       this.redis = new Redis();
     }
