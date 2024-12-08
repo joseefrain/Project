@@ -1,5 +1,16 @@
 import mongoose from 'mongoose';
 
+let idleTimeout;
+
+function resetIdleTimeout() {
+  clearTimeout(idleTimeout);
+  idleTimeout = setTimeout(async () => {
+      console.log("No hay actividad, cerrando la conexión...");
+      await mongoose.connection.close();
+      console.log("Conexión cerrada por inactividad.");
+  }, 30000); // 30 segundos de inactividad
+}
+
 const connectDB = async () => {
   const mongoURI =
     process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase';
@@ -34,22 +45,13 @@ const connectDB = async () => {
       console.log("Reconectado a MongoDB");
   });
 
+  resetIdleTimeout(); // Inicia el temporizador de inactividad
+
   } catch (err) {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   }
 };
-
-let idleTimeout;
-
-function resetIdleTimeout() {
-  clearTimeout(idleTimeout);
-  idleTimeout = setTimeout(async () => {
-      console.log("No hay actividad, cerrando la conexión...");
-      await mongoose.connection.close();
-      console.log("Conexión cerrada por inactividad.");
-  }, 30000); // 30 segundos de inactividad
-}
 
 export const ensureDatabaseConnection = async (req, res, next) => {
   if (!mongoose.connection.readyState) {
