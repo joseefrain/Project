@@ -13,6 +13,7 @@ import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 import descuentos from './routes/venta/descuento.routes';
 import ventaRoutes from './routes/venta/venta.routes';
 import creditoRoutes from './routes/credito/credito.routes';
+import mongoose from 'mongoose';
 
 const express = require('express');
 const cors = require('cors');
@@ -21,6 +22,10 @@ dotenv.config();
 
 const app = express();
 const port = process.env.PORT;
+
+mongoose.connection.on("disconnected", () => {
+  console.log("Conexión a MongoDB perdida.");
+});
 
 connectDB();
 
