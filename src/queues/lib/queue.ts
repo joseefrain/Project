@@ -13,12 +13,14 @@ export class Queue<T = any> extends EventEmitter {
   private isProcessing = false;
   private inactivityTimeout: NodeJS.Timeout | null = null;
   private readonly inactivityTime: number = 30000; // 30 segundos (configurable)
+  private redisConfig: RedisOptions | string;
 
   constructor(queueName: string, redisConfig: RedisOptions | string) {
     super();
     this.queueName = queueName;
     this.redis = new Redis(redisConfig as string);
     this.subscriber = new Redis(redisConfig as string); // Inicializa el suscriptor
+    this.redisConfig = redisConfig;
 
     // Configura el listener para el canal de Pub/Sub
     this.subscriber.subscribe(`${this.queueName}:events`);
@@ -53,10 +55,10 @@ export class Queue<T = any> extends EventEmitter {
     console.log("reconect")
     
     if (this.redis.status !== 'ready') {
-      this.redis = new Redis();
+      this.redis = new Redis(this.redisConfig as string);
     }
     if (this.subscriber.status !== 'ready') {
-      this.subscriber = new Redis();
+      this.subscriber = new Redis(this.redisConfig as string);
       this.subscriber.subscribe(`${this.queueName}:events`);
       this.subscriber.on('message', (channel, message) => {
         const event = JSON.parse(message);
