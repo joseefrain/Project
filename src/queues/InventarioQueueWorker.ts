@@ -4,14 +4,14 @@ import { VentaService } from "../services/venta/venta.service";
 import { redisConfig } from "../config/redis";
 import { Queue } from "./lib/queue";
 import { container } from "tsyringe";
-import connectDB from '../config/database';
+import { ensureDatabaseConnection } from '../config/database';
 
-connectDB();
 
 const inventarioQueueWorker  = new Queue('actualizacionInventario', process.env.MODE === "DEVELOPMENT" ? redisConfig : process.env.REDIS_URL as string);
 
 // Definir el proceso para los trabajos
 inventarioQueueWorker.process(async (job) => {
+  await ensureDatabaseConnection()
   console.log("Procesando actualización de inventario...");
 
   const salesService = container.resolve(VentaService);

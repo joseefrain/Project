@@ -10,6 +10,10 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 5000, // Tiempo de espera para conectar
         socketTimeoutMS: 45000, // Tiempo de espera para operaciones
         maxPoolSize: 10, // Tamaño del pool de conexiones
+        minPoolSize: 0, // Cierra las conexiones cuando no hay actividad
+        // autoReconnect: true, // Reconexión automática
+        maxIdleTimeMS: 60000, // Tiempo de espera para cerrar las conexiones
+
       }
     );
     console.log("Conexión a MongoDB establecida.");
@@ -25,10 +29,21 @@ const connectDB = async () => {
     mongoose.connection.on("error", (err) => {
       console.error("Error de conexión a MongoDB:", err.message);
     });
+
+    mongoose.connection.on("connected", () => {
+      console.log("Reconectado a MongoDB");
+  });
+
   } catch (err) {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   }
 };
+
+export const ensureDatabaseConnection = async () => {
+  if (!mongoose.connection.readyState) {
+    await connectDB();
+  }
+}
 
 export default connectDB;

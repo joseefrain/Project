@@ -1,7 +1,7 @@
 import { ExpressAdapter } from '@bull-board/express';
 import * as dotenv from 'dotenv';
 import 'reflect-metadata';
-import connectDB from './config/database';
+import connectDB, { ensureDatabaseConnection } from './config/database';
 import { errorHandler } from './middlewares/errorHandler';
 import branchRoutes from './routes/branch.routes';
 import entityRoutes from './routes/entity/entity.routes';
@@ -25,6 +25,7 @@ const port = process.env.PORT;
 connectDB();
 
 app.use(cors());
+app.use(ensureDatabaseConnection())
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
