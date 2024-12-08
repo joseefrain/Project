@@ -25,10 +25,6 @@ const port = process.env.PORT;
 
 connectDB();
 
-mongoose.connection.on("disconnected", () => {
-  console.log("Conexión a MongoDB perdida.");
-});
-
 app.use(cors());
 app.use(ensureDatabaseConnection)
 app.use(express.json({ limit: '10mb' }));

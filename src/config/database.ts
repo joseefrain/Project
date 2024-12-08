@@ -8,7 +8,7 @@ function resetIdleTimeout() {
       console.log("No hay actividad, cerrando la conexión...");
       await mongoose.connection.close();
       console.log("Conexión cerrada por inactividad.");
-  }, 30000); // 30 segundos de inactividad
+  }, 300000); // 5 minutos
 }
 
 const connectDB = async () => {
@@ -21,7 +21,7 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 5000, // Tiempo de espera para conectar
         socketTimeoutMS: 45000, // Tiempo de espera para operaciones
         maxPoolSize: 10, // Tamaño del pool de conexiones
-        minPoolSize: 0, // Cierra las conexiones cuando no hay actividad
+        minPoolSize:1, // Cierra las conexiones cuando no hay actividad
         // autoReconnect: true, // Reconexión automática
         maxIdleTimeMS: 60000, // Tiempo de espera para cerrar las conexiones
 
