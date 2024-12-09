@@ -29,16 +29,20 @@ export class UserController {
       let { cajaId } = req.body;
 
       let caja: ICaja | null = null;
-      let sucursalId = ((token.user.sucursalId as ISucursal)._id as Types.ObjectId).toString();
+      let sucursal = (token.user.sucursalId as ISucursal);
+      
+      if (sucursal !== null) {
+        let sucursalId = (sucursal._id as Types.ObjectId).toString();
 
-      if (!cajaId && sucursalId) {
-        caja = await this.cashRegisterService.abrirCaja({
-          montoInicial: 2000,
-          sucursalId,
-          usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
-        });
+        if (!cajaId && sucursalId) {
+          caja = await this.cashRegisterService.abrirCaja({
+            montoInicial: 2000,
+            sucursalId,
+            usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
+          });
 
-        cajaId = (caja._id as Types.ObjectId).toString();
+          cajaId = (caja._id as Types.ObjectId).toString();
+        }
       }
 
       res.status(200).json({ ...token, cajaId });
