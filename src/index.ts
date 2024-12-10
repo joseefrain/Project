@@ -13,7 +13,10 @@ import cashRegisterRoutes from './routes/venta/cashRegister.routes';
 import descuentos from './routes/venta/descuento.routes';
 import ventaRoutes from './routes/venta/venta.routes';
 import creditoRoutes from './routes/credito/credito.routes';
-import mongoose from 'mongoose';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import * as functions from 'firebase-functions/v2';
+import { Request, Response } from 'express';
 
 const express = require('express');
 const cors = require('cors');
@@ -24,6 +27,25 @@ const app = express();
 const port = process.env.PORT;
 
 connectDB();
+
+app.use(helmet());
+
+// Enable rate limit
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: true,
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      statusCode: 429,
+      body: {
+        message: 'Se ha superado el límite permitido de solicitudes por minuto',
+      },
+    });
+  },
+});
+app.use(limiter);
 
 app.use(cors());
 app.use(ensureDatabaseConnection)
@@ -55,6 +77,4 @@ serverAdapter.setBasePath('/admin/queues'); // Ruta del tablero
 // Middleware de manejo de errores
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+export const api = functions.https.onRequest(app);

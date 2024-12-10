@@ -37,7 +37,7 @@ export class VentaService {
   ) {}
 
   async addSaleToQueue(data: ICreateVentaProps) {
-    const result = await inventarioQueue.add(data, { delay: 0, maxAttempts: 3, backoff: 10000, ttl: 300000 });
+    const result = await this.createVenta(data)
     return result;
   }
 
