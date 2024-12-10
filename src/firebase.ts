@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT as string);
+const serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY as string);
 
 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
