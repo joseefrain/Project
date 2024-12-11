@@ -11,7 +11,7 @@ export class CajaRepository {
     this.cajaModel = Caja;
   }
 
-  async abrirCaja({montoInicial, usuarioAperturaId, sucursalId, session}: IOpenCash): Promise<ICaja> {
+  async abrirCaja({montoInicial, usuarioAperturaId, sucursalId}: IOpenCash): Promise<ICaja> {
     const nuevaCaja = new this.cajaModel({
       fechaApertura: new Date(),
       estado: 'abierta',
@@ -21,13 +21,13 @@ export class CajaRepository {
       montoEsperado: montoInicial,
     });
 
-    return await nuevaCaja.save({ session });
+    return await nuevaCaja.save();
   }
 
   async cerrarCaja(
     cajaId: string,
     montoFinalDeclarado: string,
-    session: mongoose.mongo.ClientSession
+    
   ): Promise<ICaja> {
     const caja = await this.cajaModel.findById(cajaId);
     if (!caja) throw new Error('Caja no encontrada');
@@ -41,7 +41,7 @@ export class CajaRepository {
     caja.fechaCierre = new Date();
     caja.estado = 'cerrada';
 
-    return await caja.save({ session });
+    return await caja.save();
   }
 
   async obtenerCajaPorId(cajaId: string): Promise<ICaja | null> {
@@ -61,14 +61,14 @@ export class CajaRepository {
   // Actualizar el monto esperado en la caja
   async actualizarMontoEsperado(data:IActualizarMontoEsperado): Promise<ICaja | null> {
 
-    const { cajaId, monto, session, aumentar = true } = data;
+    const { cajaId, monto, aumentar = true } = data;
 
     const adjustedMonto = aumentar ? +Number(monto) : -Number(monto);
 
     let caja = await this.cajaModel.findByIdAndUpdate(
       cajaId,
       { $inc: { montoEsperado: adjustedMonto } },
-      { new: true, session }
+      { new: true }
     );
 
     return caja;

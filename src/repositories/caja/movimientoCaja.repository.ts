@@ -9,10 +9,10 @@ export class MovimientoCajaRepository {
   }
 
   // Método para crear un nuevo movimiento de caja
-  async create(data: Partial<IMovimientoCaja>, session: mongo.ClientSession): Promise<IMovimientoCaja> {
+  async create(data: Partial<IMovimientoCaja>): Promise<IMovimientoCaja> {
     try {
       const movimiento = new this.model(data);
-      return await movimiento.save({ session });
+      return await movimiento.save();
     } catch (error) {
       throw new Error(`Error al crear MovimientoCaja: ${error.message}`);
     }

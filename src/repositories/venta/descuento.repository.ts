@@ -16,18 +16,18 @@ export class DescuentoRepository {
     this.modelDescuentoGrupo = DescuentoGrupo;
   }
 
-  async create(data: Partial<IDescuentoCreate>, session: mongoose.mongo.ClientSession): Promise<IDescuento> {
+  async create(data: Partial<IDescuentoCreate>, ): Promise<IDescuento> {
     const descuento = new this.model({...data, activo: true});
-    return await descuento.save({ session });
+    return await descuento.save();
   }
 
-  async createDescuentoProducto(data: Partial<IDescuentosProductos>, session: mongoose.mongo.ClientSession): Promise<void> {
+  async createDescuentoProducto(data: Partial<IDescuentosProductos>, ): Promise<void> {
     const descuento = new this.modelDescuentoProducto(data);
-    await descuento.save({ session });
+    await descuento.save();
   }
-  async createDescuentoGrupo(data: Partial<IDescuentoGrupo>, session: mongoose.mongo.ClientSession): Promise<void> {
+  async createDescuentoGrupo(data: Partial<IDescuentoGrupo>, ): Promise<void> {
     const descuento = new this.modelDescuentoGrupo(data);
-    await descuento.save({ session });
+    await descuento.save();
   }
 
   async findById(id: string): Promise<IDescuento | null> {

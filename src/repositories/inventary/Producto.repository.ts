@@ -28,10 +28,8 @@ export class ProductoRepository {
   }
 
   async create(data: Partial<IProductCreate>): Promise<IProductCreate | null> {
-    const session = await mongoose.startSession();
 
     try {
-      session.startTransaction();
 
       let isProductAvailableAtBranch = await this.findProductByNameInSucursal(
         data.nombre!,
@@ -61,7 +59,7 @@ export class ProductoRepository {
 
       let productSave = productExist
         ? productExist
-        : await product.save({ session });
+        : await product.save();
 
       let inventarioSucursal = new this.modelInventarioSucursal({
         productoId: productSave._id,
@@ -79,12 +77,10 @@ export class ProductoRepository {
         sucursalId: sucursal._id,
       });
 
-      await productoGrupo.save({ session });
+      await productoGrupo.save();
 
-      await inventarioSucursal.save({ session });
+      await inventarioSucursal.save();
 
-      await session.commitTransaction();
-      session.endSession();
 
       const sucursalId = new mongoose.Types.ObjectId(
         data.sucursalId?.toString()
@@ -109,19 +105,13 @@ export class ProductoRepository {
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
-
       throw new Error(error.message);
     }
   }
 
   async createGeneralProducts(data: Partial<IProductCreate>): Promise<IProducto | null> {
-    const session = await mongoose.startSession();
 
     try {
-
-      session.startTransaction();
 
       let isProductExist = await this.findProductByName(data.nombre!);
       let grupo = await this.modelGrupoInventario.findById(data.grupoId!);
@@ -136,7 +126,7 @@ export class ProductoRepository {
 
       const product = new this.model(data);
 
-      let productSave = await product.save({ session });
+      let productSave = await product.save();
 
       let productoGrupoExist = await this.modelProductoGrupo.findOne({
         productoId: productSave._id,
@@ -149,20 +139,15 @@ export class ProductoRepository {
           grupoId: grupo._id,
         });
 
-        await productoGrupo.save({ session });
+        await productoGrupo.save();
       }
 
-      await session.commitTransaction();
-      session.endSession();
 
       return productSave;
 
 
     }catch (error) {
       console.log(error);
-
-      await session.abortTransaction();
-      session.endSession();
 
       throw new Error(error.message);
     }

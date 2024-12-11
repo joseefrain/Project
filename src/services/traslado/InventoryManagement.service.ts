@@ -39,7 +39,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
     this.userId = new mongoose.Types.ObjectId(userId);
   }
 
-  async subtractQuantity({ quantity, inventarioSucursalId, session, isNoSave = false, tipoMovimiento }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
+  async subtractQuantity({ quantity, inventarioSucursalId, isNoSave = false, tipoMovimiento }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
     const inventarioSucursal = this._listInventarioSucursal.find(
       (sucursal) =>
         (sucursal._id as mongoose.Types.ObjectId).toString() ===
@@ -62,7 +62,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
       usuarioId: this.userId,
     });
 
-    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save({ session });
+    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save();
 
     inventarioSucursal.stock -= quantity;
     
@@ -71,12 +71,12 @@ export class InventoryManagementService implements IManageHerramientaModel {
 
     inventarioSucursal.ultimo_movimiento = new Date();
 
-    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save({ session });
+    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save();
 
     return inventarioSucursal;
   }
 
-  async addQuantity({ quantity, inventarioSucursal, session, isNoSave = false }: IAddQuantity): Promise<void> {
+  async addQuantity({ quantity, inventarioSucursal, isNoSave = false }: IAddQuantity): Promise<void> {
     let movimientoInventario = new MovimientoInventario({
       inventarioSucursalId: inventarioSucursal._id,
       cantidadCambiada: quantity,
@@ -87,16 +87,16 @@ export class InventoryManagementService implements IManageHerramientaModel {
       usuarioId: this.userId,
     });
 
-    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save({ session });
+    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save();
 
     inventarioSucursal.stock += quantity;
     inventarioSucursal.ultimo_movimiento = new Date();
     inventarioSucursal.deleted_at = null;
 
-    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save({ session });
+    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save();
   }
 
-  async createInventarioSucursal({ isNoSave = false, inventarioSucursal, session }: ICreateInventarioSucursal): Promise<void> {
+  async createInventarioSucursal({ isNoSave = false, inventarioSucursal }: ICreateInventarioSucursal): Promise<void> {
 
     let movimientoInventario = new MovimientoInventario({
       inventarioSucursalId: inventarioSucursal._id,
@@ -108,55 +108,55 @@ export class InventoryManagementService implements IManageHerramientaModel {
       usuarioId: this.userId,
     });
 
-    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save({ session });
+    isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save();
 
-    isNoSave ? this._listBranchInventoryAdded.push(inventarioSucursal) : await inventarioSucursal.save({ session });
+    isNoSave ? this._listBranchInventoryAdded.push(inventarioSucursal) : await inventarioSucursal.save();
   }
 
-  async handleStockProductBranch({ session, model, quantity }: IHandleStockProductBranch): Promise<void> {
+  async handleStockProductBranch({  model, quantity }: IHandleStockProductBranch): Promise<void> {
     const inventarioSucursal = await this.inventarioSucursalRepo.findBySucursalIdAndProductId(model.sucursalId.toString(), model.productoId.toString());
 
     let dataAddQuantity:IAddQuantity = {
       quantity: quantity,
       inventarioSucursal: inventarioSucursal,
-      session: session,
+       
       isNoSave: true
     };
 
    let dataCretaeInventarioSucursal:ICreateInventarioSucursal = {
       inventarioSucursal: model,
-      session: session,
+       
       isNoSave: true
    }
 
     inventarioSucursal ? await this.addQuantity(dataAddQuantity) : await this.createInventarioSucursal(dataCretaeInventarioSucursal);
   }
 
-  async updateAllBranchInventory(session: mongo.ClientSession): Promise<void> {
-    await this.inventarioSucursalRepo.updateAllInventarioSucursal(this._listUpdatedBranchInventory , session);
+  async updateAllBranchInventory(): Promise<void> {
+    await this.inventarioSucursalRepo.updateAllInventarioSucursal(this._listUpdatedBranchInventory );
   }
 
-  async saveAllMovimientoInventario(session: mongo.ClientSession): Promise<void> {
-    await this.inventarioSucursalRepo.saveAllMovimientoInventario(this._listInventoryMoved, session);
+  async saveAllMovimientoInventario(): Promise<void> {
+    await this.inventarioSucursalRepo.saveAllMovimientoInventario(this._listInventoryMoved);
   }
 
-  async saveAllBranchInventory(session: mongo.ClientSession): Promise<void> {
-    await this.inventarioSucursalRepo.saveAllInventarioSucursal(this._listBranchInventoryAdded, session);
+  async saveAllBranchInventory(): Promise<void> {
+    await this.inventarioSucursalRepo.saveAllInventarioSucursal(this._listBranchInventoryAdded);
   }
-  async subtractQuantityLoop({ listItems, session }:ISubtractQuantityLoop): Promise<void> {
+  async subtractQuantityLoop({ listItems }:ISubtractQuantityLoop): Promise<void> {
     for await (const item of listItems) {
       await this.subtractQuantity(
         {
           quantity: item.cantidad,
           inventarioSucursalId: item.inventarioSucursalId,
-          session: session,
+           
           isNoSave: true,
           tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA
         }
       );
     }
 
-    await this.updateAllBranchInventory(session);
-    await this.saveAllMovimientoInventario(session);
+    await this.updateAllBranchInventory();
+    await this.saveAllMovimientoInventario();
   }
 }

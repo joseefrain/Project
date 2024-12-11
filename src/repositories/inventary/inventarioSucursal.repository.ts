@@ -18,9 +18,9 @@ export class InventarioSucursalRepository {
     return inventarioSucursal;
   }
 
-  async createWithSession(data: Partial<IInventarioSucursal>, session: mongoose.mongo.ClientSession): Promise<IInventarioSucursal> {
+  async createWith(data: Partial<IInventarioSucursal>, ): Promise<IInventarioSucursal> {
     const inventarioSucursal = new this.model(data);
-    return await inventarioSucursal.save({ session });
+    return await inventarioSucursal.save();
   }
 
   async findById(id: string): Promise<IInventarioSucursal | null> {
@@ -102,11 +102,11 @@ export class InventarioSucursalRepository {
     return inventarioSucursal[0];
   }
 
-  async saveAllInventarioSucursal(data: IInventarioSucursal[], session: mongo.ClientSession): Promise<void> {
-    await this.model.insertMany(data, { session });
+  async saveAllInventarioSucursal(data: IInventarioSucursal[]): Promise<void> {
+    await this.model.insertMany(data, );
   }
 
-  async updateAllInventarioSucursal(data: IInventarioSucursal[], session: mongo.ClientSession): Promise<void> {
+  async updateAllInventarioSucursal(data: IInventarioSucursal[]): Promise<void> {
     const bulkOps = data.map((detalle) => ({
         updateOne: {
             filter: { _id: detalle._id },
@@ -115,10 +115,10 @@ export class InventarioSucursalRepository {
         }
     }));
   
-    await this.model.bulkWrite(bulkOps, { session });
+    await this.model.bulkWrite(bulkOps, );
   }
 
-  async saveAllMovimientoInventario(data: IMovimientoInventario[], session: mongo.ClientSession): Promise<void> {
-    await this.movimientoInventarioModel.insertMany(data, { session });
+  async saveAllMovimientoInventario(data: IMovimientoInventario[]): Promise<void> {
+    await this.movimientoInventarioModel.insertMany(data, );
   }
 }

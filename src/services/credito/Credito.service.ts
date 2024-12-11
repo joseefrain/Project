@@ -20,7 +20,7 @@ export class CreditoService {
     @inject(EntityRepository) private entityRepository: EntityRepository,
   ) {}
 
-  async createCredito(data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito> {
+  async createCredito(data: Partial<ICredito>, ): Promise<ICredito> {
     try {
 
       data.fecheInicio = new Date();
@@ -37,13 +37,13 @@ export class CreditoService {
 
         let id = (entidad._id as mongoose.Types.ObjectId).toString();
         let amountReceivable = (data.saldoCredito as mongoose.Types.Decimal128);
-        await this.entityRepository.updateStateClientAmountReceivable(id, amountReceivable, session);
+        await this.entityRepository.updateStateClientAmountReceivable(id, amountReceivable);
 
       } else if (data.tipoCredito === 'COMPRA') {
 
         let id = (entidad._id as mongoose.Types.ObjectId).toString();
         let amountPayable = (data.saldoCredito as mongoose.Types.Decimal128);
-        await this.entityRepository.updateStateClientAmountPayable(id, amountPayable, session);
+        await this.entityRepository.updateStateClientAmountPayable(id, amountPayable);
 
       }
 
@@ -96,7 +96,7 @@ export class CreditoService {
         data.pagoMinimoMensual = nuevoPagoMinimo;
       }
     
-      const credito = await this.creditoRepository.create(data, session);
+      const credito = await this.creditoRepository.create(data);
 
 
       return credito;
@@ -117,10 +117,10 @@ export class CreditoService {
 
   async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
 
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       if (isNaN(parseFloat(montoPago))) {
         throw new Error("El monto del pago es incorrecto");
@@ -129,7 +129,7 @@ export class CreditoService {
 
       let montoPago128 = new mongoose.Types.Decimal128(parseFloat(montoPago).toFixed(2));
 
-      const credito = await this.creditoRepository.findByIdWithSession(creditoId.toString(), session);
+      const credito = await this.creditoRepository.findByIdWith(creditoId.toString());
   
       if (!credito) {
         throw new Error("Crédito no encontrado");
@@ -190,12 +190,12 @@ export class CreditoService {
 
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
           let advancesReceipts = montoPago128;
-          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
+          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts);
         } else if (credito.tipoCredito === 'COMPRA') {
   
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
           let advancesDelivered = montoPago128
-          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
+          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered);
         }
 
       } else {
@@ -216,16 +216,16 @@ export class CreditoService {
           (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
         }
 
-        await this.entityRepository.updateWithSession(credito.entidadId.toString(), entidad, session);
+        await this.entityRepository.updateWith(credito.entidadId.toString(), entidad);
 
         if (venta.estadoTrasaccion === 'PENDIENTE') {
           credito.estadoCredito = 'CERRADO';
           venta.estadoTrasaccion = 'PAGADA';
         }
-        await this.ventaRepository.update(credito.transaccionId.toString(), venta, session);
+        await this.ventaRepository.update(credito.transaccionId.toString(), venta);
       }
       // Guardar los cambios en la base de datos
-      await this.creditoRepository.updateWithSession((credito._id as mongoose.Types.ObjectId).toString(), credito, session);
+      await this.creditoRepository.updateWith((credito._id as mongoose.Types.ObjectId).toString(), credito);
 
       let movimiento:Partial<IMovimientoFinanciero> = {
         fechaMovimiento: new Date(),
@@ -234,17 +234,17 @@ export class CreditoService {
         creditoId: (credito._id as mongoose.Types.ObjectId)
       }
 
-      await this.MovimientoRepository.create(movimiento, session);
+      await this.MovimientoRepository.create(movimiento);
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return credito;
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }
@@ -252,12 +252,12 @@ export class CreditoService {
   }
 
   async realizarPagoPlazo(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
-      const credito = await this.creditoRepository.findByIdWithSession(creditoId.toString(), session);
+      const credito = await this.creditoRepository.findByIdWith(creditoId.toString());
     
       if (!credito) {
         throw new Error("Crédito no encontrado");
@@ -327,29 +327,29 @@ export class CreditoService {
           (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
         }
 
-        await this.entityRepository.updateWithSession(credito.entidadId.toString(), entidad, session);
+        await this.entityRepository.updateWith(credito.entidadId.toString(), entidad);
 
         if (venta.estadoTrasaccion === 'PENDIENTE') {
           credito.estadoCredito = 'CERRADO';
           venta.estadoTrasaccion = 'PAGADA';
         }
-        await this.ventaRepository.update(credito.transaccionId.toString(), venta, session);
+        await this.ventaRepository.update(credito.transaccionId.toString(), venta);
       } else {
         if (credito.tipoCredito === 'VENTA') {
 
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
           let advancesReceipts = montoPago128;
-          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts, session);
+          await this.entityRepository.updateStateClientAdvancesReceipts(id, advancesReceipts);
         } else if (credito.tipoCredito === 'COMPRA') {
   
           let id = (entidad._id as mongoose.Types.ObjectId).toString();
           let advancesDelivered = montoPago128;
-          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered, session);
+          await this.entityRepository.updateStateClientAdvancesDelivered(id, advancesDelivered);
         }
       }
     
       // Guardar los cambios en la base de datos
-      await this.creditoRepository.updateWithSession((credito._id as mongoose.Types.ObjectId).toString(), credito, session);
+      await this.creditoRepository.updateWith((credito._id as mongoose.Types.ObjectId).toString(), credito);
 
       let movimiento:Partial<IMovimientoFinanciero> = {
         fechaMovimiento: new Date(),
@@ -358,17 +358,17 @@ export class CreditoService {
         creditoId: (credito._id as mongoose.Types.ObjectId)
       }
 
-      await this.MovimientoRepository.create(movimiento, session);
+      await this.MovimientoRepository.create(movimiento);
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return credito;
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }

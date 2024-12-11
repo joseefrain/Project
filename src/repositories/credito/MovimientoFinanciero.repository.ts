@@ -10,9 +10,9 @@ export class MovimientoFinancieroRepository {
     this.model = MovimientoFinanciero;
   }
 
-  async create(data: Partial<IMovimientoFinanciero>, session: mongo.ClientSession): Promise<IMovimientoFinanciero> {
+  async create(data: Partial<IMovimientoFinanciero>): Promise<IMovimientoFinanciero> {
     const movimiento = new this.model(data);
-    return await movimiento.save({ session });
+    return await movimiento.save();
   }
 
   async findById(id: string): Promise<IMovimientoFinanciero | null> {

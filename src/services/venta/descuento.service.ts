@@ -14,11 +14,11 @@ export class DescuentoService {
   ) {}
 
   async createDescuento(data: Partial<IDescuentoCreate>): Promise<IDescuento> {
-    const session = await mongoose.startSession();
+    
 
 
     try {
-      session.startTransaction();
+      
 
       const descuentoExists = await this.repository.findByName(data.nombre!);
 
@@ -26,7 +26,7 @@ export class DescuentoService {
         throw new Error('Descuento already exists');
       }
 
-      const newDescuento = await this.repository.create(data, session);
+      const newDescuento = await this.repository.create(data);
 
       let tipoDescuentoEntidad = data.tipoDescuentoEntidad!;
       let productId = data.productId ? new mongoose.Types.ObjectId(data.productId) : undefined;
@@ -53,7 +53,7 @@ export class DescuentoService {
 
         await this.repository.createDescuentoProducto(
           descuentoProducto,
-          session
+          
         );
       } else if (tipoDescuentoEntidad === 'Group') {
         let descuentoGrupo = {
@@ -62,18 +62,18 @@ export class DescuentoService {
           sucursalId,
         };
 
-        await this.repository.createDescuentoGrupo(descuentoGrupo, session);
+        await this.repository.createDescuentoGrupo(descuentoGrupo);
       }
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return newDescuento;
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }

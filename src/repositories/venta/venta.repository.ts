@@ -16,18 +16,18 @@ export class VentaRepository {
     this.modelVentaDescuentosAplicados = VentaDescuentosAplicados;
   }
 
-  async create(data: Partial<ITransaccion>, session: mongoose.mongo.ClientSession): Promise<ITransaccion> {
+  async create(data: Partial<ITransaccion>, ): Promise<ITransaccion> {
     const descuento = new this.model({...data, activo: true});
-    return await descuento.save({ session });
+    return await descuento.save();
   }
 
-  async createDetalleVenta(data: Partial<IDetalleVenta>, session: mongoose.mongo.ClientSession): Promise<IDetalleVenta> {
+  async createDetalleVenta(data: Partial<IDetalleVenta>, ): Promise<IDetalleVenta> {
     const descuento = new this.modelDetalleVenta(data);
-    return await descuento.save({ session });
+    return await descuento.save();
   }
-  async createVentaDescuentosAplicados(data: Partial<IVentaDescuentosAplicados>, session: mongoose.mongo.ClientSession): Promise<IVentaDescuentosAplicados> {
+  async createVentaDescuentosAplicados(data: Partial<IVentaDescuentosAplicados>, ): Promise<IVentaDescuentosAplicados> {
     const descuento = new this.modelVentaDescuentosAplicados(data);
-    return await descuento.save({ session });
+    return await descuento.save();
   }
   async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleVenta[]> {
     const detalleVenta = await this.modelDetalleVenta.find({ ventaId: ventaId }).populate("productoId");
@@ -75,7 +75,7 @@ export class VentaRepository {
 
     return venta;
   }
-  async update(id: string, data: Partial<ITransaccion>, session: mongoose.mongo.ClientSession): Promise<ITransaccion | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  async update(id: string, data: Partial<ITransaccion>, ): Promise<ITransaccion | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 }

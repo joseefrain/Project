@@ -15,10 +15,10 @@ export class CashRegisterService {
   async abrirCaja(data : IOpenCashService) {
     let { sucursalId, usuarioAperturaId, montoInicial } = data;
 
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       const cajaAbierta = await this.repository.obtenerCajaAbiertaPorSucursal(sucursalId);
     
@@ -28,7 +28,7 @@ export class CashRegisterService {
         sucursalId,
         usuarioAperturaId,
         montoInicial,
-        session
+        
       }
       let caja = await this.repository.abrirCaja(dataOpenCash);
 
@@ -40,27 +40,27 @@ export class CashRegisterService {
         fecha: new Date(),
         descripcion: 'Apertura de caja',
       }
-      await this.movimientoRepository.create(movimiento, session);
+      await this.movimientoRepository.create(movimiento);
 
       let resumenDiario:IAddIncomeDailySummary = {
         ingreso: montoInicial,
-        session,
+        
         sucursalId,
         cajaId: (caja._id as Types.ObjectId).toString()
       }  
       await this.resumenRepository.addIncomeDailySummary(resumenDiario);
 
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return caja;
       
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }
@@ -68,10 +68,10 @@ export class CashRegisterService {
 
   async cerrarCaja(cajaId: string, montoFinalDeclarado: string): Promise<ICaja> {
 
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       const caja = await this.repository.obtenerCajaPorId(cajaId);
 
@@ -79,17 +79,17 @@ export class CashRegisterService {
 
       if (caja.estado !== 'abierta') throw new Error('La caja ya está cerrada');
 
-      await this.repository.cerrarCaja(cajaId, montoFinalDeclarado, session)
+      await this.repository.cerrarCaja(cajaId, montoFinalDeclarado)
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return caja;
 
     } catch (error) {
       console.log(error);
-      await session.abortTransaction();
-      session.endSession();
+      
+      
       throw new Error(error.message);
     }
 
@@ -105,7 +105,7 @@ export class CashRegisterService {
 
   async actualizarMontoEsperadoByVenta(props:IActualizarMontoEsperadoByVenta): Promise<ICaja | null> {
    
-    const { data, session} = props;
+    const { data} = props;
     let cajaId = data.cajaId!
     
     let total = new Types.Decimal128(data.total!.toString());
@@ -115,11 +115,11 @@ export class CashRegisterService {
     let dataAcualizacion = {
       cajaId,
       monto: total,
-      session,
+      
     }
     let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
 
-    await this.resumenRepository.addSaleDailySummary(data, session);
+    await this.resumenRepository.addSaleDailySummary(data);
 
     let movimiento = {
       tipoMovimiento: tipeCashRegisterMovement.VENTA,
@@ -130,22 +130,22 @@ export class CashRegisterService {
       cajaId: (caja._id as Types.ObjectId),
       cambioCliente: cambio
     }
-    await this.movimientoRepository.create(movimiento, session);
+    await this.movimientoRepository.create(movimiento);
 
     return caja
   }
 
   async actualizarMontoEsperadoByIngreso(cajaId: string, ingreso:number, usuarioId:string): Promise<ICaja | null> {
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       let monto = new Types.Decimal128(ingreso.toString());
       let dataAcualizacion = {
         cajaId,
         monto,
-        session,
+        
       }
       let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
 
@@ -153,7 +153,7 @@ export class CashRegisterService {
         cajaId : (caja._id as Types.ObjectId).toString(),
         ingreso: ingreso,
         sucursalId: (caja.sucursalId as Types.ObjectId).toString(),
-        session
+        
       }
       await this.resumenRepository.addIncomeDailySummary(resumen);
 
@@ -165,31 +165,31 @@ export class CashRegisterService {
         usuarioId: new Types.ObjectId(usuarioId),
         cajaId: (caja._id as Types.ObjectId)
       }
-      await this.movimientoRepository.create(movimiento, session);
+      await this.movimientoRepository.create(movimiento);
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return caja
     } catch (error) {
       console.log(error);
-      await session.abortTransaction();
-      session.endSession();
+      
+      
       throw new Error(error.message);
     }
   }
 
   async actualizarMontoEsperadoByEgreso(cajaId: string, egreso: number, usuarioId: string): Promise<ICaja> {
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       let monto = new Types.Decimal128(egreso.toString());
       let dataAcualizacion = {
         cajaId,
         monto,
-        session,
+        
         aumentar: false
       }
       let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
@@ -198,7 +198,7 @@ export class CashRegisterService {
         cajaId : (caja._id as Types.ObjectId).toString(),
         expense: egreso,
         sucursalId: (caja.sucursalId as Types.ObjectId).toString(),
-        session
+        
       }
       await this.resumenRepository.addExpenseDailySummary(resumen);
 
@@ -210,16 +210,16 @@ export class CashRegisterService {
         usuarioId: new Types.ObjectId(usuarioId),
         cajaId: (caja._id as Types.ObjectId)
       }
-      await this.movimientoRepository.create(movimiento, session);
+      await this.movimientoRepository.create(movimiento);
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return caja
     } catch (error) {
       console.log(error);
-      await session.abortTransaction();
-      session.endSession();
+      
+      
       throw new Error(error.message);
     }
   }

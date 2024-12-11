@@ -44,10 +44,10 @@ export class VentaService {
     const { venta, user } = data;
     // venta.tipoTransaccion = "VENTA";
 
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       let listInventarioSucursalIds = venta.products?.map((detalle) =>detalle.inventarioSucursalId) as string[];
 
@@ -78,7 +78,7 @@ export class VentaService {
         estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction
       }
 
-      const newSale = await this.repository.create(newVenta, session);
+      const newSale = await this.repository.create(newVenta);
 
       for await (const element of venta.products!) {
 
@@ -101,7 +101,7 @@ export class VentaService {
           tipoDescuentoEntidad: tipoAplicacion,
         }
 
-        let newdDetalleVenta = await this.repository.createDetalleVenta(detalleVenta, session);
+        let newdDetalleVenta = await this.repository.createDetalleVenta(detalleVenta);
         
         let descuentoElement = element.discount;
 
@@ -144,13 +144,13 @@ export class VentaService {
             monto: new mongoose.Types.Decimal128(descuentoMonto.toString()!),
           }
   
-          await this.repository.createVentaDescuentosAplicados(ventaDescuentosAplicados, session);
+          await this.repository.createVentaDescuentosAplicados(ventaDescuentosAplicados);
         }
 
         let dataSubTractQuantity:ISubtractQuantity = {
           inventarioSucursalId: new mongoose.mongo.ObjectId(element.inventarioSucursalId) ,
           quantity: element.quantity,
-          session,
+          
           isNoSave:true,
           tipoMovimiento: tipoMovimientoInventario.VENTA
         }
@@ -162,14 +162,14 @@ export class VentaService {
         }
       }
  
-      await this.inventoryManagementService.updateAllBranchInventory(session);
-      await this.inventoryManagementService.saveAllMovimientoInventario(session);
+      await this.inventoryManagementService.updateAllBranchInventory();
+      await this.inventoryManagementService.saveAllMovimientoInventario();
 
       let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString(), } as IVentaCreateCaja);
 
       const datosActualizar = {
         data: ventaActualizar,
-        session
+        
       }
 
       await this.cashRegisterService.actualizarMontoEsperadoByVenta(datosActualizar!);
@@ -188,7 +188,7 @@ export class VentaService {
           fechaVencimiento: new Date()
         }
 
-        await this.creditoService.createCredito(credito, session);
+        await this.creditoService.createCredito(credito);
       }
 
       let productListReOrder = listInventarioSucursal
@@ -206,15 +206,15 @@ export class VentaService {
       //     productListReOrder,
       //     user.chatId
       //   );
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return venta;
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }

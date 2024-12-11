@@ -10,10 +10,10 @@ export class ResumenCajaDiarioRepository {
   }
 
   // Método para crear un nuevo resumen de caja diario
-  async create(data: Partial<IResumenCajaDiario>, session: mongo.ClientSession): Promise<IResumenCajaDiario> {
+  async create(data: Partial<IResumenCajaDiario>): Promise<IResumenCajaDiario> {
     try {
       const resumen = new this.model(data);
-      return await resumen.save({ session });
+      return await resumen.save();
     } catch (error) {
       throw new Error(`Error al crear ResumenCajaDiario: ${error.message}`);
     }
@@ -83,14 +83,13 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async findByDateAndBranch(branchId: Types.ObjectId, session: mongoose.ClientSession): Promise<IResumenCajaDiario | null> {
+  async findByDateAndBranch(branchId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
       const date = new Date();
       date.setHours(0, 0, 0, 0);
       return await this.model.findOne(
         { fecha: date, sucursalId: branchId },
-        {}, // Objeto de proyección (puede estar vacío si necesitas todos los campos)
-        { session } // Opciones de la consulta, incluyendo session
+        {} // Objeto de proyección (puede estar vacío si necesitas todos los campos)
       ) as IResumenCajaDiario;
     } catch (error) {
       throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
@@ -110,12 +109,12 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async addSaleDailySummary(data: IVentaCreateCaja, session: mongoose.mongo.ClientSession): Promise<IResumenCajaDiario | null> {
+  async addSaleDailySummary(data: IVentaCreateCaja, ): Promise<IResumenCajaDiario | null> {
     try {
       const sucursalId = new Types.ObjectId(data.sucursalId);
       const totalIncrement = new Types.Decimal128(data.total!.toString());
 
-      let existResumen = await this.findByDateAndBranch(sucursalId, session);
+      let existResumen = await this.findByDateAndBranch(sucursalId);
 
       const fecha = new Date();
       fecha.setHours(0, 0, 0, 0);
@@ -132,7 +131,7 @@ export class ResumenCajaDiarioRepository {
           ventas: [ data ],
         }
 
-        let resumenDiario = await this.create(dataResumen, session);
+        let resumenDiario = await this.create(dataResumen);
 
         return resumenDiario;
       }
@@ -140,7 +139,7 @@ export class ResumenCajaDiarioRepository {
       const resumenHoy = await this.model.findOneAndUpdate(
         { fecha: fecha, sucursalId: new Types.ObjectId(sucursalId) },
         { $inc: { totalVentas: totalIncrement, montoFinalSistema: totalIncrement } },
-        { new: true, upsert: true, session } 
+        { new: true, upsert: true } 
       ).exec();
   
       if (!resumenHoy) {
@@ -149,7 +148,7 @@ export class ResumenCajaDiarioRepository {
 
       resumenHoy.ventas.push(data);
 
-      await resumenHoy.save({ session });
+      await resumenHoy.save();
   
       return resumenHoy;
     } catch (error) {
@@ -158,7 +157,7 @@ export class ResumenCajaDiarioRepository {
   }
 
   async addIncomeDailySummary( data:IAddIncomeDailySummary ): Promise<IResumenCajaDiario | null> {
-    const { ingreso, session, sucursalId, cajaId } = data;
+    const { ingreso, sucursalId, cajaId } = data;
 
     try {
       const incomeIncrement = new Types.Decimal128(ingreso.toString());
@@ -169,7 +168,7 @@ export class ResumenCajaDiarioRepository {
       const resumenHoy = await this.model.findOneAndUpdate(
         { fecha: new Date(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
         { $inc: { totalIngresos: incomeIncrement, montoFinalSistema: incomeIncrement } },
-        { new: true, upsert: true, session } ,
+        { new: true, upsert: true } ,
       ).exec();
   
       if (!resumenHoy) {
@@ -183,7 +182,7 @@ export class ResumenCajaDiarioRepository {
   }
     
   async addExpenseDailySummary(data:IAddExpenseDailySummary): Promise<IResumenCajaDiario | null> {
-    const { expense, session, sucursalId, cajaId } = data;
+    const { expense, sucursalId, cajaId } = data;
     const sucursalIdMongo = new Types.ObjectId(sucursalId);
     const expenseIncrement = new Types.Decimal128(expense.toString());
     const cajaIdMongo = new Types.ObjectId(cajaId);
@@ -191,7 +190,7 @@ export class ResumenCajaDiarioRepository {
     const resumenHoy = await this.model.findOneAndUpdate(
       { fecha: new Date(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
       { $inc: { totalEgresos: expenseIncrement, montoFinalSistema: -expenseIncrement } },
-      { new: true, upsert: true, session } // Asegurarse de pasar la sesión
+      { new: true, upsert: true } // Asegurarse de pasar la sesión
     ).exec();
 
     if (!resumenHoy) {

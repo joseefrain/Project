@@ -58,10 +58,10 @@ export class TrasladoRepository {
   async update(
     id: string,
     data: Partial<ITraslado>,
-    session: mongoose.mongo.ClientSession
+    
   ): Promise<ITraslado | null> {
     return await this.model
-      .findByIdAndUpdate(id, { $set: data }, { new: true, session })
+      .findByIdAndUpdate(id, { $set: data }, { new: true })
       .exec();
   }
 
@@ -78,10 +78,10 @@ export class TrasladoRepository {
   }
   async saveAllDetalleTraslado(
     data: IDetalleTrasladoCreate[],
-    session: mongo.ClientSession
+    
   ): Promise<IDetalleTraslado[]> {
      // Insertar los documentos
-  const insertedData = await this.modelDetalleTraslado.insertMany(data, { session });
+  const insertedData = await this.modelDetalleTraslado.insertMany(data, );
 
   // Obtener los IDs de los documentos insertados
   const insertedIds = insertedData.map(item => (item._id as mongoose.Types.ObjectId).toString());
@@ -89,7 +89,7 @@ export class TrasladoRepository {
   // Consultar los documentos insertados y aplicar populate
   const populatedData = await this.modelDetalleTraslado
     .find({ _id: { $in: insertedIds } })
-    .session(session) 
+    .() 
     .populate({
       path: 'inventarioSucursalId',
       populate: {
@@ -102,7 +102,7 @@ export class TrasladoRepository {
 
   async updateAllDetalleTraslado(
     data: IDetalleTraslado[],
-    session: mongo.ClientSession
+    
   ): Promise<void> {
     const bulkOps = data.map((detalle) => ({
       updateOne: {
@@ -112,7 +112,7 @@ export class TrasladoRepository {
       },
     }));
 
-    await this.modelDetalleTraslado.bulkWrite(bulkOps, { session });
+    await this.modelDetalleTraslado.bulkWrite(bulkOps, );
   }
 
   async getLastTrasladoBySucursalId(sucursalId: string) {

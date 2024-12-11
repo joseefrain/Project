@@ -4,7 +4,7 @@ import { IInventarioSucursal } from "../models/inventario/InventarioSucursal.mod
 export interface ISubtractQuantity {
   quantity: number;
   inventarioSucursalId: mongoose.Types.ObjectId;
-  session: mongoose.mongo.ClientSession;
+  ;
   isNoSave: boolean;
   tipoMovimiento:TipoMovimientoInventario;
 }
@@ -66,13 +66,13 @@ export interface IInit {
 export interface IAddQuantity {
   quantity: number;
   inventarioSucursal: IInventarioSucursal;
-  session: mongoose.mongo.ClientSession;
+  ;
   isNoSave?: boolean;
 }
 
 export interface ICreateInventarioSucursal {
   inventarioSucursal: IInventarioSucursal;
-  session: mongoose.mongo.ClientSession;
+  ;
   isNoSave?: boolean;
 }
 
@@ -81,7 +81,7 @@ export interface IManageHerramientaModel {
 }
 
 export interface IHandleStockProductBranch {
-  session: mongoose.mongo.ClientSession;
+  ;
   model:IInventarioSucursal; 
   quantity:number
 }
@@ -92,6 +92,6 @@ export interface IItemSsubtractQuantityLoop {
 }
 
 export interface ISubtractQuantityLoop {
-  session: mongoose.mongo.ClientSession;
+  ;
   listItems: IItemSsubtractQuantityLoop[];
 }

@@ -10,13 +10,13 @@ export class CreditoRepository {
     this.model = Credito;
   }
 
-  async create(data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito> {
+  async create(data: Partial<ICredito>, ): Promise<ICredito> {
     const credit = new this.model(data);
-    return await credit.save({ session });
+    return await credit.save();
   }
 
-  async findByIdWithSession(id: string, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
-    const credit = this.model.findById(id, null, { session })
+  async findByIdWith(id: string, ): Promise<ICredito | null> {
+    const credit = this.model.findById(id, null, )
     return await credit.exec();
   }
 
@@ -42,8 +42,8 @@ export class CreditoRepository {
     return await credit.exec();
   }
 
-  async updateWithSession(id: string, data: Partial<ICredito>, session: mongoose.mongo.ClientSession): Promise<ICredito | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  async updateWith(id: string, data: Partial<ICredito>, ): Promise<ICredito | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
   async update(id: string, data: Partial<ICredito>): Promise<ICredito | null> {

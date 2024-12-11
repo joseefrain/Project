@@ -5,7 +5,6 @@ export interface IOpenCash {
   sucursalId: string;
   usuarioAperturaId: string;
   montoInicial: number;
-  session: mongoose.mongo.ClientSession
 }
 
 export type IOpenCashService = Omit<IOpenCash, 'session'>;
@@ -47,14 +46,12 @@ export const tipeCashRegisterMovement:ICashRegisterMovementObejct = {
 
 export interface IAddIncomeDailySummary {
   ingreso: number,
-  session: mongoose.mongo.ClientSession,
   sucursalId: string,
   cajaId: string
 }
 
 export interface IAddExpenseDailySummary {
   expense: number;
-  session: mongoose.ClientSession;
   sucursalId: string;
   cajaId: string;
 }
@@ -76,11 +73,9 @@ export interface IVentaCreateCaja {
 export interface IActualizarMontoEsperado {
   cajaId: string;
   monto: Types.Decimal128;
-  session: mongoose.mongo.ClientSession;
   aumentar?:boolean;
 }
 
 export interface IActualizarMontoEsperadoByVenta {
   data: IVentaCreateCaja;
-  session: mongo.ClientSession
 }

@@ -61,13 +61,13 @@ export class TrasladoService {
 
     this.inventoryManagementService.init(dataInit);
 
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
 
       let dataGeneratePedido:IGeneratePedidoHerramienta = {
-        session,
+        
         sucursalEnviaId: model.sucursalOrigenId!,
         sucursalRecibeId: model.sucursalDestinoId!
       }
@@ -86,14 +86,14 @@ export class TrasladoService {
         trasladoId: (traslado._id as mongoose.Types.ObjectId).toString(),
         listDetalleTraslado: model.listDetalleTraslado,
         isNoSave: false,
-        session: session
+         
       }
 
       var listItemDePedidos = await this.generateItemDePedidoByPedido(dataGenerateItemDePedidoByPedido);
       
       let dataSubtractCantidad:ISubtractCantidadByDetalleTraslado = {
         listItems:listItemDePedidos,
-        session: session
+         
       }
       await this.subtractCantidadByDetalleTraslado(dataSubtractCantidad);
 
@@ -110,7 +110,7 @@ export class TrasladoService {
 
       let dataSendPedido:ISendPedidoHerramienta = {
         model: sendTrasladoProducto,
-        session: session,
+         
         usuarioEnviaId: model.usuarioIdEnvia!
       }
 
@@ -118,8 +118,8 @@ export class TrasladoService {
 
       let usuario = await this.sucursalRepo.findUserAdminForBranch((traslado.sucursalDestinoId._id as mongoose.Types.ObjectId).toString());
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       let username = usuario?.username || 'Sin administrador';
       let channel = "#pedidos";
@@ -157,18 +157,18 @@ export class TrasladoService {
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }
   }
 
   async postRecibirPedido(model: Partial<ITrasladoRecepcion>) {
-    const session = await mongoose.startSession();
+    
 
     try {
-      session.startTransaction();
+      
       this.inventoryManagementService.initHandleStockProductBranch(model.usuarioIdRecibe!);
 
       var pedido = (await this.trasladoRepository.findById(model.trasladoId!)) as ITraslado;
@@ -215,7 +215,7 @@ export class TrasladoService {
           model: element,
           bodegaId: (pedido.sucursalDestinoId._id as mongoose.Types.ObjectId).toString(),
           listFiles: element.archivosAdjuntosRecibido as string[],
-          session: session,
+           
           _detalleTralado: listItemDePedidos as IDetalleTraslado[]
         }
 
@@ -237,23 +237,23 @@ export class TrasladoService {
       let DTAdd = listResponseAdd.listDetalleTrasladoAgregados
       let DTUpdate = listResponseAdd.listDetalleTrasladoActualizado
 
-      await this.trasladoRepository.saveAllDetalleTraslado(DTAdd, session);
-      await this.trasladoRepository.updateAllDetalleTraslado(DTUpdate, session);
-      await this.inventoryManagementService.saveAllBranchInventory(session);
-      await this.inventoryManagementService.updateAllBranchInventory(session);
-      await this.inventoryManagementService.saveAllMovimientoInventario(session);
+      await this.trasladoRepository.saveAllDetalleTraslado(DTAdd);
+      await this.trasladoRepository.updateAllDetalleTraslado(DTUpdate);
+      await this.inventoryManagementService.saveAllBranchInventory();
+      await this.inventoryManagementService.updateAllBranchInventory();
+      await this.inventoryManagementService.saveAllMovimientoInventario();
 
-      await pedido.save({session});
+      await pedido.save({});
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return pedido;
     } catch (error) {
       console.log(error);
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       throw new Error(error.message);
     }
@@ -332,11 +332,11 @@ export class TrasladoService {
     }
   }
   async returnProductToBranch(itemDePedidoId: string, req:Request) {
-    const session = await mongoose.startSession();
+    
 
     try {
 
-      session.startTransaction();
+      
 
       const itemDePedido = (await this.trasladoRepository.findItemDePedidoById(itemDePedidoId) as IDetalleTraslado);
       const inventarioSucursal = (await this.inventarioSucursalRepo.findById(itemDePedido.inventarioSucursalId.toString()) as IInventarioSucursal);
@@ -346,8 +346,8 @@ export class TrasladoService {
       inventarioSucursal.stock += itemDePedido.cantidad;
       inventarioSucursal.ultimo_movimiento = new Date();
 
-      inventarioSucursal.save({ session });
-      itemDePedido.save({ session });
+      inventarioSucursal.save();
+      itemDePedido.save();
 
       let user = req.user;
 
@@ -361,16 +361,16 @@ export class TrasladoService {
         usuarioId: user?.id,
       });
 
-      movimientoInventario.save({ session });
+      movimientoInventario.save();
 
-      await session.commitTransaction();
-      session.endSession();
+      
+      
 
       return inventarioSucursal;
     } catch (error) {
 
-      await session.abortTransaction();
-      session.endSession();
+      
+      
 
       console.error('Error al obtener el pedido:', error);
       throw new Error('Error al obtener el pedido');
@@ -379,7 +379,7 @@ export class TrasladoService {
 
   // logic crear pedido
 
-  async generatePedidoHerramienta({ session, sucursalEnviaId, sucursalRecibeId }: IGeneratePedidoHerramienta) {
+  async generatePedidoHerramienta({  sucursalEnviaId, sucursalRecibeId }: IGeneratePedidoHerramienta) {
 
     const sucursalEnviaIdParsed = new mongoose.Types.ObjectId(sucursalEnviaId);
     const sucursalRecibeIdParsed = new mongoose.Types.ObjectId(sucursalRecibeId);
@@ -401,7 +401,7 @@ export class TrasladoService {
       sucursalOrigenId: sucursalEnviaIdParsed,
     });
 
-    return (await newPedido.save({ session })).populate([
+    return (await newPedido.save()).populate([
       'sucursalOrigenId',
       'sucursalDestinoId',
       'usuarioIdEnvia',
@@ -409,7 +409,7 @@ export class TrasladoService {
     ]);
   }
 
-  async sendPedidoHerramienta({ model, session, usuarioEnviaId }: ISendPedidoHerramienta): Promise<void> {
+  async sendPedidoHerramienta({ model, usuarioEnviaId }: ISendPedidoHerramienta): Promise<void> {
     let traslado = model.traslado;
     let trasladoId = (traslado._id as mongoose.Types.ObjectId).toString();
 
@@ -433,14 +433,14 @@ export class TrasladoService {
     traslado.comentarioEnvio = model.comentarioEnvio;
     traslado.archivosAdjuntos = model.traslado.archivosAdjuntos;
 
-    await this.trasladoRepository.update(trasladoId, traslado, session);
+    await this.trasladoRepository.update(trasladoId, traslado);
   }
 
   public async generateItemDePedidoByPedido({
     trasladoId,
     listDetalleTraslado,
     isNoSave = false,
-    session,
+    
   }: IGenerateItemDePedidoByPedido): Promise<IDetalleTrasladoCreate[]> {
     let listItems: IDetalleTrasladoCreate[] = [];
 
@@ -472,31 +472,31 @@ export class TrasladoService {
 
     // Guardar en la base de datos si `isNoSave` es falso
     if (!isNoSave) {
-     let newItems = await this.trasladoRepository.saveAllDetalleTraslado(listItems, session);
+     let newItems = await this.trasladoRepository.saveAllDetalleTraslado(listItems);
      listItems = newItems;
     }
 
     return listItems;
   }
 
-  async subtractCantidadByDetalleTraslado({ listItems, session }:ISubtractCantidadByDetalleTraslado): Promise<void> {
+  async subtractCantidadByDetalleTraslado({ listItems }:ISubtractCantidadByDetalleTraslado): Promise<void> {
     for await (const item of listItems) {
       await this.inventoryManagementService.subtractQuantity(
         {
           quantity: item.cantidad,
           inventarioSucursalId: item.inventarioSucursalId._id as mongoose.Types.ObjectId,
-          session: session,
+           
           isNoSave: true,
           tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA,
         }
       );
     }
 
-    await this.inventoryManagementService.updateAllBranchInventory(session);
-    await this.inventoryManagementService.saveAllMovimientoInventario(session);
+    await this.inventoryManagementService.updateAllBranchInventory();
+    await this.inventoryManagementService.saveAllMovimientoInventario();
   }
 
-  public async addCantidad({ model, bodegaId, listFiles, session, _detalleTralado }: IAddCantidadTraslado): Promise<IResponseToAddCantidad> {
+  public async addCantidad({ model, bodegaId, listFiles, _detalleTralado }: IAddCantidadTraslado): Promise<IResponseToAddCantidad> {
     // Inicialización del response
     const response: IResponseToAddCantidad = {
       listHistorialInventario: [],
@@ -560,7 +560,7 @@ export class TrasladoService {
         isNoSave: true,
         trasladoId: (itemDePedido.trasladoId as mongoose.Types.ObjectId).toString(),
         listDetalleTraslado: list,
-        session: session
+         
       }
 
       let newItemsDePedido = await this.generateItemDePedidoByPedido(dataGenerateItemDePedidoByPedido);
@@ -596,7 +596,7 @@ export class TrasladoService {
       });
 
       let dataHandle = {
-        session: session,
+         
         model: inventarioSucursal,
         quantity: model.cantidad
       }

@@ -38,8 +38,8 @@ export class EntityRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async updateWithSession(id: string, data: Partial<IEntity>, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true, session }).exec();
+  async updateWith(id: string, data: Partial<IEntity>, ): Promise<IEntity | null> {
+    return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
   async delete(id: string): Promise<IEntity | null> {
@@ -48,45 +48,45 @@ export class EntityRepository {
       .exec();
   }
 
-  async updateStateClientAmountReceivable(id:string, amountReceivable: mongoose.Types.Decimal128, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+  async updateStateClientAmountReceivable(id:string, amountReceivable: mongoose.Types.Decimal128, ): Promise<IEntity | null> {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
       { $inc: { 'state.amountReceivable': +amountReceivable } },
-      { new: true, session }
+      { new: true }
     );
 
     return entidad;
   }
 
-  async updateStateClientAmountPayable(id:string, amountPayable: mongoose.Types.Decimal128, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+  async updateStateClientAmountPayable(id:string, amountPayable: mongoose.Types.Decimal128, ): Promise<IEntity | null> {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
       { $inc: { "state.amountPayable": +amountPayable } },
-      { new: true, session }
+      { new: true }
     );
 
     return entidad;
   }
 
-  async updateStateClientAdvancesDelivered(id:string, advancesDelivered: mongoose.Types.Decimal128, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+  async updateStateClientAdvancesDelivered(id:string, advancesDelivered: mongoose.Types.Decimal128, ): Promise<IEntity | null> {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
       { $inc: { 'state.advancesDelivered': +advancesDelivered } },
-      { new: true, session }
+      { new: true }
     );
 
     return entidad;
   }
 
-  async updateStateClientAdvancesReceipts(id:string, advancesReceipts: mongoose.Types.Decimal128, session: mongoose.mongo.ClientSession): Promise<IEntity | null> {
+  async updateStateClientAdvancesReceipts(id:string, advancesReceipts: mongoose.Types.Decimal128, ): Promise<IEntity | null> {
 
     let entidad = await this.model.findByIdAndUpdate(
       id,
       { $inc: { 'state.advancesReceipts': +advancesReceipts } },
-      { new: true, session }
+      { new: true }
     );
 
     return entidad;
