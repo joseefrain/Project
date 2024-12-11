@@ -9,7 +9,6 @@ import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.
 import { IUser } from '../../models/usuarios/User.model';
 import { CustomJwtPayload } from '../../utils/jwt';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
-import { inventarioQueue } from '../../queues/inventarioQueue';
 import { InventoryManagementService } from '../traslado/InventoryManagement.service';
 import { IInit, ISubtractQuantity, tipoMovimientoInventario } from '../../interface/IInventario';
 import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento.model';

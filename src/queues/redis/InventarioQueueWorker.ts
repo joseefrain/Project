@@ -1,10 +1,10 @@
 
 import 'reflect-metadata';
-import { VentaService } from "../services/venta/venta.service";
-import { redisConfig } from "../config/redis";
-import { Queue } from "./lib/queue";
+import { VentaService } from "../../services/venta/venta.service";
+import { redisConfig } from "../../config/redis";
+import { Queue } from "./module/queue";
 import { container } from "tsyringe";
-import connectDB from '../config/database';
+import connectDB from '../../config/database';
 
 connectDB();
 
