@@ -45,7 +45,7 @@ const limiter = rateLimit({
     });
   },
 });
-app.use(limiter);
+// app.use(limiter);
 
 app.use(cors());
 app.use(ensureDatabaseConnection)

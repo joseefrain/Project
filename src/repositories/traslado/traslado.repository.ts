@@ -89,7 +89,6 @@ export class TrasladoRepository {
   // Consultar los documentos insertados y aplicar populate
   const populatedData = await this.modelDetalleTraslado
     .find({ _id: { $in: insertedIds } })
-    .() 
     .populate({
       path: 'inventarioSucursalId',
       populate: {
