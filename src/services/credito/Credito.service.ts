@@ -5,7 +5,7 @@ import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
-import { VentaRepository } from "../../repositories/venta/venta.repository";
+import { TransactionRepository } from "../../repositories/venta/venta.repository";
 import { ITransaccion } from "../../models/Ventas/Venta.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
@@ -16,7 +16,7 @@ export class CreditoService {
   constructor(
     @inject(CreditoRepository) private creditoRepository: CreditoRepository,
     @inject(MovimientoFinancieroRepository) private MovimientoRepository: MovimientoFinancieroRepository,
-    @inject(VentaRepository) private ventaRepository: VentaRepository,
+    @inject(TransactionRepository) private ventaRepository: TransactionRepository,
     @inject(EntityRepository) private entityRepository: EntityRepository,
   ) {}
 
@@ -117,10 +117,7 @@ export class CreditoService {
 
   async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
 
-    
-
     try {
-      
 
       if (isNaN(parseFloat(montoPago))) {
         throw new Error("El monto del pago es incorrecto");
@@ -235,9 +232,6 @@ export class CreditoService {
       }
 
       await this.MovimientoRepository.create(movimiento);
-
-      
-      
 
       return credito;
     } catch (error) {

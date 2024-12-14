@@ -1,19 +1,19 @@
 import { injectable } from 'tsyringe';
 import { ITransaccion, Transaccion } from '../../models/Ventas/Venta.model';
 import mongoose, { mongo } from 'mongoose';
-import { DetalleVenta, IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
-import { IVentaDescuentosAplicados, VentaDescuentosAplicados } from '../../models/Ventas/VentaDescuentosAplicados.model';
+import { DetalleTransaccion, IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
+import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/Ventas/VentaDescuentosAplicados.model';
 
 @injectable()
-export class VentaRepository {
+export class TransactionRepository {
   private model: typeof Transaccion;
-  private modelDetalleVenta: typeof DetalleVenta;
-  private modelVentaDescuentosAplicados: typeof VentaDescuentosAplicados;
+  private modelDetalleTransaction: typeof DetalleTransaccion;
+  private modelVentaDescuentosAplicados: typeof TransaccionDescuentosAplicados;
 
   constructor() {
     this.model = Transaccion;
-    this.modelDetalleVenta = DetalleVenta;
-    this.modelVentaDescuentosAplicados = VentaDescuentosAplicados;
+    this.modelDetalleTransaction = DetalleTransaccion;
+    this.modelVentaDescuentosAplicados = TransaccionDescuentosAplicados;
   }
 
   async create(data: Partial<ITransaccion>, ): Promise<ITransaccion> {
@@ -22,23 +22,23 @@ export class VentaRepository {
   }
 
   async createDetalleVenta(data: Partial<IDetalleTransaccion>, ): Promise<IDetalleTransaccion> {
-    const descuento = new this.modelDetalleVenta(data);
+    const descuento = new this.modelDetalleTransaction(data);
     return await descuento.save();
   }
-  async createVentaDescuentosAplicados(data: Partial<IVentaDescuentosAplicados>, ): Promise<IVentaDescuentosAplicados> {
+  async createVentaDescuentosAplicados(data: Partial<ITransaccionDescuentosAplicados>, ): Promise<ITransaccionDescuentosAplicados> {
     const descuento = new this.modelVentaDescuentosAplicados(data);
     return await descuento.save();
   }
   async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
-    const detalleVenta = await this.modelDetalleVenta.find({ ventaId: ventaId }).populate("productoId");
+    const detalleVenta = await this.modelDetalleTransaction.find({ ventaId: ventaId }).populate("productoId");
 
     return detalleVenta;
   }
-  async findVentaDescuentosAplicadosByDetalleVentaId(detalleVentaId: string): Promise<IVentaDescuentosAplicados> {
+  async findVentaDescuentosAplicadosByDetalleVentaId(detalleVentaId: string): Promise<ITransaccionDescuentosAplicados> {
     const ventaDescuentosAplicados = (
       (await this.modelVentaDescuentosAplicados.findOne({
         detalleVentaId: detalleVentaId,
-      })) as IVentaDescuentosAplicados
+      })) as ITransaccionDescuentosAplicados
     ).populate([
       {
         path: 'descuentosProductosId',

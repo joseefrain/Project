@@ -64,8 +64,10 @@ export interface IInit {
 
 export interface IAddQuantity {
   quantity: number;
-  inventarioSucursal: IInventarioSucursal;
+  inventarioSucursalId?: mongoose.Types.ObjectId;
+  inventarioSucursal?: IInventarioSucursal;
   isNoSave?: boolean;
+  tipoMovimiento:TipoMovimientoInventario;
 }
 
 export interface ICreateInventarioSucursal {
@@ -80,6 +82,7 @@ export interface IManageHerramientaModel {
 export interface IHandleStockProductBranch {
   model:IInventarioSucursal; 
   quantity:number
+  tipoMovimiento:TipoMovimientoInventario
 }
 
 export interface IItemSsubtractQuantityLoop {

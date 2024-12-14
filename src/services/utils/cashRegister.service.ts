@@ -15,11 +15,8 @@ export class CashRegisterService {
   async abrirCaja(data : IOpenCashService) {
     let { sucursalId, usuarioAperturaId, montoInicial } = data;
 
-    
-
     try {
       
-
       const cajaAbierta = await this.repository.obtenerCajaAbiertaPorSucursal(sucursalId);
     
       if (cajaAbierta) return cajaAbierta;
@@ -50,17 +47,10 @@ export class CashRegisterService {
       }  
       await this.resumenRepository.addIncomeDailySummary(resumenDiario);
 
-
-      
-      
-
       return caja;
       
     } catch (error) {
       console.log(error);
-
-      
-      
 
       throw new Error(error.message);
     }
@@ -68,10 +58,7 @@ export class CashRegisterService {
 
   async cerrarCaja(cajaId: string, montoFinalDeclarado: string): Promise<ICaja> {
 
-    
-
     try {
-      
 
       const caja = await this.repository.obtenerCajaPorId(cajaId);
 
@@ -80,9 +67,6 @@ export class CashRegisterService {
       if (caja.estado !== 'abierta') throw new Error('La caja ya está cerrada');
 
       await this.repository.cerrarCaja(cajaId, montoFinalDeclarado)
-
-      
-      
 
       return caja;
 
@@ -103,7 +87,7 @@ export class CashRegisterService {
     return await this.repository.obtenerCajasPorSucursal(sucursalId);
   }
 
-  async actualizarMontoEsperadoByVenta(props:IActualizarMontoEsperadoByVenta): Promise<ICaja | null> {
+  async actualizarMontoEsperadoByTrasaccion(props:IActualizarMontoEsperadoByVenta): Promise<ICaja | null> {
    
     const { data} = props;
     let cajaId = data.cajaId!
@@ -114,18 +98,19 @@ export class CashRegisterService {
 
     let dataAcualizacion = {
       cajaId,
-      monto: total,
-      
+      monto: total, 
+      aumentar: data.tipoTransaccion === 'VENTA' ? true : false
     }
+
     let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
 
-    await this.resumenRepository.addSaleDailySummary(data);
+    await this.resumenRepository.addTransactionDailySummary(data);
 
     let movimiento = {
-      tipoMovimiento: tipeCashRegisterMovement.VENTA,
+      tipoMovimiento: data.tipoTransaccion,
       monto: monto,
       fecha: new Date(),
-      descripcion: 'Venta',
+      descripcion: data.tipoTransaccion,   
       usuarioId: new Types.ObjectId(data.userId),
       cajaId: (caja._id as Types.ObjectId),
       cambioCliente: cambio

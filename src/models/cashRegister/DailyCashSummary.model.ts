@@ -1,18 +1,20 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
-import { IVentaCreate } from '../Ventas/Venta.model';
-import { IVentaCreateCaja } from '../../interface/ICaja';
+import { ITransaccionCreate } from '../Ventas/Venta.model';
+import { ITransactionCreateCaja } from '../../interface/ICaja';
 
 export interface IResumenCajaDiario extends Document {
   sucursalId: mongoose.Types.ObjectId;
   cajaId: mongoose.Types.ObjectId;
   fecha: Date;
   totalVentas: mongoose.Types.Decimal128;
+  totalCompras: mongoose.Types.Decimal128;
   totalIngresos: mongoose.Types.Decimal128;
   totalEgresos: mongoose.Types.Decimal128;
   montoFinalSistema: mongoose.Types.Decimal128;
   montoDeclaradoPorUsuario?: mongoose.Types.Decimal128 | null;
   diferencia?: mongoose.Types.Decimal128 | null;
-  ventas: IVentaCreateCaja[];
+  ventas: ITransactionCreateCaja[];
+  compras: ITransactionCreateCaja[];
 }
 
 const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
@@ -32,6 +34,10 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
     required: true,
   },
   totalVentas: {
+    type: Schema.Types.Decimal128,
+    required: true,
+  },
+  totalCompras: {
     type: Schema.Types.Decimal128,
     required: true,
   },
@@ -56,6 +62,90 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
     default: null,
   },
   ventas: {
+    type: [
+      {
+        id: {
+          type: String,
+          required: true,
+        },
+        userId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Usuario',
+          required: true,
+        },
+        sucursalId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Sucursal',
+          required: true,
+        },
+        subtotal: {
+          type: Schema.Types.Decimal128,
+          required: true,
+        },
+        total: {
+          type: Schema.Types.Decimal128,
+          required: true,
+        },
+        discount: {
+          type: Schema.Types.Decimal128,
+          default: 0,
+        },
+        fechaRegistro: {
+          type: Date,
+          required: true,
+          default: Date.now,
+        },
+        products: {
+          type: [
+            {
+              ventaId: {
+                type: String,
+              },
+              productId: {
+                type: String,
+                required: true,
+              },
+              groupId: {
+                type: String,
+              },
+              clientType: {
+                type: String,
+                enum: ['Regular', 'Proveedor'],
+                required: true,
+              },
+              productName: {
+                type: String,
+                required: true,
+              },
+              quantity: {
+                type: Number,
+                required: true,
+              },
+              price: {
+                type: Number,
+                required: true,
+              },
+              inventarioSucursalId: {
+                type: String,
+                required: true,
+              },
+              discount: {
+                type: {
+                  id: String,
+                  name: String,
+                  amount: Number,
+                  percentage: Number,
+                  type: String,
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+    required: true,
+  },
+  compras: {
     type: [
       {
         id: {

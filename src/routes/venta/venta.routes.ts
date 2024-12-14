@@ -1,11 +1,11 @@
-import { VentaController } from '../../controllers/venta/Venta.controller';
+import { TransactionController } from '../../controllers/venta/Venta.controller';
 import { container } from 'tsyringe';
 import { authMiddleware } from '../../middlewares/authMiddleware';
 
 const express = require('express');
 const router = express.Router();
 
-const ventaController = container.resolve(VentaController);
+const transactionController = container.resolve(TransactionController);
 
 router.use(authMiddleware);
 
@@ -13,24 +13,24 @@ router.use(authMiddleware);
 router.post(
   '/',
   authMiddleware,
-  ventaController.create.bind(ventaController)
+  transactionController.create.bind(transactionController)
 );
 router.get(
   '/:id',
   authMiddleware,
-  ventaController.getVentaById.bind(ventaController)
+  transactionController.getVentaById.bind(transactionController)
 );
 
 router.get(
   '/:id/branch',
   authMiddleware,
-  ventaController.getBySucursalId.bind(ventaController)
+  transactionController.getBySucursalId.bind(transactionController)
 );
 
 router.get(
   '/:id/branch/user',
   authMiddleware,
-  ventaController.findAllVentaBySucursalIdAndUserId.bind(ventaController)
+  transactionController.findAllVentaBySucursalIdAndUserId.bind(transactionController)
 );
 
 // router.get('/', authMiddleware, ventaController.getAll.bind(ventaController));

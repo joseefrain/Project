@@ -1,20 +1,20 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
-import { ICreateVentaProps, VentaService } from '../../services/venta/venta.service';
+import { ICreateTransactionProps, TransactionService } from '../../services/venta/venta.service';
 import { CustomJwtPayload } from '../../utils/jwt';
 import mongoose from 'mongoose';
 
 @injectable()
-export class VentaController {
-  constructor(@inject(VentaService) private service: VentaService) {}
+export class TransactionController {
+  constructor(@inject(TransactionService) private service: TransactionService) {}
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      let data: ICreateVentaProps = {
+      let data: ICreateTransactionProps = {
         venta: req.body,
         user: (req.user as CustomJwtPayload),
       }
-      const result = await this.service.addSaleToQueue(data);
+      const result = await this.service.addTransactionToQueue(data);
       res.status(201).json(result); // Enviar el resultado
     } catch (error) {
       next(error);

@@ -5,7 +5,7 @@ import { ITipoDescuentoEntidad } from "./Descuento.model";
 
 export type ITipoDescuento = 'PORCENTAJE' | 'FIJO';
 
-export interface IVentaDescuentosAplicados extends Document {
+export interface ITransaccionDescuentosAplicados extends Document {
   detalleVentaId: mongoose.Types.ObjectId;
   descuentosProductosId?: mongoose.Types.ObjectId | IDescuentosProductos;
   descuentoGrupoId?: mongoose.Types.ObjectId | IDescuentoGrupo;
@@ -15,7 +15,7 @@ export interface IVentaDescuentosAplicados extends Document {
   monto: mongoose.Types.Decimal128;
 }
 
-const ventaDescuentosAplicadosSchema = new Schema<IVentaDescuentosAplicados>({
+const transaccionDescuentosAplicadosSchema = new Schema<ITransaccionDescuentosAplicados>({
   detalleVentaId: {
     type: Schema.Types.ObjectId,
     ref: 'DetalleVenta',
@@ -53,7 +53,7 @@ const ventaDescuentosAplicadosSchema = new Schema<IVentaDescuentosAplicados>({
   timestamps: { createdAt: 'created_at', updatedAt: 'updatedAt' } // Corregido a `updatedAt`
 });
 
-export const VentaDescuentosAplicados = mongoose.model<IVentaDescuentosAplicados>(
+export const TransaccionDescuentosAplicados = mongoose.model<ITransaccionDescuentosAplicados>(
   'VentaDescuentosAplicados',
-  ventaDescuentosAplicadosSchema
+  transaccionDescuentosAplicadosSchema
 );

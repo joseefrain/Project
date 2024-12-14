@@ -1,5 +1,5 @@
 import mongoose, { mongo, Types } from "mongoose";
-import { IVentaCreate, IVentaProducto } from "../models/Ventas/Venta.model";
+import { ITransaccionCreate, ITrasaccionProducto, TypeTransaction } from "../models/Ventas/Venta.model";
 
 export interface IOpenCash {
   sucursalId: string;
@@ -56,11 +56,11 @@ export interface IAddExpenseDailySummary {
   cajaId: string;
 }
 
-export interface IVentaCreateCaja {
+export interface ITransactionCreateCaja {
   id: string;
   userId: string;
   sucursalId: string;
-  products: IVentaProducto[];
+  products: ITrasaccionProducto[];
   subtotal: number;
   total: number;
   discount: number;
@@ -68,6 +68,7 @@ export interface IVentaCreateCaja {
   monto?:number;
   cambioCliente?:number;
   cajaId?:string;
+  tipoTransaccion: TypeTransaction;
 }
 
 export interface IActualizarMontoEsperado {
@@ -77,5 +78,5 @@ export interface IActualizarMontoEsperado {
 }
 
 export interface IActualizarMontoEsperadoByVenta {
-  data: IVentaCreateCaja;
+  data: ITransactionCreateCaja;
 }

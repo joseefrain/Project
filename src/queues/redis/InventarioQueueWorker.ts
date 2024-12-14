@@ -1,6 +1,6 @@
 
 import 'reflect-metadata';
-import { VentaService } from "../../services/venta/venta.service";
+import { TransactionService } from "../../services/venta/venta.service";
 import { redisConfig } from "../../config/redis";
 import { Queue } from "./module/queue";
 import { container } from "tsyringe";
@@ -14,8 +14,8 @@ const inventarioQueueWorker  = new Queue('actualizacionInventario', process.env.
 inventarioQueueWorker.process(async (job) => {
   console.log("Procesando actualización de inventario...");
 
-  const salesService = container.resolve(VentaService);
-  const result = await salesService.createVenta(job.data as any); // Retornar el resultado de la venta
+  const salesService = container.resolve(TransactionService);
+  const result = await salesService.createTransaction(job.data as any); // Retornar el resultado de la venta
   return result;
 });
 

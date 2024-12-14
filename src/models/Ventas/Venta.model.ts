@@ -22,7 +22,7 @@ export interface ITransaccion extends Document {
   paymentMethod: TypePaymentMethod;
 }
 
-export interface IVentaProducto {
+export interface ITrasaccionProducto {
   ventaId: string;
   productId: string;
   groupId: string;
@@ -31,10 +31,10 @@ export interface IVentaProducto {
   quantity: number;
   price: number;
   inventarioSucursalId: string;
-  discount: null | IVentaDescuento;
+  discount: null | ITransaccionDescuento;
 }
 
-export interface IVentaDescuento {
+export interface ITransaccionDescuento {
   id: string;
   name: string;
   amount: number;
@@ -48,10 +48,10 @@ interface ICreditoCreate {
   cuotaMensual: mongoose.Types.Decimal128;
   pagoMinimoMensual: mongoose.Types.Decimal128;
 }
-export interface IVentaCreate {
+export interface ITransaccionCreate {
   userId: string;
   sucursalId: string;
-  products: IVentaProducto[];
+  products: ITrasaccionProducto[];
   subtotal: number;
   total: number;
   discount: number;
@@ -111,4 +111,4 @@ const transaccionSchema: Schema = new Schema(
   }
 );
 
-export const Transaccion = mongoose.model<ITransaccion>('Venta', transaccionSchema);
+export const Transaccion = mongoose.model<ITransaccion>('Transaccion', transaccionSchema);

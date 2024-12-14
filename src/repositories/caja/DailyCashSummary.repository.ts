@@ -1,6 +1,6 @@
 import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
-import { IAddExpenseDailySummary, IAddIncomeDailySummary, IVentaCreateCaja } from '../../interface/ICaja';
+import { IAddExpenseDailySummary, IAddIncomeDailySummary, ITransactionCreateCaja } from '../../interface/ICaja';
 
 export class ResumenCajaDiarioRepository {
   private model: Model<IResumenCajaDiario>;
@@ -109,9 +109,10 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async addSaleDailySummary(data: IVentaCreateCaja, ): Promise<IResumenCajaDiario | null> {
+  async addTransactionDailySummary(data: ITransactionCreateCaja, ): Promise<IResumenCajaDiario | null> {
     try {
       const sucursalId = new Types.ObjectId(data.sucursalId);
+      const tipoTransaccion = data.tipoTransaccion;
       const totalIncrement = new Types.Decimal128(data.total!.toString());
 
       let existResumen = await this.findByDateAndBranch(sucursalId);
@@ -122,7 +123,8 @@ export class ResumenCajaDiarioRepository {
       if (!existResumen) {
         let dataResumen = {
           sucursalId,
-          totalVentas: totalIncrement,
+          totalVentas: tipoTransaccion === 'VENTA' ? totalIncrement : new Types.Decimal128('0'),
+          totalCompras: tipoTransaccion === 'COMPRA' ? totalIncrement : new Types.Decimal128('0'),
           montoFinalSistema: totalIncrement,
           fecha: fecha,
           cajaId: new Types.ObjectId(data.cajaId),
@@ -135,10 +137,13 @@ export class ResumenCajaDiarioRepository {
 
         return resumenDiario;
       }
+      let totalSale = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : +Number(0);
+      let totalPurchase = tipoTransaccion === 'COMPRA' ? +Number(totalIncrement) : +Number(0);
+      let montoFinalSistema = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : -Number(totalIncrement);
   
       const resumenHoy = await this.model.findOneAndUpdate(
         { fecha: fecha, sucursalId: new Types.ObjectId(sucursalId) },
-        { $inc: { totalVentas: totalIncrement, montoFinalSistema: totalIncrement } },
+        { $inc: { totalVentas: totalSale, totalCompras: totalPurchase, montoFinalSistema: montoFinalSistema } },
         { new: true, upsert: true } 
       ).exec();
   
@@ -146,7 +151,11 @@ export class ResumenCajaDiarioRepository {
         throw new Error('Error al actualizar o crear el resumen de caja diario para la sucursal');
       }
 
-      resumenHoy.ventas.push(data);
+      if (tipoTransaccion === 'VENTA') {
+        resumenHoy.ventas.push(data);
+      } else if (tipoTransaccion === 'COMPRA') {
+        resumenHoy.compras.push(data);
+      }
 
       await resumenHoy.save();
   

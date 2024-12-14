@@ -41,8 +41,8 @@ export class InventoryManagementService implements IManageHerramientaModel {
 
   async subtractQuantity({ quantity, inventarioSucursalId, isNoSave = false, tipoMovimiento }: ISubtractQuantity): Promise<void | IInventarioSucursal> {
     const inventarioSucursal = this._listInventarioSucursal.find(
-      (sucursal) =>
-        (sucursal._id as mongoose.Types.ObjectId).toString() ===
+      (inventarioSucursal) =>
+        (inventarioSucursal._id as mongoose.Types.ObjectId).toString() ===
         inventarioSucursalId.toString()
     );
 
@@ -76,24 +76,46 @@ export class InventoryManagementService implements IManageHerramientaModel {
     return inventarioSucursal;
   }
 
-  async addQuantity({ quantity, inventarioSucursal, isNoSave = false }: IAddQuantity): Promise<void> {
+  async addQuantity({ quantity, tipoMovimiento ,inventarioSucursalId , inventarioSucursal , isNoSave = false }: IAddQuantity): Promise<void> {
+
+    let inventarioSucursalReal:IInventarioSucursal
+
+    if (!inventarioSucursal) {
+
+      if (!inventarioSucursalId) {
+        throw new Error('inventarioSucursalId no encontrado');
+      }
+
+      const inventarioSucursalWrap = this._listInventarioSucursal.find(
+        (inventarioSucursal) =>
+          (inventarioSucursal._id as mongoose.Types.ObjectId).toString() ===
+          inventarioSucursalId.toString()
+      );
+      inventarioSucursalReal = inventarioSucursalWrap as IInventarioSucursal
+    } else {
+      inventarioSucursalReal = inventarioSucursal
+    }
+
+    if (!inventarioSucursalReal)
+      throw new Error('Producto no encontrado en la sucursal');
+
     let movimientoInventario = new MovimientoInventario({
-      inventarioSucursalId: inventarioSucursal._id,
+      inventarioSucursalId: inventarioSucursalReal._id,
       cantidadCambiada: quantity,
-      cantidadInicial: inventarioSucursal.stock,
-      cantidadFinal: inventarioSucursal.stock + quantity,
-      tipoMovimiento: 'transferencia',
+      cantidadInicial: inventarioSucursalReal.stock,
+      cantidadFinal: inventarioSucursalReal.stock + quantity,
+      tipoMovimiento: tipoMovimiento,
       fechaMovimiento: new Date(),
       usuarioId: this.userId,
     });
 
     isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save();
 
-    inventarioSucursal.stock += quantity;
-    inventarioSucursal.ultimo_movimiento = new Date();
-    inventarioSucursal.deleted_at = null;
+    inventarioSucursalReal.stock += quantity;
+    inventarioSucursalReal.ultimo_movimiento = new Date();
+    inventarioSucursalReal.deleted_at = null;
 
-    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save();
+    isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursalReal) : await inventarioSucursalReal.save();
   }
 
   async createInventarioSucursal({ isNoSave = false, inventarioSucursal }: ICreateInventarioSucursal): Promise<void> {
@@ -113,13 +135,13 @@ export class InventoryManagementService implements IManageHerramientaModel {
     isNoSave ? this._listBranchInventoryAdded.push(inventarioSucursal) : await inventarioSucursal.save();
   }
 
-  async handleStockProductBranch({  model, quantity }: IHandleStockProductBranch): Promise<void> {
+  async handleStockProductBranch({  model, quantity, tipoMovimiento }: IHandleStockProductBranch): Promise<void> {
     const inventarioSucursal = await this.inventarioSucursalRepo.findBySucursalIdAndProductId(model.sucursalId.toString(), model.productoId.toString());
 
     let dataAddQuantity:IAddQuantity = {
       quantity: quantity,
       inventarioSucursal: inventarioSucursal,
-       
+      tipoMovimiento,
       isNoSave: true
     };
 

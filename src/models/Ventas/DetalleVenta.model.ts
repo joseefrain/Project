@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ITransaccion } from './Venta.model';
+import { ITransaccion, Transaccion } from './Venta.model';
 import { IProducto } from '../inventario/Producto.model';
 import { ITipoDescuentoEntidad } from './Descuento.model';
 
@@ -16,9 +16,9 @@ export interface IDetalleTransaccion extends Document {
   tipoDescuentoEntidad: ITipoDescuentoEntidad,
 }
 
-const detalleVentaSchema: Schema = new Schema(
+const detalleTransaccionSchema: Schema = new Schema(
   {
-    ventaId: { type: Schema.Types.ObjectId, ref: 'Venta', required: true },
+    ventaId: { type: Schema.Types.ObjectId, ref: Transaccion, required: true },
     productoId: {
       type: Schema.Types.ObjectId,
       ref: 'Producto',
@@ -42,7 +42,7 @@ const detalleVentaSchema: Schema = new Schema(
   }
 );
 
-export const DetalleVenta = mongoose.model<IDetalleTransaccion>(
-  'DetalleVenta',
-  detalleVentaSchema
+export const DetalleTransaccion = mongoose.model<IDetalleTransaccion>(
+  'DetalleTransaccion',
+  detalleTransaccionSchema
 );

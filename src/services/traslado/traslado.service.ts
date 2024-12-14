@@ -29,7 +29,7 @@ import { SucursalRepository } from '../../repositories/sucursal/sucursal.reposit
 import { CustomJwtPayload } from '../../utils/jwt';
 import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
-import { IInit, tipoMovimientoInventario } from '../../interface/IInventario';
+import { IHandleStockProductBranch, IInit, tipoMovimientoInventario } from '../../interface/IInventario';
 
 @injectable()
 export class TrasladoService {
@@ -595,10 +595,11 @@ export class TrasladoService {
         puntoReCompra: model.puntoReCompra,
       });
 
-      let dataHandle = {
+      let dataHandle:IHandleStockProductBranch = {
          
         model: inventarioSucursal,
-        quantity: model.cantidad
+        quantity: model.cantidad,
+        tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA
       }
 
       await this.inventoryManagementService.handleStockProductBranch(dataHandle);
