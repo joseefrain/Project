@@ -3,7 +3,7 @@ import { ITransaccion } from './Venta.model';
 import { IProducto } from '../inventario/Producto.model';
 import { ITipoDescuentoEntidad } from './Descuento.model';
 
-export interface IDetalleVenta extends Document {
+export interface IDetalleTransaccion extends Document {
   ventaId: mongoose.Types.ObjectId | ITransaccion;
   productoId: mongoose.Types.ObjectId | IProducto;
   precio: mongoose.Types.Decimal128;
@@ -42,7 +42,7 @@ const detalleVentaSchema: Schema = new Schema(
   }
 );
 
-export const DetalleVenta = mongoose.model<IDetalleVenta>(
+export const DetalleVenta = mongoose.model<IDetalleTransaccion>(
   'DetalleVenta',
   detalleVentaSchema
 );

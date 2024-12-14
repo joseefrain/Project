@@ -11,7 +11,7 @@ import { TrasladoRepository } from '../../repositories/traslado/traslado.reposit
 import mongoose from 'mongoose';
 import { IDetalleTraslado } from '../../models/traslados/DetalleTraslado.model';
 import { InventarioSucursalRepository } from '../../repositories/inventary/inventarioSucursal.repository';
-import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
+import { IInventarioSucursal, IInventarioSucursalUpdate } from '../../models/inventario/InventarioSucursal.model';
 import { ITraslado } from '../../models/traslados/Traslado.model';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { IProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
@@ -62,9 +62,19 @@ export class ProductoService {
 
   async updateProduct(
     id: string,
-    data: Partial<IProducto>
-  ): Promise<IProducto | null> {
-    const branch = await this.repository.update(id, data);
+    data: Partial<IInventarioSucursalUpdate>
+  ): Promise<IInventarioSucursal | null> {
+    let product = (await this.inventarioSucursalRepository.findById(id) as IInventarioSucursal);
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.stock = data.stock as number;
+    product.precio = data.precio as mongoose.Types.Decimal128;
+    product.puntoReCompra = data.puntoReCompra as number;
+
+    const branch = await this.inventarioSucursalRepository.update(id, data);
     if (!branch) {
       throw new Error('Product not found');
     }

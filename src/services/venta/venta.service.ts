@@ -3,7 +3,7 @@ import { VentaRepository } from '../../repositories/venta/venta.repository';
 import mongoose, { Types } from 'mongoose';
 import { ITransaccion, IVentaCreate, IVentaDescuento, IVentaProducto, TypeTransaction } from '../../models/Ventas/Venta.model';
 import { ITipoDescuento } from '../../models/Ventas/VentaDescuentosAplicados.model';
-import { IDetalleVenta } from '../../models/Ventas/DetalleVenta.model';
+import { IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
 import { IProducto } from '../../models/inventario/Producto.model';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { IUser } from '../../models/usuarios/User.model';
@@ -262,7 +262,7 @@ export class VentaService {
     return ventaDto;
   }
 
- async mapperData(venta: ITransaccion, detalleVenta: IDetalleVenta[]): Promise<IVentaCreate | null> {
+ async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<IVentaCreate | null> {
     let products: IVentaProducto[] = [];
 
     for await (const detalle of detalleVenta) {
@@ -317,7 +317,7 @@ export class VentaService {
     return ventaDto;
   }
 
-  async getAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleVenta[]> {
+  async getAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
     return this.repository.findAllDetalleVentaByVentaId(ventaId);
   }
 }

@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { ITransaccion, Transaccion } from '../../models/Ventas/Venta.model';
 import mongoose, { mongo } from 'mongoose';
-import { DetalleVenta, IDetalleVenta } from '../../models/Ventas/DetalleVenta.model';
+import { DetalleVenta, IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
 import { IVentaDescuentosAplicados, VentaDescuentosAplicados } from '../../models/Ventas/VentaDescuentosAplicados.model';
 
 @injectable()
@@ -21,7 +21,7 @@ export class VentaRepository {
     return await descuento.save();
   }
 
-  async createDetalleVenta(data: Partial<IDetalleVenta>, ): Promise<IDetalleVenta> {
+  async createDetalleVenta(data: Partial<IDetalleTransaccion>, ): Promise<IDetalleTransaccion> {
     const descuento = new this.modelDetalleVenta(data);
     return await descuento.save();
   }
@@ -29,7 +29,7 @@ export class VentaRepository {
     const descuento = new this.modelVentaDescuentosAplicados(data);
     return await descuento.save();
   }
-  async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleVenta[]> {
+  async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
     const detalleVenta = await this.modelDetalleVenta.find({ ventaId: ventaId }).populate("productoId");
 
     return detalleVenta;

@@ -12,6 +12,8 @@ export interface IInventarioSucursal extends Document {
   puntoReCompra: number;
 }
 
+export type IInventarioSucursalUpdate = Omit<IInventarioSucursal, 'deleted_at' | 'productoId' | 'sucursalId' | 'ultimo_movimiento'>;
+
 const inventarioSucursalSchema: Schema = new Schema(
   {
     productoId: {
