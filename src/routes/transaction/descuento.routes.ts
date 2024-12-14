@@ -1,4 +1,4 @@
-import { DescuentoController } from '../../controllers/venta/Descuento.controller';
+import { DescuentoController } from '../../controllers/transaction/Descuento.controller';
 import { container } from 'tsyringe';
 import { authMiddleware } from '../../middlewares/authMiddleware';
 

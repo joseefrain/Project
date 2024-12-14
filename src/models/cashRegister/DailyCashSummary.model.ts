@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
-import { ITransaccionCreate } from '../Ventas/Venta.model';
+import { ITransaccionCreate } from '../transaction/Transaction.model';
 import { ITransactionCreateCaja } from '../../interface/ICaja';
 
 export interface IResumenCajaDiario extends Document {

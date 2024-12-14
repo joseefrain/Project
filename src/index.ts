@@ -9,9 +9,9 @@ import grupoRoutes from './routes/inventario/grupo.routes';
 import productRoutes from './routes/inventario/producto.routes';
 import productTransfer from './routes/traslado/traslado.routes';
 import userRoutes from './routes/user.routes';
-import cashRegisterRoutes from './routes/venta/cashRegister.routes';
-import descuentos from './routes/venta/descuento.routes';
-import ventaRoutes from './routes/venta/venta.routes';
+import cashRegisterRoutes from './routes/transaction/cashRegister.routes';
+import descuentos from './routes/transaction/descuento.routes';
+import transaccionesRoutes from './routes/transaction/transaction.routes';
 import creditoRoutes from './routes/credito/credito.routes';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -65,8 +65,8 @@ app.use('/api/inventory/groups', grupoRoutes);
 app.use('/api/transfer', productTransfer);
 
 //rutas de venta
-app.use('/api/venta/descuentos', descuentos);
-app.use('/api/venta', ventaRoutes);
+app.use('/api/transaccion/descuentos', descuentos);
+app.use('/api/transaccion', transaccionesRoutes);
 app.use('/api/cashRegister', cashRegisterRoutes);
 app.use('/api/credito', creditoRoutes);
 

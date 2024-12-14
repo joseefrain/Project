@@ -1,5 +1,5 @@
 import mongoose, { mongo, Types } from "mongoose";
-import { ITransaccionCreate, ITrasaccionProducto, TypeTransaction } from "../models/Ventas/Venta.model";
+import { ITransaccionCreate, ITrasaccionProducto, TypeTransaction } from "../models/transaction/Transaction.model";
 
 export interface IOpenCash {
   sucursalId: string;

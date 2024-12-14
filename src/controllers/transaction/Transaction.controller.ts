@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
-import { ICreateTransactionProps, TransactionService } from '../../services/venta/venta.service';
+import { ICreateTransactionProps, TransactionService } from '../../services/transaction/transaction.service';
 import { CustomJwtPayload } from '../../utils/jwt';
 import mongoose from 'mongoose';
 
@@ -21,9 +21,9 @@ export class TransactionController {
     }
   }
 
-  async getBySucursalId(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getVentasBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const ventas = await this.service.getVentasBySucursal(req.params.id);
+      const ventas = await this.service.findByTypeAndBranch(req.params.id, "VENTA");
       res.status(200).json(ventas);
     } catch (error) {
       console.log(error.message);
@@ -31,9 +31,21 @@ export class TransactionController {
       next(error);
     }
   }
-  async getVentaById(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+  async getComprasBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const venta = await this.service.getVentaById(req.params.id);
+      const compras = await this.service.findByTypeAndBranch(req.params.id, "COMPRA");
+      res.status(200).json(compras);
+    } catch (error) {
+      console.log(error.message);
+      
+      next(error);
+    }
+  }
+
+  async getTransactionById(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const venta = await this.service.getTransactionById(req.params.id);
       res.status(200).json(venta);
     } catch (error) {
       next(error);

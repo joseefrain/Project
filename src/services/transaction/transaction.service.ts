@@ -1,9 +1,9 @@
 import { injectable, inject } from 'tsyringe';
-import { TransactionRepository } from '../../repositories/venta/venta.repository';
+import { TransactionRepository } from '../../repositories/transaction/transaction.repository';
 import mongoose, { Types } from 'mongoose';
-import { ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITrasaccionProducto, TypeTransaction } from '../../models/Ventas/Venta.model';
-import { ITipoDescuento } from '../../models/Ventas/VentaDescuentosAplicados.model';
-import { IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
+import { ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITrasaccionProducto, TypeTransaction } from '../../models/transaction/Transaction.model';
+import { ITipoDescuento } from '../../models/transaction/TransactionDescuentosAplicados.model';
+import { IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { IProducto } from '../../models/inventario/Producto.model';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { IUser } from '../../models/usuarios/User.model';
@@ -11,10 +11,10 @@ import { CustomJwtPayload } from '../../utils/jwt';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { InventoryManagementService } from '../traslado/InventoryManagement.service';
 import { IAddQuantity, IInit, ISubtractQuantity, tipoMovimientoInventario } from '../../interface/IInventario';
-import { IDescuento, ITipoDescuentoEntidad } from '../../models/Ventas/Descuento.model';
+import { IDescuento, ITipoDescuentoEntidad } from '../../models/transaction/Descuento.model';
 import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
-import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
-import { IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model'; 
+import { DescuentoRepository } from '../../repositories/transaction/descuento.repository';
+import { IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
 import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
 import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
@@ -97,6 +97,8 @@ export class TransactionService {
         }
 
         let newdDetalleVenta = await this.repository.createDetalleVenta(detalleVenta);
+
+        (newSale.transactionDetails as mongoose.Types.ObjectId[]).push(newdDetalleVenta._id as mongoose.Types.ObjectId);
         
         let descuentoElement = element.discount;
 
@@ -179,6 +181,8 @@ export class TransactionService {
         data: ventaActualizar,   
       }
 
+      await newSale.save();
+
       await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!);
 
       if (newSale.paymentMethod === 'credit') {
@@ -226,20 +230,14 @@ export class TransactionService {
       throw new Error(error.message);
     }
   }
-  async getVentasBySucursal(sucursalId: string): Promise<ITransaccionCreate[]> {
+  async findByTypeAndBranch(sucursalId: string, type: TypeTransaction): Promise<ITransaccionCreate[]> {
     // Obtener todas las ventas de la sucursal especificada
-    const ventas = await this.repository.findAllVentaBySucursalId(sucursalId);
-    let ventasDto: ITransaccionCreate[] = [];
+    const transaccion = await this.repository.findByTypeAndBranch(sucursalId, type);
+    let transactionDto: ITransaccionCreate[] = await this.mapperDataAll(transaccion);
   
-    // Iterar sobre cada venta y obtener los detalles de venta
-    for (const venta of ventas) {
-      const detalleVenta = await this.repository.findAllDetalleVentaByVentaId((venta._id as Types.ObjectId).toString());
-      const ventaDto = (await this.mapperData(venta, detalleVenta) as ITransaccionCreate);
-      ventasDto.push(ventaDto);
-    }
-  
-    return ventasDto;
+    return transactionDto;
   }
+
   async findAllVentaBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITransaccionCreate[]> {
     const ventas = await this.repository.findAllVentaBySucursalIdAndUserId(sucursalId, userId);
 
@@ -259,8 +257,8 @@ export class TransactionService {
     return this.repository.findAllVentaBySucursalIdAndUserId(sucursalId, userId);
   }
 
-  async getVentaById(id: string): Promise<ITransaccionCreate | null> {
-    let venta = (await this.repository.findVentaById(id) as ITransaccion);
+  async getTransactionById(id: string): Promise<ITransaccionCreate | null> {
+    let venta = (await this.repository.findTransaccionById(id) as ITransaccion);
 
     let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
 
@@ -269,7 +267,7 @@ export class TransactionService {
     return ventaDto;
   }
 
- async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionCreate | null> {
+ async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionCreate> {
     let products: ITrasaccionProducto[] = [];
 
     for await (const detalle of detalleVenta) {
@@ -322,6 +320,15 @@ export class TransactionService {
     }
 
     return ventaDto;
+  }
+
+  async mapperDataAll(ventas: ITransaccion[]): Promise<ITransaccionCreate[]> {
+
+    const results = await Promise.all(
+      ventas.map(venta => this.mapperData(venta, venta.transactionDetails as IDetalleTransaccion[]))
+    );
+  
+    return results;
   }
 
   async getAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {

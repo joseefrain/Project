@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { ISucursal, Sucursal } from '../sucursales/Sucursal.model';
 import { Entity, IEntity } from '../entity/Entity.model';
-import { ITransaccion, Transaccion } from '../Ventas/Venta.model';
+import { ITransaccion, Transaccion } from '../transaction/Transaction.model';
 
 type TypeCredito = 'VENTA' | 'COMPRA';
 export type ModalidadCredito = 'PLAZO' | 'PAGO';

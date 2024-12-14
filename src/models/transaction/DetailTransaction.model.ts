@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ITransaccion, Transaccion } from './Venta.model';
+import { ITransaccion, Transaccion } from './Transaction.model';
 import { IProducto } from '../inventario/Producto.model';
 import { ITipoDescuentoEntidad } from './Descuento.model';
 

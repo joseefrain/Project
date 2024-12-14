@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
-import { Descuento, IDescuento, IDescuentoCreate, IListDescuentoResponse} from '../../models/Ventas/Descuento.model';
-import { DescuentoGrupo, IDescuentoGrupo } from '../../models/Ventas/DescuentoGrupo.model';
-import { DescuentosProductos, IDescuentosProductos } from '../../models/Ventas/DescuentosProductos.model';
+import { Descuento, IDescuento, IDescuentoCreate, IListDescuentoResponse} from '../../models/transaction/Descuento.model';
+import { DescuentoGrupo, IDescuentoGrupo } from '../../models/transaction/DescuentoGrupo.model';
+import { DescuentosProductos, IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model';
 import mongoose, { mongo } from 'mongoose';
 
 @injectable()

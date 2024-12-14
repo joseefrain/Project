@@ -1,8 +1,8 @@
 import { injectable } from 'tsyringe';
-import { ITransaccion, Transaccion } from '../../models/Ventas/Venta.model';
+import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
 import mongoose, { mongo } from 'mongoose';
-import { DetalleTransaccion, IDetalleTransaccion } from '../../models/Ventas/DetalleVenta.model';
-import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/Ventas/VentaDescuentosAplicados.model';
+import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
+import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 
 @injectable()
 export class TransactionRepository {
@@ -56,24 +56,31 @@ export class TransactionRepository {
 
     return ventaDescuentosAplicados;
   }
-  async findAllVentaBySucursalId(sucursalId: string): Promise<ITransaccion[]> {
-    const venta = await this.model.find({ sucursalId: sucursalId }).populate("usuarioId");
+  async findByTypeAndBranch(sucursalId: string, type: TypeTransaction): Promise<ITransaccion[]> {
+    const venta = await this.model.find({ sucursalId: sucursalId, tipoTransaccion: type }).populate([{
+      path: 'usuarioId',
+    }, {
+      path: 'transactionDetails',
+      populate: {
+        path: 'productoId',
+      },
+    }]);
 
     return venta;
   }
   async findAllVentaBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITransaccion[]> {
-    const venta = await this.model.find({ sucursalId: sucursalId, usuarioId: userId });
+    const venta = await this.model.find({ sucursalId: sucursalId, usuarioId: userId, tipoTransaccion: "VENTA" });
 
     return venta;
   }
-  async findVentaById(id: string): Promise<ITransaccion | null> {
-    const venta = await this.model.findById(id).populate("usuarioId");
+  async findTransaccionById(id: string): Promise<ITransaccion | null> {
+    const transaccion = await this.model.findById(id).populate("usuarioId");
 
-    if (!venta) {
+    if (!transaccion) {
       return null;
     }
 
-    return venta;
+    return transaccion;
   }
   async update(id: string, data: Partial<ITransaccion>, ): Promise<ITransaccion | null> {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();

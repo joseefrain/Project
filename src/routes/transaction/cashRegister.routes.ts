@@ -1,4 +1,4 @@
-import { CashRegisterController } from '../../controllers/venta/CashRegister.controller';
+import { CashRegisterController } from '../../controllers/transaction/CashRegister.controller';
 import { container } from 'tsyringe';
 import { authMiddleware } from '../../middlewares/authMiddleware';
 

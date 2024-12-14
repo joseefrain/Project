@@ -54,6 +54,6 @@ const transaccionDescuentosAplicadosSchema = new Schema<ITransaccionDescuentosAp
 });
 
 export const TransaccionDescuentosAplicados = mongoose.model<ITransaccionDescuentosAplicados>(
-  'VentaDescuentosAplicados',
+  'TransaccionDescuentosAplicados',
   transaccionDescuentosAplicadosSchema
 );

@@ -1,6 +1,6 @@
 
 import 'reflect-metadata';
-import { TransactionService } from "../../services/venta/venta.service";
+import { TransactionService } from "../../services/transaction/transaction.service";
 import { redisConfig } from "../../config/redis";
 import { Queue } from "./module/queue";
 import { container } from "tsyringe";

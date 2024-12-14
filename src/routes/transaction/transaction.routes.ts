@@ -1,4 +1,4 @@
-import { TransactionController } from '../../controllers/venta/Venta.controller';
+import { TransactionController } from '../../controllers/transaction/Transaction.controller';
 import { container } from 'tsyringe';
 import { authMiddleware } from '../../middlewares/authMiddleware';
 
@@ -18,17 +18,17 @@ router.post(
 router.get(
   '/:id',
   authMiddleware,
-  transactionController.getVentaById.bind(transactionController)
+  transactionController.getTransactionById.bind(transactionController)
 );
 
 router.get(
-  '/:id/branch',
+  '/venta/:id/branch',
   authMiddleware,
-  transactionController.getBySucursalId.bind(transactionController)
+  transactionController.getVentasBySucursal.bind(transactionController)
 );
 
 router.get(
-  '/:id/branch/user',
+  '/venta/:id/branch/user',
   authMiddleware,
   transactionController.findAllVentaBySucursalIdAndUserId.bind(transactionController)
 );

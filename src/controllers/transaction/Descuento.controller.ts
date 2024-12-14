@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
-import { DescuentoService } from '../../services/venta/descuento.service';
+import { DescuentoService } from '../../services/transaction/descuento.service';
 
 @injectable()
 export class DescuentoController {

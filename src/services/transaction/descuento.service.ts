@@ -3,8 +3,8 @@ import {
   IDescuento,
   IDescuentoCreate,
   IListDescuentoResponse,
-} from '../../models/Ventas/Descuento.model';
-import { DescuentoRepository } from '../../repositories/venta/descuento.repository';
+} from '../../models/transaction/Descuento.model';
+import { DescuentoRepository } from '../../repositories/transaction/descuento.repository';
 import mongoose from 'mongoose';
 
 @injectable()

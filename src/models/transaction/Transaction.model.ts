@@ -4,6 +4,7 @@ import { ISucursal } from '../sucursales/Sucursal.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
 import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
+import { IDetalleTransaccion } from './DetailTransaction.model';
 
 export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA';
 type TypePaymentMethod = 'cash' | 'credit';
@@ -20,6 +21,7 @@ export interface ITransaccion extends Document {
   tipoTransaccion: TypeTransaction;
   entidadId: mongoose.Types.ObjectId | IEntity | null;
   paymentMethod: TypePaymentMethod;
+  transactionDetails: mongoose.Types.ObjectId[] | IDetalleTransaccion[];
 }
 
 export interface ITrasaccionProducto {
@@ -103,6 +105,15 @@ const transaccionSchema: Schema = new Schema(
     entidadId: {
       type: Schema.Types.ObjectId,
       ref: 'Entity',
+      required: true,
+    },
+    transactionDetails: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'DetalleTransaccion',
+        },
+      ],
       required: true,
     },
   },

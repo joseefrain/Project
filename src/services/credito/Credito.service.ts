@@ -5,8 +5,8 @@ import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
-import { TransactionRepository } from "../../repositories/venta/venta.repository";
-import { ITransaccion } from "../../models/Ventas/Venta.model";
+import { TransactionRepository } from "../../repositories/transaction/transaction.repository";
+import { ITransaccion } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
@@ -196,7 +196,7 @@ export class CreditoService {
         }
 
       } else {
-        let venta = (await this.ventaRepository.findVentaById(credito.transaccionId.toString()) as ITransaccion);
+        let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
 
         let montoCredito = new mongoose.Types.Decimal128(`0`);
 
@@ -303,7 +303,7 @@ export class CreditoService {
       // Verificar si todas las cuotas han sido pagadas
       const cuotasPendientes = credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE');
       if (cuotasPendientes.length === 0) {
-        let venta = (await this.ventaRepository.findVentaById(credito.transaccionId.toString()) as ITransaccion);
+        let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
 
         let montoCredito = new mongoose.Types.Decimal128(`0`);
 
