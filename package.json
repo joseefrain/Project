@@ -16,9 +16,6 @@
     "format": "prettier --write .",
     "serve:dev": "npm run build && npm run start:dev"
   },
-  "engines": {
-    "node": "18"
-  },
   "dependencies": {
     "@bull-board/api": "^6.3.3",
     "@bull-board/express": "^6.3.3",
