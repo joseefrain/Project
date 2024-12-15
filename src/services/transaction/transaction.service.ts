@@ -67,7 +67,7 @@ export class TransactionService {
         descuento: new mongoose.Types.Decimal128(venta.discount?.toString()! || "0"),
         deleted_at: null,
         fechaRegistro: new Date(),
-        tipoTransaccion: 'VENTA' as TypeTransaction,
+        tipoTransaccion: data.venta.tipoTransaccion,
         paymentMethod: venta.paymentMethod,
         entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
         estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction
