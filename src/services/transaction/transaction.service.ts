@@ -19,7 +19,7 @@ import { CashRegisterService } from '../utils/cashRegister.service';
 import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
 import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
-import { ResumenCajaDiarioRepository } from 'src/repositories/caja/DailyCashSummary.repository';
+import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
