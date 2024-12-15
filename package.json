@@ -11,7 +11,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "start:dev": "node dist/index.js",
+    "start:dev": "node lib/index.js",
     "lint": "eslint .",
     "format": "prettier --write .",
     "serve:dev": "npm run build && npm run start:dev"
