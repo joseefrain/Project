@@ -33,6 +33,12 @@ router.get(
   transactionController.findAllVentaBySucursalIdAndUserId.bind(transactionController)
 );
 
+router.get(
+  '/compra/:id/branch',
+  authMiddleware,
+  transactionController.getComprasBySucursal.bind(transactionController)
+);
+
 // router.get('/', authMiddleware, ventaController.getAll.bind(ventaController));
 // router.get(
 //   '/:id/branch',
