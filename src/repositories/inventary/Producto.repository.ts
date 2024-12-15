@@ -99,6 +99,7 @@ export class ProductoRepository {
         create_at: new Date(),
         update_at: new Date(),
         puntoReCompra: data.puntoReCompra!,
+        id: inventarioSucursal._id as mongoose.Types.ObjectId,
       };
 
       return productoCreate;

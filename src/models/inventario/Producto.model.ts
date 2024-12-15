@@ -65,6 +65,7 @@ export interface IProductCreate {
   create_at: Date;
   update_at: Date;
   puntoReCompra: number;
+  id?: mongoose.Types.ObjectId;
 }
 
 const productoSchema: Schema = new Schema(
