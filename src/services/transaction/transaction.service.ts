@@ -183,7 +183,10 @@ export class TransactionService {
 
       await newSale.save();
 
-      await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!);
+      if (data.venta.paymentMethod === 'cash') {
+        await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
+      }
+
 
       if (newSale.paymentMethod === 'credit') {
         let credito:Partial<ICredito> = {
