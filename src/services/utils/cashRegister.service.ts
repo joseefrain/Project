@@ -104,8 +104,6 @@ export class CashRegisterService {
 
     let caja = (await this.repository.actualizarMontoEsperado(dataAcualizacion) as ICaja);
 
-    await this.resumenRepository.addTransactionDailySummary(data);
-
     let movimiento = {
       tipoMovimiento: data.tipoTransaccion,
       monto: monto,

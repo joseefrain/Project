@@ -137,6 +137,7 @@ export class ResumenCajaDiarioRepository {
 
         return resumenDiario;
       }
+      
       let totalSale = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : +Number(0);
       let totalPurchase = tipoTransaccion === 'COMPRA' ? +Number(totalIncrement) : +Number(0);
       let montoFinalSistema = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : -Number(totalIncrement);

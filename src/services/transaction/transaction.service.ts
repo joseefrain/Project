@@ -19,6 +19,7 @@ import { CashRegisterService } from '../utils/cashRegister.service';
 import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
 import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
+import { ResumenCajaDiarioRepository } from 'src/repositories/caja/DailyCashSummary.repository';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -33,6 +34,7 @@ export class TransactionService {
     @inject(DescuentoRepository) private descuentoRepository: DescuentoRepository,
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
     @inject(CreditoService) private creditoService: CreditoService,
+    @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository
   ) {}
 
   async addTransactionToQueue(data: ICreateTransactionProps) {
@@ -187,6 +189,7 @@ export class TransactionService {
         await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
       }
 
+      await this.resumenRepository.addTransactionDailySummary(datosActualizar.data);
 
       if (newSale.paymentMethod === 'credit') {
         let credito:Partial<ICredito> = {
