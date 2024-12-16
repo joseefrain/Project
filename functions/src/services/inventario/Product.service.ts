@@ -3,13 +3,11 @@ import {
   IProducto,
   IProductCreate,
   IBranchProductsAll,
-  IProductShortage,
   IProductInTransit,
 } from '../../models/inventario/Producto.model';
 import { ProductoRepository } from '../../repositories/inventary/Producto.repository';
 import { TrasladoRepository } from '../../repositories/traslado/traslado.repository';
 import mongoose from 'mongoose';
-import { IDetalleTraslado } from '../../models/traslados/DetalleTraslado.model';
 import { InventarioSucursalRepository } from '../../repositories/inventary/inventarioSucursal.repository';
 import { IInventarioSucursal, IInventarioSucursalUpdate } from '../../models/inventario/InventarioSucursal.model';
 import { ITraslado } from '../../models/traslados/Traslado.model';

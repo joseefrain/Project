@@ -29,4 +29,15 @@ export class CashRegisterController {
       next(error);
     }
   }
+
+  async openCashRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+
+      const data = req.body;
+      const caja = await this.service.abrirCaja(data);
+      res.status(200).json(caja);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

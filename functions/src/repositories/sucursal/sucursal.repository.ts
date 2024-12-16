@@ -2,14 +2,12 @@ import { injectable } from 'tsyringe';
 import {
   IBranchProducts,
   IProducto,
-  IProductShortage,
   Producto,
 } from '../../models/inventario/Producto.model';
 import { Sucursal, ISucursal } from '../../models/sucursales/Sucursal.model';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
-import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
-import { IGrupoInventario } from '../../models/inventario/GrupoInventario.model';
+import { ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { IUser, User } from '../../models/usuarios/User.model';
 
 @injectable()
@@ -86,6 +84,7 @@ export class SucursalRepository {
             create_at: producto.create_at!,
             update_at: producto.update_at!,
             puntoReCompra: inventarioSucursal.puntoReCompra,
+            barCode: producto.barCode,
           });
         }
       }

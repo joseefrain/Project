@@ -22,5 +22,11 @@ router.get(
   cashRegisterController.getById.bind(cashRegisterController)
 );
 
+router.post(
+  '/',
+  authMiddleware,
+  cashRegisterController.openCashRegister.bind(cashRegisterController)
+);
+
 
 export default router;

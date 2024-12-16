@@ -100,6 +100,7 @@ export class ProductoRepository {
         update_at: new Date(),
         puntoReCompra: data.puntoReCompra!,
         id: inventarioSucursal._id as mongoose.Types.ObjectId,
+        barCode: data.barCode!,
       };
 
       return productoCreate;
@@ -313,6 +314,7 @@ async removeDuplicateInventario(): Promise<void> {
             update_at: producto.update_at!,
             nombreSucursal: sucursalId.nombre,
             puntoReCompra: inventarioSucursal.puntoReCompra,
+            barCode: producto.barCode,
           });
         }
       }
