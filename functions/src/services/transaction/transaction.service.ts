@@ -167,7 +167,8 @@ export class TransactionService {
             quantity: element.quantity,
             inventarioSucursalId: new mongoose.mongo.ObjectId(element.inventarioSucursalId) ,
             isNoSave:true,
-            tipoMovimiento: data.venta.tipoTransaccion === 'VENTA' ? tipoMovimientoInventario.VENTA : tipoMovimientoInventario.COMPRA
+            tipoMovimiento: data.venta.tipoTransaccion === 'VENTA' ? tipoMovimientoInventario.VENTA : tipoMovimientoInventario.COMPRA,
+            cost: element.costoUnitario
           };
   
           await this.inventoryManagementService.addQuantity(dataAddQuantity)
@@ -307,7 +308,8 @@ export class TransactionService {
         ventaId: (venta._id as mongoose.Types.ObjectId).toString(),
         inventarioSucursalId: "",
         groupId: "",
-        discount: descuento
+        discount: descuento,
+        costoUnitario: 0
       }
    
       products.push(producto);

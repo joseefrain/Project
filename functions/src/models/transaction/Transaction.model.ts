@@ -32,6 +32,7 @@ export interface ITrasaccionProducto {
   productName: string;
   quantity: number;
   price: number;
+  costoUnitario?: number;
   inventarioSucursalId: string;
   discount: null | ITransaccionDescuento;
 }

@@ -4,6 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
 import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, tipoMovimientoInventario } from '../../interface/IInventario';
+import { dividirDecimal128, multiplicarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
 
 @injectable()
 export class InventoryManagementService implements IManageHerramientaModel {
@@ -76,7 +77,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
     return inventarioSucursal;
   }
 
-  async addQuantity({ quantity, tipoMovimiento ,inventarioSucursalId , inventarioSucursal , isNoSave = false }: IAddQuantity): Promise<void> {
+  async addQuantity({ quantity, tipoMovimiento ,inventarioSucursalId , inventarioSucursal , isNoSave = false, cost = 0 }: IAddQuantity): Promise<void> {
 
     let inventarioSucursalReal:IInventarioSucursal
 
@@ -91,7 +92,29 @@ export class InventoryManagementService implements IManageHerramientaModel {
           (inventarioSucursal._id as mongoose.Types.ObjectId).toString() ===
           inventarioSucursalId.toString()
       );
-      inventarioSucursalReal = inventarioSucursalWrap as IInventarioSucursal
+      inventarioSucursalReal = inventarioSucursalWrap as IInventarioSucursal;
+
+      if (!inventarioSucursalReal)
+        throw new Error('Producto no encontrado en la sucursal');
+
+      let costoUnitario = new mongoose.Types.Decimal128(cost.toString());
+      let costoInventario = inventarioSucursalReal.costoUnitario;
+      let cantidadEnInventario = new mongoose.Types.Decimal128(inventarioSucursalReal.stock.toString());
+  
+      if (costoInventario !== costoUnitario) {
+        let costTotalProductoEnInventario = multiplicarDecimal128(costoInventario, cantidadEnInventario);
+        let costoUnitarioTotal = multiplicarDecimal128(costoUnitario, new mongoose.Types.Decimal128(quantity.toString()));
+        let costoTotal = sumarDecimal128(costTotalProductoEnInventario, costoUnitarioTotal);
+  
+        let cantidadTotal = inventarioSucursalReal.stock + quantity;
+        let cantidadTotal128 = new mongoose.Types.Decimal128(cantidadTotal.toString());
+  
+        let costoReal = dividirDecimal128(costoTotal, cantidadTotal128);
+  
+        inventarioSucursalReal.costoUnitario = costoReal;
+        
+      }
+
     } else {
       inventarioSucursalReal = inventarioSucursal
     }

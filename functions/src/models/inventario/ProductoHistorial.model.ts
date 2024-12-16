@@ -1,10 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { IProducto } from './Producto.model';
 import { IUser } from '../usuarios/User.model';
+import { IInventarioSucursal } from './InventarioSucursal.model';
 
 export interface IProductoHistorial extends Document {
-  productoId: mongoose.Types.ObjectId | IProducto;
-  precio: number;
+  inventarioSucursalId: mongoose.Types.ObjectId | IInventarioSucursal;
+  costoUnitario: mongoose.Types.Decimal128;
   fechaActualizacion: Date;
   usuarioId: mongoose.Types.ObjectId | IUser;
   deleted_at: Date | null;
@@ -17,7 +17,7 @@ const productoHistorialSchema: Schema = new Schema(
       ref: 'Producto',
       required: true,
     },
-    precio: { type: Number, required: true },
+    costoUnitario: { type: Schema.Types.Decimal128, required: true },
     fechaActualizacion: { type: Date, required: true },
     usuarioId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     deleted_at: { type: Date, default: null },

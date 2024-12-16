@@ -68,6 +68,7 @@ export interface IAddQuantity {
   inventarioSucursal?: IInventarioSucursal;
   isNoSave?: boolean;
   tipoMovimiento:TipoMovimientoInventario;
+  cost?:number;
 }
 
 export interface ICreateInventarioSucursal {
