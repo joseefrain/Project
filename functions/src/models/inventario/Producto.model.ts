@@ -23,6 +23,7 @@ export interface IBranchProducts {
   sucursalId: mongoose.Types.ObjectId;
   inventarioSucursalId: mongoose.Types.ObjectId;
   barCode: string;
+  costoUnitario: mongoose.Types.Decimal128;
   create_at: Date;
   update_at: Date;
 }
@@ -36,6 +37,7 @@ export interface IProductShortage {
   deleted_at: Date | null;
   id: mongoose.Types.ObjectId;
   barCode: string;
+  costoUnitario: mongoose.Types.Decimal128;
   create_at: Date;
   update_at: Date;
 }
@@ -69,6 +71,7 @@ export interface IProductCreate {
   update_at: Date;
   puntoReCompra: number;
   barCode: string;
+  costoUnitario: mongoose.Types.Decimal128;
   id?: mongoose.Types.ObjectId;
 }
 

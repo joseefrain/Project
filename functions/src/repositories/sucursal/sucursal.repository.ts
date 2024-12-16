@@ -85,6 +85,7 @@ export class SucursalRepository {
             update_at: producto.update_at!,
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode,
+            costoUnitario: inventarioSucursal.costoUnitario
           });
         }
       }

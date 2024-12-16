@@ -593,6 +593,7 @@ export class TrasladoService {
         deleted_at: null,
         precio: model.precio,
         puntoReCompra: model.puntoReCompra,
+        costoUnitario: inventarioSucursalEnvia.costoUnitario
       });
 
       let dataHandle:IHandleStockProductBranch = {

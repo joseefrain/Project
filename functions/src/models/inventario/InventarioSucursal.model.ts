@@ -10,6 +10,7 @@ export interface IInventarioSucursal extends Document {
   ultimo_movimiento: Date;
   deleted_at: Date | null;
   puntoReCompra: number;
+  costoUnitario: mongoose.Types.Decimal128;
 }
 
 export type IInventarioSucursalUpdate = Omit<IInventarioSucursal, 'deleted_at' | 'productoId' | 'sucursalId' | 'ultimo_movimiento'>;
@@ -28,6 +29,7 @@ const inventarioSucursalSchema: Schema = new Schema(
     },
     stock: { type: Number, required: true },
     precio: { type: Schema.Types.Decimal128, required: true },
+    costoUnitario: { type: Schema.Types.Decimal128, required: true },
     ultimo_movimiento: { type: Date, required: true },
     puntoReCompra: { type: Number, required: true },
     deleted_at: { type: Date, default: null },

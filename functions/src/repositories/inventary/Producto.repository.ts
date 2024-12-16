@@ -68,6 +68,7 @@ export class ProductoRepository {
         ultimo_movimiento: new Date(),
         precio: data.precio,
         puntoReCompra: data.puntoReCompra,
+        costoUnitario: data.costoUnitario
       });
 
 
@@ -101,6 +102,7 @@ export class ProductoRepository {
         puntoReCompra: data.puntoReCompra!,
         id: inventarioSucursal._id as mongoose.Types.ObjectId,
         barCode: data.barCode!,
+        costoUnitario: data.costoUnitario!
       };
 
       return productoCreate;
@@ -315,6 +317,7 @@ async removeDuplicateInventario(): Promise<void> {
             nombreSucursal: sucursalId.nombre,
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode,
+            costoUnitario: inventarioSucursal.costoUnitario
           });
         }
       }
