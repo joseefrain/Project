@@ -209,6 +209,7 @@ export class CreditoService {
           (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
           (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
         } else if (credito.tipoCredito === 'COMPRA') {
+          (entidad.state as IClientState).advancesDelivered = sumarDecimal128((entidad.state as IClientState).advancesDelivered, montoPago128);
           (entidad.state as IClientState).amountPayable = restarDecimal128((entidad.state as IClientState).amountPayable, montoCredito);
           (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
         }
@@ -317,6 +318,7 @@ export class CreditoService {
           (entidad.state as IClientState).amountReceivable = restarDecimal128((entidad.state as IClientState).amountReceivable, montoCredito);
           (entidad.state as IClientState).advancesReceipts = restarDecimal128((entidad.state as IClientState).advancesReceipts, montoCredito);
         } else if (credito.tipoCredito === 'COMPRA') {
+          (entidad.state as IClientState).advancesDelivered = sumarDecimal128((entidad.state as IClientState).advancesDelivered, montoPago128);
           (entidad.state as IClientState).amountPayable = restarDecimal128((entidad.state as IClientState).amountPayable, montoCredito);
           (entidad.state as IClientState).advancesDelivered = restarDecimal128((entidad.state as IClientState).advancesDelivered, montoCredito);
         }
