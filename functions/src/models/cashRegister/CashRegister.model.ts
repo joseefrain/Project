@@ -1,17 +1,43 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
 import { ISucursal } from '../sucursales/Sucursal.model';
-import { IUser } from '../usuarios/User.model';
+import { IUser, User } from '../usuarios/User.model';
+
+export type stateCashRegister = 'ABIERTA' | 'CERRADA';
+export interface ICajaHistorico {
+  fechaApertura: Date;
+  fechaCierre: Date;
+  montoInicial: mongoose.Types.Decimal128;
+  montoFinalDeclarado: mongoose.Types.Decimal128;
+  diferencia: mongoose.Types.Decimal128;
+  montoEsperado: mongoose.Types.Decimal128;
+  usuarioAperturaId: mongoose.Types.ObjectId | IUser;
+}
+
+const cajaHistoricoSchema: Schema<ICajaHistorico> = new Schema(
+  {
+    fechaApertura: { type: Date, required: true },
+    fechaCierre: { type: Date, required: true },
+    montoInicial: { type: mongoose.Types.Decimal128, required: true },
+    montoFinalDeclarado: { type: mongoose.Types.Decimal128, required: true },
+    diferencia: { type: mongoose.Types.Decimal128, required: true },
+    montoEsperado: { type: mongoose.Types.Decimal128, required: true },
+    usuarioAperturaId: { type: Schema.Types.ObjectId, ref: User, required: true },
+  },
+  { _id: false }
+);
 
 export interface ICaja extends Document {
   sucursalId: mongoose.Types.ObjectId | ISucursal;
-  usuarioAperturaId: mongoose.Types.ObjectId | IUser;
+  usuarioAperturaId: mongoose.Types.ObjectId | IUser | null;
   montoInicial: mongoose.Types.Decimal128;
   montoEsperado: mongoose.Types.Decimal128;
   montoFinalDeclarado?: mongoose.Types.Decimal128 | null;
   diferencia?: mongoose.Types.Decimal128 | null;
-  fechaApertura: Date;
+  fechaApertura: Date | null;
   fechaCierre?: Date | null;
-  estado: 'abierta' | 'cerrada';
+  estado: stateCashRegister;
+  hasMovementCashier: boolean;
+  historico: ICajaHistorico[];
 }
 
 const cajaSchema: Schema<ICaja> = new Schema({
@@ -52,10 +78,15 @@ const cajaSchema: Schema<ICaja> = new Schema({
   },
   estado: {
     type: String,
-    enum: ['abierta', 'cerrada'],
+    enum: ['ABIERTA', 'CERRADA'],
     required: true,
-    default: 'abierta',
+    default: 'CERRADA',
   },
+  hasMovementCashier: {
+    type: Boolean,
+    default: false,
+  },
+  historico: [{ type: cajaHistoricoSchema, required: true }],
 });
 
 // Exportamos el modelo como `Caja`

@@ -1,6 +1,7 @@
 import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
-import { IAddExpenseDailySummary, IAddIncomeDailySummary, ITransactionCreateCaja } from '../../interface/ICaja';
+import { IAddExpenseDailySummary, IAddIncomeDailySummary } from '../../interface/ICaja';
+import { ITransaccion } from '../../models/transaction/Transaction.model';
 
 export class ResumenCajaDiarioRepository {
   private model: Model<IResumenCajaDiario>;
@@ -83,14 +84,37 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async findByDateAndBranch(branchId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
+  async findByDateAndCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
       const date = new Date();
       date.setHours(0, 0, 0, 0);
       return await this.model.findOne(
-        { fecha: date, sucursalId: branchId },
+        { fecha: date, cajaId: cashierId },
         {} // Objeto de proyección (puede estar vacío si necesitas todos los campos)
       ) as IResumenCajaDiario;
+    } catch (error) {
+      throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
+    }
+  }
+
+  async findTodayResumenByCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
+    try {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      return await this.model.findOne({ cajaId: cashierId, fecha: date }).populate([
+        {
+          path: 'ventas',
+          populate: {
+            path: 'transactionDetails',
+          },
+        },
+        {
+          path: 'compras',
+          populate: {
+            path: 'transactionDetails',
+          },
+        }
+      ])
     } catch (error) {
       throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
     }
@@ -109,13 +133,13 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async addTransactionDailySummary(data: ITransactionCreateCaja, ): Promise<IResumenCajaDiario | null> {
+  async addTransactionDailySummary(transaccion: ITransaccion, sucursalId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const sucursalId = new Types.ObjectId(data.sucursalId);
-      const tipoTransaccion = data.tipoTransaccion;
-      const totalIncrement = new Types.Decimal128(data.total!.toString());
+      const tipoTransaccion = transaccion.tipoTransaccion;
+      const totalIncrement = transaccion.total;
+      const cashierId = transaccion.cajaId as Types.ObjectId;
 
-      let existResumen = await this.findByDateAndBranch(sucursalId);
+      let existResumen = await this.findByDateAndCashier(cashierId);
 
       const fecha = new Date();
       fecha.setHours(0, 0, 0, 0);
@@ -127,10 +151,10 @@ export class ResumenCajaDiarioRepository {
           totalCompras: tipoTransaccion === 'COMPRA' ? totalIncrement : new Types.Decimal128('0'),
           montoFinalSistema: totalIncrement,
           fecha: fecha,
-          cajaId: new Types.ObjectId(data.cajaId),
+          cajaId: cashierId,
           totalIngresos: new Types.Decimal128('0'),
           totalEgresos: new Types.Decimal128('0'),
-          ventas: [ data ],
+          ventas: [ transaccion._id as Types.ObjectId ],
         }
 
         let resumenDiario = await this.create(dataResumen);
@@ -143,7 +167,7 @@ export class ResumenCajaDiarioRepository {
       let montoFinalSistema = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : -Number(totalIncrement);
   
       const resumenHoy = await this.model.findOneAndUpdate(
-        { fecha: fecha, sucursalId: new Types.ObjectId(sucursalId) },
+        { fecha: fecha, sucursalId },
         { $inc: { totalVentas: totalSale, totalCompras: totalPurchase, montoFinalSistema: montoFinalSistema } },
         { new: true, upsert: true } 
       ).exec();
@@ -153,9 +177,9 @@ export class ResumenCajaDiarioRepository {
       }
 
       if (tipoTransaccion === 'VENTA') {
-        resumenHoy.ventas.push(data);
+        (resumenHoy.ventas as Types.ObjectId[]).push(transaccion._id as Types.ObjectId);
       } else if (tipoTransaccion === 'COMPRA') {
-        resumenHoy.compras.push(data);
+        (resumenHoy.compras as Types.ObjectId[]).push(transaccion._id as Types.ObjectId);
       }
 
       await resumenHoy.save();

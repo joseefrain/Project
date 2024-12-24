@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 import { CreditoService } from '../../services/credito/Credito.service';
 import mongoose from 'mongoose';
+import { CustomJwtPayload } from '../../utils/jwt';
 
 @injectable()
 export class CreditoController {
@@ -56,30 +57,22 @@ export class CreditoController {
     }
   }
 
-  async realizarPago(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      let creditoId = new mongoose.Types.ObjectId(req.params.id);
-      const entity = await this.service.realizarPago(creditoId, req.body.monto);
-      res.status(200).json(entity);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async realizarPagoPlazo(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      let creditoId = new mongoose.Types.ObjectId(req.params.id);
-      const entity = await this.service.realizarPagoPlazo(creditoId, req.body.monto);
-      res.status(200).json(entity);
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async handlePagoCredito(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       let montoPago = `${req.body.montoPago}`;
-      const credito = await this.service.handlePagoCredito(req.body.creditoIdStr, montoPago, req.body.modalidadCredito);
+      let userId = (req.user as CustomJwtPayload).id.toString();
+      let creditoId = req.body.creditoIdStr;
+      let modalidadCredito = req.body.modalidadCredito;
+      let cajaId = req.body.cajaId;
+
+      const data = {
+        creditoIdStr: creditoId,
+        montoPago: montoPago,
+        modalidadCredito: modalidadCredito,
+        userId: userId,
+        cajaId: cajaId,
+      }
+      const credito = await this.service.handlePagoCredito(data);
       res.status(200).json(credito);
     } catch (error) {
       next(error);

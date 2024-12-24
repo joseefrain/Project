@@ -10,6 +10,16 @@ import { ITransaccion } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
+import { CashRegisterService } from "../utils/cashRegister.service";
+import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja } from "../../interface/ICaja";
+
+export interface IHandlePagoCreditoProps {
+  creditoIdStr: string;
+  montoPago: string;
+  modalidadCredito: ModalidadCredito;
+  userId: string;
+  cajaId: string;
+}
 
 @injectable()
 export class CreditoService {
@@ -18,6 +28,7 @@ export class CreditoService {
     @inject(MovimientoFinancieroRepository) private MovimientoRepository: MovimientoFinancieroRepository,
     @inject(TransactionRepository) private ventaRepository: TransactionRepository,
     @inject(EntityRepository) private entityRepository: EntityRepository,
+    @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
   ) {}
 
   async createCredito(data: Partial<ICredito>, ): Promise<ICredito> {
@@ -105,24 +116,23 @@ export class CreditoService {
     }
   }
 
-  async handlePagoCredito(creditoIdStr: string, montoPago: string, modalidadCredito: ModalidadCredito): Promise<ICredito> {
+  async handlePagoCredito({ creditoIdStr, montoPago, modalidadCredito, userId, cajaId }: IHandlePagoCreditoProps): Promise<ICredito> {
     let creditoId = new mongoose.Types.ObjectId(creditoIdStr);
 
     if (modalidadCredito === 'PLAZO') {
-      return this.realizarPagoPlazo(creditoId, montoPago);
+      return this.realizarPagoPlazo(creditoId, montoPago, userId, cajaId);
     } else {
-      return this.realizarPago(creditoId, montoPago);
+      return this.realizarPago(creditoId, montoPago, userId, cajaId);
     }
   }
 
-  async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
+  async realizarPago(creditoId: mongoose.Types.ObjectId, montoPago: string, userId: string, cajaId: string): Promise<ICredito> {
 
     try {
 
       if (isNaN(parseFloat(montoPago))) {
         throw new Error("El monto del pago es incorrecto");
       }
-
 
       let montoPago128 = new mongoose.Types.Decimal128(parseFloat(montoPago).toFixed(2));
 
@@ -131,6 +141,8 @@ export class CreditoService {
       if (!credito) {
         throw new Error("Crédito no encontrado");
       }
+
+      let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
 
       let entidad = await this.entityRepository.findById((credito.entidadId as mongoose.Types.ObjectId).toString());
 
@@ -196,8 +208,6 @@ export class CreditoService {
         }
 
       } else {
-        let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
-
         let montoCredito = new mongoose.Types.Decimal128(`0`);
 
         credito.pagosCredito.forEach(pago => {
@@ -231,24 +241,32 @@ export class CreditoService {
         monto: montoPago128,
         creditoId: (credito._id as mongoose.Types.ObjectId)
       }
-
       await this.MovimientoRepository.create(movimiento);
 
+      let datosActualizar:ITransactionCreateCaja = {
+        cajaId: cajaId,
+        monto: Number(montoPago128),
+        cambioCliente: 0,
+        total: Number(montoPago128),
+        tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
+        userId: userId,
+      }
+
+      let datoMovimientoCaja:IActualizarMontoEsperadoByVenta = {
+        data: datosActualizar,
+      }
+
+      await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datoMovimientoCaja!); 
       return credito;
     } catch (error) {
       console.log(error);
-
-      
-      
 
       throw new Error(error.message);
     }
     
   }
 
-  async realizarPagoPlazo(creditoId: mongoose.Types.ObjectId, montoPago: string): Promise<ICredito> {
-    
-
+  async realizarPagoPlazo(creditoId: mongoose.Types.ObjectId, montoPago: string, userId: string, cajaId: string): Promise<ICredito> {
     try {
       
 
@@ -356,8 +374,20 @@ export class CreditoService {
 
       await this.MovimientoRepository.create(movimiento);
 
-      
-      
+      let datosActualizar:ITransactionCreateCaja = {
+        cajaId: cajaId,
+        monto: Number(montoPago128),
+        cambioCliente: 0,
+        total: Number(montoPago128),
+        tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
+        userId: userId,
+      }
+
+      let datoMovimientoCaja:IActualizarMontoEsperadoByVenta = {
+        data: datosActualizar,
+      }
+
+      await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datoMovimientoCaja!); 
 
       return credito;
     } catch (error) {

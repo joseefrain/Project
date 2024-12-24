@@ -2,6 +2,19 @@ import mongoose, { mongo, Types } from "mongoose";
 import { ITransaccionCreate, ITrasaccionProducto, TypeTransaction } from "../models/transaction/Transaction.model";
 
 export interface IOpenCash {
+  usuarioAperturaId: string;
+  montoInicial: number;
+  cajaId:string;
+}
+
+export interface ICloseCash {
+  cajaId: string;
+  montoFinalDeclarado: string;
+  usuarioArqueoId: string;
+  closeWithoutCounting: boolean;
+}
+
+export interface ICreataCashRegister {
   sucursalId: string;
   usuarioAperturaId: string;
   montoInicial: number;
@@ -57,18 +70,12 @@ export interface IAddExpenseDailySummary {
 }
 
 export interface ITransactionCreateCaja {
-  id: string;
-  userId: string;
-  sucursalId: string;
-  products: ITrasaccionProducto[];
-  subtotal: number;
+  cajaId?:string;
   total: number;
-  discount: number;
-  fechaRegistro?: Date;
   monto?:number;
   cambioCliente?:number;
-  cajaId?:string;
   tipoTransaccion: TypeTransaction;
+  userId: string;
 }
 
 export interface IActualizarMontoEsperado {

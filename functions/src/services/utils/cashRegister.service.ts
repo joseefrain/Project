@@ -2,32 +2,35 @@ import { CajaRepository } from '../../repositories/caja/cashRegister.repository'
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { inject, injectable } from 'tsyringe';
 import mongoose, { mongo, Types } from 'mongoose';
-import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
+import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, ICloseCash, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
 import { MovimientoCajaRepository } from '../../repositories/caja/movimientoCaja.repository';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
+import { ArqueoCajaRepository } from '../../repositories/caja/countingCash.repository';
+import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 
 @injectable()
 export class CashRegisterService {
   constructor(@inject(CajaRepository) private repository: CajaRepository,
-  @inject(MovimientoCajaRepository) private movimientoRepository: MovimientoCajaRepository,
-@inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository) {}
+              @inject(MovimientoCajaRepository) private movimientoRepository: MovimientoCajaRepository,
+              @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository,
+              @inject(ArqueoCajaRepository) private arqueoRepository: ArqueoCajaRepository) {}
   
   async abrirCaja(data : IOpenCashService) {
-    let { sucursalId, usuarioAperturaId, montoInicial } = data;
+    let { usuarioAperturaId, montoInicial, cajaId } = data;
 
     try {
       
-      const cajaAbierta = await this.repository.obtenerCajaAbiertaPorSucursal(sucursalId);
-    
-      if (cajaAbierta) return cajaAbierta;
-
       let dataOpenCash = {
-        sucursalId,
         usuarioAperturaId,
         montoInicial,
-        
+        cajaId
       }
+
       let caja = await this.repository.abrirCaja(dataOpenCash);
+
+      if (caja.hasMovementCashier) {
+        return caja;
+      }
 
       let movimiento = {
         cajaId: (caja._id as mongoose.Types.ObjectId),
@@ -37,12 +40,12 @@ export class CashRegisterService {
         fecha: new Date(),
         descripcion: 'Apertura de caja',
       }
+
       await this.movimientoRepository.create(movimiento);
 
       let resumenDiario:IAddIncomeDailySummary = {
         ingreso: montoInicial,
-        
-        sucursalId,
+        sucursalId: (caja.sucursalId as Types.ObjectId).toString(),
         cajaId: (caja._id as Types.ObjectId).toString()
       }  
       await this.resumenRepository.addIncomeDailySummary(resumenDiario);
@@ -56,7 +59,7 @@ export class CashRegisterService {
     }
   }
 
-  async cerrarCaja(cajaId: string, montoFinalDeclarado: string): Promise<ICaja> {
+  async cerrarCaja({ cajaId, usuarioArqueoId, montoFinalDeclarado, closeWithoutCounting }:ICloseCash): Promise<ICaja | IResumenCajaDiario> {
 
     try {
 
@@ -64,11 +67,33 @@ export class CashRegisterService {
 
       if (!caja) throw new Error('Caja no encontrada');
 
-      if (caja.estado !== 'abierta') throw new Error('La caja ya está cerrada');
+      if (caja.estado !== 'ABIERTA') throw new Error('La caja ya está cerrada');
 
-      await this.repository.cerrarCaja(cajaId, montoFinalDeclarado)
+      if (closeWithoutCounting) {
+        caja.estado = 'CERRADA';
+        await caja.save();
+        return caja;
+      }
 
-      return caja;
+      await this.repository.cerrarCaja(caja, montoFinalDeclarado);
+
+      const length = caja.historico.length;
+      let historico = caja.historico[length - 1];
+
+      let arqueoCaja = {
+        cajaId: (caja._id as Types.ObjectId),
+        usuarioArqueoId: new Types.ObjectId(usuarioArqueoId),
+        montoDeclarado: historico.montoFinalDeclarado,
+        montoSistema: historico.montoEsperado,
+        diferencia: historico.diferencia,
+        fechaArqueo: historico.fechaCierre,
+        comentarios: 'Caja cerrada por el usuario'
+      }
+      await this.arqueoRepository.create(arqueoCaja);
+      
+      let resumen = await this.resumenRepository.findTodayResumenByCashier(caja._id as Types.ObjectId);
+
+      return resumen as IResumenCajaDiario;
 
     } catch (error) {
       console.log(error);

@@ -58,6 +58,7 @@ export class TransactionService {
 
       let sucursalId = new mongoose.Types.ObjectId(venta.sucursalId!);
       let usuarioId = new mongoose.Types.ObjectId(venta.userId!);
+      let cajaId = new mongoose.Types.ObjectId(venta.cajaId!);
 
       let listInventarioSucursal:IInventarioSucursal[] = []
 
@@ -72,7 +73,8 @@ export class TransactionService {
         tipoTransaccion: data.venta.tipoTransaccion,
         paymentMethod: venta.paymentMethod,
         entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
-        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction
+        estadoTrasaccion: (venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA') as TypeEstatusTransaction,
+        cajaId: cajaId
       }
 
       const newSale = await this.repository.create(newVenta);
@@ -190,7 +192,7 @@ export class TransactionService {
         await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
       }
 
-      await this.resumenRepository.addTransactionDailySummary(datosActualizar.data);
+      await this.resumenRepository.addTransactionDailySummary(newSale, sucursalId);
 
       if (newSale.paymentMethod === 'credit') {
         let credito:Partial<ICredito> = {

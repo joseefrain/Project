@@ -1,6 +1,5 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
-import { ITransaccionCreate } from '../transaction/Transaction.model';
-import { ITransactionCreateCaja } from '../../interface/ICaja';
+import { ITransaccion, ITransaccionCreate, Transaccion } from '../transaction/Transaction.model';
 
 export interface IResumenCajaDiario extends Document {
   sucursalId: mongoose.Types.ObjectId;
@@ -13,8 +12,8 @@ export interface IResumenCajaDiario extends Document {
   montoFinalSistema: mongoose.Types.Decimal128;
   montoDeclaradoPorUsuario?: mongoose.Types.Decimal128 | null;
   diferencia?: mongoose.Types.Decimal128 | null;
-  ventas: ITransactionCreateCaja[];
-  compras: ITransactionCreateCaja[];
+  ventas: mongoose.Types.ObjectId[] | ITransaccion[];
+  compras: mongoose.Types.ObjectId[] | ITransaccion[];
 }
 
 const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
@@ -62,171 +61,11 @@ const resumenCajaDiarioSchema: Schema<IResumenCajaDiario> = new Schema({
     default: null,
   },
   ventas: {
-    type: [
-      {
-        id: {
-          type: String,
-          required: true,
-        },
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: 'Usuario',
-          required: true,
-        },
-        sucursalId: {
-          type: Schema.Types.ObjectId,
-          ref: 'Sucursal',
-          required: true,
-        },
-        subtotal: {
-          type: Schema.Types.Decimal128,
-          required: true,
-        },
-        total: {
-          type: Schema.Types.Decimal128,
-          required: true,
-        },
-        discount: {
-          type: Schema.Types.Decimal128,
-          default: 0,
-        },
-        fechaRegistro: {
-          type: Date,
-          required: true,
-          default: Date.now,
-        },
-        products: {
-          type: [
-            {
-              ventaId: {
-                type: String,
-              },
-              productId: {
-                type: String,
-                required: true,
-              },
-              groupId: {
-                type: String,
-              },
-              clientType: {
-                type: String,
-                enum: ['Regular', 'Proveedor'],
-                required: true,
-              },
-              productName: {
-                type: String,
-                required: true,
-              },
-              quantity: {
-                type: Number,
-                required: true,
-              },
-              price: {
-                type: Number,
-                required: true,
-              },
-              inventarioSucursalId: {
-                type: String,
-                required: true,
-              },
-              discount: {
-                type: {
-                  id: String,
-                  name: String,
-                  amount: Number,
-                  percentage: Number,
-                  type: String,
-                },
-              },
-            },
-          ],
-        },
-      },
-    ],
+    type: [{ type: mongoose.Types.ObjectId, ref: Transaccion }],
     required: true,
   },
   compras: {
-    type: [
-      {
-        id: {
-          type: String,
-          required: true,
-        },
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: 'Usuario',
-          required: true,
-        },
-        sucursalId: {
-          type: Schema.Types.ObjectId,
-          ref: 'Sucursal',
-          required: true,
-        },
-        subtotal: {
-          type: Schema.Types.Decimal128,
-          required: true,
-        },
-        total: {
-          type: Schema.Types.Decimal128,
-          required: true,
-        },
-        discount: {
-          type: Schema.Types.Decimal128,
-          default: 0,
-        },
-        fechaRegistro: {
-          type: Date,
-          required: true,
-          default: Date.now,
-        },
-        products: {
-          type: [
-            {
-              ventaId: {
-                type: String,
-              },
-              productId: {
-                type: String,
-                required: true,
-              },
-              groupId: {
-                type: String,
-              },
-              clientType: {
-                type: String,
-                enum: ['Regular', 'Proveedor'],
-                required: true,
-              },
-              productName: {
-                type: String,
-                required: true,
-              },
-              quantity: {
-                type: Number,
-                required: true,
-              },
-              price: {
-                type: Number,
-                required: true,
-              },
-              inventarioSucursalId: {
-                type: String,
-                required: true,
-              },
-              discount: {
-                type: {
-                  id: String,
-                  name: String,
-                  amount: Number,
-                  percentage: Number,
-                  type: String,
-                },
-              },
-            },
-          ],
-        },
-      },
-    ],
+    type: [{ type: mongoose.Types.ObjectId, ref: Transaccion }],
     required: true,
   },
 });

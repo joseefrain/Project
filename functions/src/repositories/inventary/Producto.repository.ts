@@ -316,7 +316,7 @@ async removeDuplicateInventario(): Promise<void> {
             update_at: producto.update_at!,
             nombreSucursal: sucursalId.nombre,
             puntoReCompra: inventarioSucursal.puntoReCompra,
-            barCode: producto.barCode,
+            barCode: producto.barCode || "",
             costoUnitario: inventarioSucursal.costoUnitario
           });
         }

@@ -37,7 +37,7 @@ export class UserController {
         if (!cajaId && sucursalId) {
           caja = await this.cashRegisterService.abrirCaja({
             montoInicial: 2000,
-            sucursalId,
+            cajaId,
             usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
           });
 

@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
+import Caja, { ICaja } from "../cashRegister/CashRegister.model"
 import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
 import { IDetalleTransaccion } from './DetailTransaction.model';
@@ -22,6 +23,7 @@ export interface ITransaccion extends Document {
   entidadId: mongoose.Types.ObjectId | IEntity | null;
   paymentMethod: TypePaymentMethod;
   transactionDetails: mongoose.Types.ObjectId[] | IDetalleTransaccion[];
+  cajaId: mongoose.Types.ObjectId | ICaja;
 }
 
 export interface ITrasaccionProducto {
@@ -115,6 +117,11 @@ const transaccionSchema: Schema = new Schema(
           ref: 'DetalleTransaccion',
         },
       ],
+      required: true,
+    },
+    cajaId: {
+      type: Schema.Types.ObjectId,
+      ref: Caja,
       required: true,
     },
   },

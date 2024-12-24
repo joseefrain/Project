@@ -8,7 +8,7 @@ export interface IProducto extends Document {
   deleted_at: Date | null;
   create_at?: Date;
   update_at?: Date;
-  barCode: string;
+  barCode?: string;
 }
 
 export interface IBranchProducts {
@@ -22,7 +22,7 @@ export interface IBranchProducts {
   id: mongoose.Types.ObjectId;
   sucursalId: mongoose.Types.ObjectId;
   inventarioSucursalId: mongoose.Types.ObjectId;
-  barCode: string;
+  barCode?: string;
   costoUnitario: mongoose.Types.Decimal128;
   create_at: Date;
   update_at: Date;
@@ -70,7 +70,7 @@ export interface IProductCreate {
   create_at: Date;
   update_at: Date;
   puntoReCompra: number;
-  barCode: string;
+  barCode?: string;
   costoUnitario: mongoose.Types.Decimal128;
   id?: mongoose.Types.ObjectId;
 }
@@ -81,7 +81,7 @@ const productoSchema: Schema = new Schema(
     descripcion: { type: String },
     monedaId: { type: Schema.Types.ObjectId, ref: 'Moneda', required: true },
     deleted_at: { type: Date, default: null },
-    barCode: { type: String, required: true },
+    barCode: { type: String, required: false, default: null },
   },
   { timestamps: true }
 );
