@@ -29,7 +29,7 @@ export class ProductoService {
     user: CustomJwtPayload
   ): Promise<IProductCreate | IProducto> {
 
-    let isGeneralProduct = user.role === 'root' ? (data.sucursalId! ? false : true) : false;
+    let isGeneralProduct = user.roles === 'root' ? (data.sucursalId! ? false : true) : false;
 
     if (isGeneralProduct) {
       return (await this.repository.createGeneralProducts(data) as IProducto);

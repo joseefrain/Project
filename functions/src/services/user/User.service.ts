@@ -1,7 +1,7 @@
 import { UserRepository } from '../../repositories/user/User.repository';
 import { IResponseLogin, IUser } from '../../models/usuarios/User.model';
 import { generateToken } from '../../utils/jwt';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { injectable, inject } from 'tsyringe';
 
 @injectable()
@@ -20,7 +20,7 @@ export class UserService {
     const token = generateToken({
       id: newUser._id as Types.ObjectId,
       username: newUser.username,
-      role: newUser.role,
+      roles: newUser.roles as mongoose.Types.ObjectId[],
     });
 
     return token;
@@ -46,7 +46,7 @@ export class UserService {
     const token = generateToken({
       id: user._id as Types.ObjectId,
       username: user.username,
-      role: user.role,
+      roles: user.roles as mongoose.Types.ObjectId[],
     });
 
     return { token, user };

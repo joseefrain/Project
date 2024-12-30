@@ -15,6 +15,37 @@ export class RoleController {
     }
   }
 
+  async addSingleRoleToUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const branch = await this.service.addSingleRoleToUser(
+        req.params.userId,
+        req.params.roleId
+      );
+      res.status(200).json(branch);
+    } catch (error) {
+      next(error);
+    }
+  }
+  async addMultipleRolesToUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const branch = await this.service.addMultipleRolesToUser(
+        req.params.userId,
+        req.body.roles
+      );
+      res.status(200).json(branch);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getById(
     req: Request,
     res: Response,

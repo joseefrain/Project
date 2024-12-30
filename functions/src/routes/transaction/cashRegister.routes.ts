@@ -27,6 +27,14 @@ router.post(
   authMiddleware,
   cashRegisterController.openCashRegister.bind(cashRegisterController)
 );
+router.post(
+  '/close',
+  authMiddleware,
+  cashRegisterController.closeCashRegister.bind(cashRegisterController)
+);
+
+router.get('/abiertas/:id', authMiddleware, cashRegisterController.obtenerCajasAbiertaPorSucursal.bind(cashRegisterController));
+router.get('/cerradas/:id', authMiddleware, cashRegisterController.obtenerCajasCerradaPorSucursal.bind(cashRegisterController));
 
 
 export default router;

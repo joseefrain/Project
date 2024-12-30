@@ -84,12 +84,12 @@ export class CajaRepository {
     return await this.cajaModel.findById(cajaId);
   }
 
-  async obtenerCajaAbiertaPorSucursal(sucursalId: string): Promise<ICaja | null> {
-    return await this.cajaModel.findOne({ sucursalId, estado: 'ABIERTA' });
+  async obtenerCajasAbiertaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
+    return await this.cajaModel.find({ sucursalId, estado: 'ABIERTA' });
   }
 
-  async obtenerCajaCerradaPorSucursal(sucursalId: string): Promise<ICaja | null> {
-    return await this.cajaModel.findOne({ sucursalId, estado: 'CERRADA' });
+  async obtenerCajasCerradaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
+    return await this.cajaModel.find({ sucursalId, estado: 'CERRADA' });
   }
 
   // Obtener todas las cajas por sucursal

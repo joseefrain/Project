@@ -28,5 +28,16 @@ router.delete(
   roleController.delete.bind(roleController)
 );
 
+router.post(
+  '/addSingleRoleToUser/:userId/:roleId',
+  authMiddleware,
+  roleController.addSingleRoleToUser.bind(roleController)
+);
+router.post(
+  '/addMultipleRolesToUser/:userId',
+  authMiddleware,
+  roleController.addMultipleRolesToUser.bind(roleController)
+);
+
 
 export default router;

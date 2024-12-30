@@ -23,8 +23,28 @@ export class CashRegisterController {
   async getBySucursalId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = req.params.id;
-      const descuento = await this.service.obtenerCajasPorSucursal(id);
-      res.status(200).json(descuento);
+      const cashiers = await this.service.obtenerCajasPorSucursal(id);
+      res.status(200).json(cashiers);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async obtenerCajasAbiertaPorSucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = req.params.id;
+      const cashiers = await this.service.obtenerCajasAbiertaPorSucursal(id);
+      res.status(200).json(cashiers);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async obtenerCajasCerradaPorSucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = req.params.id;
+      const cashiers = await this.service.obtenerCajasCerradaPorSucursal(id);
+      res.status(200).json(cashiers);
     } catch (error) {
       next(error);
     }
@@ -35,6 +55,16 @@ export class CashRegisterController {
 
       const data = req.body;
       const caja = await this.service.abrirCaja(data);
+      res.status(200).json(caja);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async closeCashRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const data = req.body;
+      const caja = await this.service.cerrarCaja(data);
       res.status(200).json(caja);
     } catch (error) {
       next(error);

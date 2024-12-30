@@ -1,12 +1,13 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { ISucursal } from '../sucursales/Sucursal.model';
+import { IRole, Role } from '../security/Role.model';
 
 // Interfaz para tipar los usuarios
 export interface IUser extends Document {
   username: string;
   password: string;
-  role: string;
+  roles: mongoose.Types.ObjectId[] | IRole[];
   sucursalId: mongoose.Types.ObjectId | ISucursal | null;
   deleted_at: Date | null;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -28,8 +29,8 @@ const UserSchema: Schema<IUser> = new Schema({
     type: String,
     required: true,
   },
-  role: {
-    type: String,
+  roles: {
+    type: [{ type: Schema.Types.ObjectId, ref: Role }],
     required: true,
   },
   sucursalId: { type: Schema.Types.ObjectId, ref: 'Sucursal', default: null },

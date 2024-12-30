@@ -112,6 +112,14 @@ export class CashRegisterService {
     return await this.repository.obtenerCajasPorSucursal(sucursalId);
   }
 
+  async obtenerCajasAbiertaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
+    return await this.repository.obtenerCajasAbiertaPorSucursal(sucursalId);
+  }
+
+  async obtenerCajasCerradaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
+    return await this.repository.obtenerCajasCerradaPorSucursal(sucursalId);
+  }
+
   async actualizarMontoEsperadoByTrasaccion(props:IActualizarMontoEsperadoByVenta): Promise<ICaja | null> {
    
     const { data} = props;

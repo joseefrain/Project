@@ -2,11 +2,15 @@
 import { injectable, inject } from 'tsyringe';
 import { IRole } from '../../models/security/Role.model';
 import { RoleRepository } from '../../repositories/security/RoleRepository';
+import { UserRepository } from '../../repositories/user/User.repository';
+import mongoose, { mongo } from 'mongoose';
+import { IUser } from '../../models/usuarios/User.model';
 
 @injectable()
 export class RoleService {
   constructor(
-    @inject(RoleRepository) private repository: RoleRepository
+    @inject(RoleRepository) private repository: RoleRepository,
+    @inject(UserRepository) private userRepository: UserRepository
   ) {}
 
   async createRole(data: Partial<IRole>): Promise<IRole | null> {
@@ -19,6 +23,41 @@ export class RoleService {
     const newRole = await this.repository.create(data);
 
     return newRole;
+  }
+
+  async addSingleRoleToUser(userId: string, roleId: string): Promise<IUser | null> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error('user not found');
+    }
+
+    const role = await this.repository.findById(roleId);
+    if (!role) {
+      throw new Error('role not found');
+    }
+
+    (user.roles as mongoose.Types.ObjectId[]).push(role._id as mongoose.Types.ObjectId);
+
+    return await this.userRepository.update(userId, user);
+  }
+
+  async addMultipleRolesToUser(userId: string, rolesId: string[]): Promise<IUser | null> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new Error('user not found');
+    }
+
+    const roles = await this.repository.findListByIds(rolesId);
+
+    for (const role of roles) {
+      if (!role) {
+        throw new Error('role not found');
+      }
+
+      (user.roles as mongoose.Types.ObjectId[]).push(role._id as mongoose.Types.ObjectId);
+    }
+
+    return await this.userRepository.update(userId, user);
   }
 
   async getRoleById(id: string): Promise<IRole | null> {

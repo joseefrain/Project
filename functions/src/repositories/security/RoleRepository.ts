@@ -20,6 +20,11 @@ export class RoleRepository {
     return await query.exec();
   }
 
+  async findListByIds(ids: string[]): Promise<IRole[]> {
+    const query = this.model.find({ _id: { $in: ids } });
+    return await query.exec();
+  }
+
   async findByName(name: string): Promise<IRole | null> {
     const query = this.model.findOne({ name });
 

@@ -10,7 +10,7 @@ const jwtOptions: SignOptions = {
 export interface CustomJwtPayload extends JwtPayload {
   id: Types.ObjectId;
   username: string;
-  role: string;
+  roles: Types.ObjectId[];
 }
 
 export const generateToken = (payload: CustomJwtPayload): string => {
