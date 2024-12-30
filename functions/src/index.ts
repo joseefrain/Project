@@ -13,6 +13,7 @@ import cashRegisterRoutes from './routes/transaction/cashRegister.routes';
 import descuentos from './routes/transaction/descuento.routes';
 import transaccionesRoutes from './routes/transaction/transaction.routes';
 import creditoRoutes from './routes/credito/credito.routes';
+import roleRoutes from './routes/security/RoleRouter';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import * as functions from 'firebase-functions/v2';
@@ -69,6 +70,7 @@ app.use('/api/transaccion/descuentos', descuentos);
 app.use('/api/transaccion', transaccionesRoutes);
 app.use('/api/cashRegister', cashRegisterRoutes);
 app.use('/api/credito', creditoRoutes);
+app.use('/api/roles', roleRoutes);
 
 // rutas de administracion de la tienda
 const serverAdapter = new ExpressAdapter();
