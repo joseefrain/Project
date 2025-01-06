@@ -38,6 +38,7 @@ export interface ICaja extends Document {
   estado: stateCashRegister;
   hasMovementCashier: boolean;
   historico: ICajaHistorico[];
+  consecutivo: number;
 }
 
 const cajaSchema: Schema<ICaja> = new Schema({
@@ -46,6 +47,7 @@ const cajaSchema: Schema<ICaja> = new Schema({
     ref: 'Sucursal',
     required: true,
   },
+  consecutivo: { type: Number, required: true },
   usuarioAperturaId: {
     type: Schema.Types.ObjectId,
     ref: 'User',

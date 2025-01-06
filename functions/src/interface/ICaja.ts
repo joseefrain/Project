@@ -18,6 +18,7 @@ export interface ICreataCashRegister {
   sucursalId: string;
   usuarioAperturaId: string;
   montoInicial: number;
+  consecutivo?: number;
 }
 
 export type IOpenCashService = Omit<IOpenCash, 'session'>;

@@ -22,6 +22,8 @@ router.get(
   cashRegisterController.getById.bind(cashRegisterController)
 );
 
+router.post('/create', authMiddleware, cashRegisterController.createCashRegister.bind(cashRegisterController));
+
 router.post(
   '/',
   authMiddleware,

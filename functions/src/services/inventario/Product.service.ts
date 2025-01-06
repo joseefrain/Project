@@ -14,14 +14,15 @@ import { ITraslado } from '../../models/traslados/Traslado.model';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { IProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { CustomJwtPayload } from '../../utils/jwt';
+import { RoleRepository } from '../../repositories/security/RoleRepository';
 
 @injectable()
 export class ProductoService {
   constructor(
     @inject(ProductoRepository) private repository: ProductoRepository,
     @inject(TrasladoRepository) private trasladoRepository: TrasladoRepository,
-    @inject(InventarioSucursalRepository)
-    private inventarioSucursalRepository: InventarioSucursalRepository
+    @inject(RoleRepository) private roleRepository: RoleRepository,
+    @inject(InventarioSucursalRepository) private inventarioSucursalRepository: InventarioSucursalRepository
   ) {}
 
   async createProduct(
@@ -29,9 +30,9 @@ export class ProductoService {
     user: CustomJwtPayload
   ): Promise<IProductCreate | IProducto> {
 
-    let isGeneralProduct = user.roles === 'root' ? (data.sucursalId! ? false : true) : false;
+    let findRoot = await this.roleRepository.findRootRole(user.roles.map((role) => role.toString()));
 
-    if (isGeneralProduct) {
+    if (findRoot) {
       return (await this.repository.createGeneralProducts(data) as IProducto);
     } else {
       return (await this.repository.create(data) as IProductCreate);

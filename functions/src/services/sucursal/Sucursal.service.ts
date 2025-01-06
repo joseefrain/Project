@@ -4,11 +4,14 @@ import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { SucursalRepository } from '../../repositories/sucursal/sucursal.repository';
 import { IBranchProducts } from '../../models/inventario/Producto.model';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
+import mongoose from 'mongoose';
+import { CashRegisterService } from '../utils/cashRegister.service';
 
 @injectable()
 export class SucursalService {
   constructor(
-    @inject(SucursalRepository) private repository: SucursalRepository
+    @inject(SucursalRepository) private repository: SucursalRepository,
+    @inject(CashRegisterService) private cajaService: CashRegisterService
   ) {}
 
   async createSucursal(data: Partial<ISucursal>): Promise<ISucursal> {
@@ -19,6 +22,12 @@ export class SucursalService {
     }
 
     const newBranch = await this.repository.create(data);
+
+    await this.cajaService.createCaja({
+      montoInicial: 0,
+      usuarioAperturaId: '66fa14eb398e62bab6a00318',
+      sucursalId: (newBranch._id as mongoose.Types.ObjectId).toString(),
+    });
 
     return newBranch;
   }

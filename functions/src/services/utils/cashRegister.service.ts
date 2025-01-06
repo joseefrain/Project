@@ -2,7 +2,7 @@ import { CajaRepository } from '../../repositories/caja/cashRegister.repository'
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { inject, injectable } from 'tsyringe';
 import mongoose, { mongo, Types } from 'mongoose';
-import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, ICloseCash, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
+import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, ICloseCash, ICreataCashRegister, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
 import { MovimientoCajaRepository } from '../../repositories/caja/movimientoCaja.repository';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 import { ArqueoCajaRepository } from '../../repositories/caja/countingCash.repository';
@@ -57,6 +57,12 @@ export class CashRegisterService {
 
       throw new Error(error.message);
     }
+  }
+
+  async createCaja({ montoInicial, usuarioAperturaId, sucursalId }: ICreataCashRegister): Promise<ICaja> {
+    const cashiers = await this.repository.obtenerCajasPorSucursal(sucursalId);
+    let consecutivo = cashiers.length + 1;
+    return await this.repository.create({ montoInicial, usuarioAperturaId, sucursalId, consecutivo });
   }
 
   async cerrarCaja({ cajaId, usuarioArqueoId, montoFinalDeclarado, closeWithoutCounting }:ICloseCash): Promise<ICaja | IResumenCajaDiario> {
