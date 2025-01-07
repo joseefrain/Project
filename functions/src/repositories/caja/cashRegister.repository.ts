@@ -30,15 +30,16 @@ export class CajaRepository {
     return await caja.save();
   }
 
-  async create ({ montoInicial, usuarioAperturaId, sucursalId }: ICreataCashRegister): Promise<ICaja> {
+  async create ({ montoInicial, usuarioAperturaId, sucursalId, consecutivo }: ICreataCashRegister): Promise<ICaja> {
     const nuevaCaja = new this.cajaModel({
       fechaApertura: new Date(),
-      estado: 'cerrada',
+      estado: 'CERRADA',
       usuarioAperturaId,
       sucursalId,
       montoInicial,
       montoEsperado: montoInicial,
       hasSubscribers: false,
+      consecutivo
     });
 
     return await nuevaCaja.save();

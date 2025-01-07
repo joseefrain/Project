@@ -142,3 +142,5 @@ typings/
 node_modules/
 *.local
 .vercel
+
+.codegpt
