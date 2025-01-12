@@ -1,6 +1,7 @@
 import * as jwt from 'jsonwebtoken';
 import { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { Types } from 'mongoose'; // Para manejar ObjectId
+import { IRole } from '../models/security/Role.model';
 
 const jwtOptions: SignOptions = {
   expiresIn: process.env.JWT_EXPIRES_IN || '1d',
@@ -10,7 +11,7 @@ const jwtOptions: SignOptions = {
 export interface CustomJwtPayload extends JwtPayload {
   id: Types.ObjectId;
   username: string;
-  roles: Types.ObjectId[];
+  roles: Types.ObjectId[] | IRole[]
 }
 
 export const generateToken = (payload: CustomJwtPayload): string => {

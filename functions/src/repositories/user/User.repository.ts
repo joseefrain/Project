@@ -18,11 +18,7 @@ export class UserRepository {
   async findById(id: string): Promise<IUser | null> {
     const query = this.model.findById(id);
 
-    query.populate({
-      path: 'sucursalId',
-      model: Sucursal,
-      options: { strictPopulate: false },
-    });
+    query.populate(["sucursalId", "roles"]);
 
     return await query.exec();
   }
@@ -30,11 +26,7 @@ export class UserRepository {
   async findByUsername(username: string): Promise<IUser | null> {
     const query = this.model.findOne({ username });
 
-    query.populate({
-      path: 'sucursalId',
-      model: Sucursal,
-      options: { strictPopulate: false },
-    });
+    query.populate(["sucursalId", "roles"]);
 
     return await query.exec();
   }
@@ -44,15 +36,9 @@ export class UserRepository {
     limit: number = 10,
     skip: number = 0
   ): Promise<IUser[]> {
-    const query = this.model.find({ ...filters, deleted_at: null });
+    const users = await this.model.find({ ...filters, deleted_at: null }).populate(["sucursalId", "roles"]);
 
-    query.populate({
-      path: 'sucursalId',
-      model: Sucursal,
-      options: { strictPopulate: false },
-    });
-
-    return await query.limit(limit).skip(skip).exec();
+    return users
   }
 
   async update(id: string, data: Partial<IUser>): Promise<IUser | null> {
