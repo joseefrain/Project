@@ -1,4 +1,3 @@
-import { NIVEL_PERMISO_ENUM } from "./permissionLevels";
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface IPrivileges {
@@ -10,6 +9,7 @@ interface IPrivileges {
 export interface IRole extends Document {
   name: string;
   privileges: IPrivileges[];
+  deleted_at: Date | null;
 }
 
 const RoleSchema:Schema = new mongoose.Schema<IRole>({
@@ -22,6 +22,7 @@ const RoleSchema:Schema = new mongoose.Schema<IRole>({
       levels: [{ type: Number, enum: [-1, 0, 1, 4, 5] }], // Array de niveles de permiso
     },
   ],
+  deleted_at: { type: Date, default: null },
 });
 
 export const Role = mongoose.model<IRole>('Role', RoleSchema);
