@@ -3,7 +3,7 @@ import { injectable, inject } from 'tsyringe';
 import { IRole } from '../../models/security/Role.model';
 import { RoleRepository } from '../../repositories/security/RoleRepository';
 import { UserRepository } from '../../repositories/user/User.repository';
-import mongoose, { mongo } from 'mongoose';
+import mongoose, { DeleteResult, mongo } from 'mongoose';
 import { IUser } from '../../models/usuarios/User.model';
 
 @injectable()
@@ -87,7 +87,7 @@ export class RoleService {
     return role;
   }
 
-  async deleteRole(id: string): Promise<IRole | null> {
+  async deleteRole(id: string): Promise<DeleteResult> {
     const role = await this.repository.delete(id);
     if (!role) {
       throw new Error('role not found');

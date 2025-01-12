@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
 import { IRole, Role } from '../../models/security/Role.model';
+import { DeleteResult } from 'mongoose';
 
 @injectable()
 export class RoleRepository {
@@ -53,9 +54,9 @@ export class RoleRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async delete(id: string): Promise<IRole | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
-      .exec();
+  async delete(id: string): Promise<DeleteResult> {
+    let role = await this.model.deleteOne({ _id: id }).exec();
+
+    return role;
   }
 }
