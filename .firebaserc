@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "appcamoapa"
-  }
+    "default": "store-efrain",
+    "development": "store-efrain"
+  },
+  "targets": {},
+  "etags": {}
 }
