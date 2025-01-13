@@ -10,6 +10,7 @@ export interface IUser extends Document {
   roles: mongoose.Types.ObjectId[] | IRole[];
   sucursalId: mongoose.Types.ObjectId | ISucursal | null;
   deleted_at: Date | null;
+  isRootUser: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -35,6 +36,7 @@ const UserSchema: Schema<IUser> = new Schema({
   },
   sucursalId: { type: Schema.Types.ObjectId, ref: 'Sucursal', default: null },
   deleted_at: { type: Date, default: null },
+  isRootUser: { type: Boolean, default: false },
 });
 
 // Método para comparar contraseñas usando bcrypt

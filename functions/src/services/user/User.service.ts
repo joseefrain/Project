@@ -3,27 +3,27 @@ import { IResponseLogin, IUser } from '../../models/usuarios/User.model';
 import { generateToken } from '../../utils/jwt';
 import mongoose, { Types } from 'mongoose';
 import { injectable, inject } from 'tsyringe';
+import { RoleService } from '../security/RoleService';
 
 @injectable()
 export class UserService {
-  constructor(@inject(UserRepository) private repository: UserRepository) {}
+  constructor(@inject(UserRepository) private repository: UserRepository
+, @inject(RoleService) private roleService: RoleService) {}
 
-  async createUser(data: Partial<IUser>): Promise<string> {
+  async createUser(data: Partial<IUser>): Promise<IUser> {
     const userExists = await this.repository.findByUsername(data.username!);
 
     if (userExists) {
       throw new Error('User already exists');
     }
 
+    let isRootUser = await this.roleService.validateRootRole(data);
+
+    data.isRootUser = isRootUser;
+
     const newUser = await this.repository.create(data);
 
-    const token = generateToken({
-      id: newUser._id as Types.ObjectId,
-      username: newUser.username,
-      roles: newUser.roles as mongoose.Types.ObjectId[],
-    });
-
-    return token;
+    return newUser;
   }
 
   async loginUser(data: Partial<IUser>): Promise<IResponseLogin> {
@@ -69,6 +69,11 @@ export class UserService {
   }
 
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | null> {
+
+    let isRootUser = await this.roleService.validateRootRole(data);
+
+    data.isRootUser = isRootUser;
+
     const user = await this.repository.update(id, data);
     if (!user) {
       throw new Error('User not found');

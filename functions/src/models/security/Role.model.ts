@@ -1,8 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { NIVEL_PERMISO_ENUM } from './permissionLevels';
 
 interface IPrivileges {
   module: string;
-  levels: number[];
+  levels: NIVEL_PERMISO_ENUM[];
 }
 
 
