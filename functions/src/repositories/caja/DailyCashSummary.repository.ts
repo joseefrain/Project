@@ -99,7 +99,7 @@ export class ResumenCajaDiarioRepository {
 
   async findTodayResumenByCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const date = new Date();
+      const date = new Date()
       date.setHours(0, 0, 0, 0);
       return await this.model.findOne({ cajaId: cashierId, fecha: date }).populate([
         {
@@ -197,10 +197,13 @@ export class ResumenCajaDiarioRepository {
       const incomeIncrement = new Types.Decimal128(ingreso.toString());
       const sucursalIdMongo = new Types.ObjectId(sucursalId);
       const cajaIdMongo = new Types.ObjectId(cajaId);
+
+      let date  = new Date();
+      date.setHours(0, 0, 0, 0);
   
       // Actualizar el resumen diario para incrementar totalIngresos y montoFinalSistema
       const resumenHoy = await this.model.findOneAndUpdate(
-        { fecha: new Date(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
+        { fecha: date, sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
         { $inc: { totalIngresos: incomeIncrement, montoFinalSistema: incomeIncrement } },
         { new: true, upsert: true } ,
       ).exec();

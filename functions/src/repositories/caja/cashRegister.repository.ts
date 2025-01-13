@@ -72,8 +72,8 @@ export class CajaRepository {
     caja.usuarioAperturaId = null;
     caja.montoInicial = cero128;
     caja.montoEsperado = cero128;
-    caja.montoFinalDeclarado = null;
-    caja.diferencia = null;
+    caja.montoFinalDeclarado = cero128;
+    caja.diferencia = cero128;
     caja.fechaApertura = null;
     caja.fechaCierre = null;
     caja.hasMovementCashier = false;

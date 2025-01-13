@@ -51,7 +51,6 @@ const cajaSchema: Schema<ICaja> = new Schema({
   usuarioAperturaId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
   },
   montoInicial: {
     type: Schema.Types.Decimal128,
@@ -71,7 +70,6 @@ const cajaSchema: Schema<ICaja> = new Schema({
   },
   fechaApertura: {
     type: Date,
-    required: true,
     default: Date.now,
   },
   fechaCierre: {
