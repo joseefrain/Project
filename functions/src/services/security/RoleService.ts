@@ -100,10 +100,17 @@ export class RoleService {
   }
 
   async deleteRole(id: string): Promise<DeleteResult> {
+    const isReferenced = await this.repository.isIdReferenced(id);
+
+    if (isReferenced) {
+      throw new Error('El rol no puede ser eliminado porque está en uso');
+    }
+
     const role = await this.repository.delete(id);
     if (!role) {
       throw new Error('role not found');
     }
+    
     return role;
   }
 
