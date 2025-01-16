@@ -30,13 +30,7 @@ export class ProductoService {
     user: CustomJwtPayload
   ): Promise<IProductCreate | IProducto> {
 
-    let findRoot = await this.roleRepository.findRootRole(user.roles.map((role) => role.toString()));
-
-    if (findRoot) {
-      return (await this.repository.createGeneralProducts(data) as IProducto);
-    } else {
-      return (await this.repository.create(data) as IProductCreate);
-    }
+    return (await this.repository.create(data) as IProductCreate);
   }
 
   async getProductById(id: string): Promise<IProducto | null> {

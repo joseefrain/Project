@@ -12,6 +12,7 @@ export interface CustomJwtPayload extends JwtPayload {
   id: Types.ObjectId;
   username: string;
   roles: Types.ObjectId[] | IRole[]
+  isRoot: boolean;
 }
 
 export const generateToken = (payload: CustomJwtPayload): string => {
