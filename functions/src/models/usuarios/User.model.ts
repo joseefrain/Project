@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Query, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { IRole, Role } from '../security/Role.model';
@@ -54,11 +54,20 @@ UserSchema.pre<IUser>('save', async function (next) {
   next();
 });
 
-UserSchema.pre<IUser>('findOneAndUpdate', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+UserSchema.pre<Query<any, IUser>>('findOneAndUpdate', async function (next) {
+  const update = this.getUpdate() as IUser; // Obtener el objeto de actualización
+
+  // Verificar si el campo `password` está siendo modificado
+  if (update && update.password) {
+    const salt = await bcrypt.genSalt(10);
+    update.password = await bcrypt.hash(update.password, salt);
+
+    // Guardar los cambios en el query
+    this.setUpdate(update);
+  }
+
   next();
 });
+
 
 export const User = mongoose.model<IUser>('User', UserSchema);
