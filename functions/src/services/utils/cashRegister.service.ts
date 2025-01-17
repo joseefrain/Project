@@ -45,24 +45,7 @@ export class CashRegisterService {
 
       const sucursalId = (caja.sucursalId as Types.ObjectId);
 
-      let fecha  = new Date();
-      fecha.setHours(0, 0, 0, 0);
-      
-      
-      let dataResumen = {
-        sucursalId,
-        totalVentas: new Types.Decimal128('0'),
-        totalCompras: new Types.Decimal128('0'),
-        montoFinalSistema: new Types.Decimal128('0'),
-        fecha,
-        cajaId: (caja._id as Types.ObjectId),
-        totalIngresos: new Types.Decimal128('0'),
-        totalEgresos: new Types.Decimal128('0'),
-        ventas: [],
-        compras: []
-      }
-
-      await this.resumenRepository.create(dataResumen);
+      await this.resumenRepository.create((caja._id as Types.ObjectId), sucursalId);
 
       return caja;
       
@@ -89,13 +72,15 @@ export class CashRegisterService {
 
       if (caja.estado !== 'ABIERTA') throw new Error('La caja ya está cerrada');
 
+      await this.repository.createHistorico(caja, montoFinalDeclarado);
+
       if (closeWithoutCounting) {
         caja.estado = 'CERRADA';
         await caja.save();
         return caja;
       }
 
-      await this.repository.cerrarCaja(caja, montoFinalDeclarado);
+      await this.repository.cerrarCaja(caja);
 
       const length = caja.historico.length;
       let historico = caja.historico[length - 1];

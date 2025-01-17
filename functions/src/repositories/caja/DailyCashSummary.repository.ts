@@ -11,9 +11,31 @@ export class ResumenCajaDiarioRepository {
   }
 
   // Método para crear un nuevo resumen de caja diario
-  async create(data: Partial<IResumenCajaDiario>): Promise<IResumenCajaDiario> {
+  async create(cajaId:Types.ObjectId, sucursalId: Types.ObjectId): Promise<IResumenCajaDiario> {
     try {
-      const resumen = new this.model(data);
+      let fecha  = new Date();
+      fecha.setHours(0, 0, 0, 0);
+      
+      let exist = await this.findByDateAndCashier(cajaId);
+
+      if (exist) {
+        return exist;
+      }
+      
+      let dataResumen = {
+        sucursalId,
+        totalVentas: new Types.Decimal128('0'),
+        totalCompras: new Types.Decimal128('0'),
+        montoFinalSistema: new Types.Decimal128('0'),
+        fecha,
+        cajaId: cajaId,
+        totalIngresos: new Types.Decimal128('0'),
+        totalEgresos: new Types.Decimal128('0'),
+        ventas: [],
+        compras: []
+      }
+
+      const resumen = new this.model(dataResumen);
       return await resumen.save();
     } catch (error) {
       throw new Error(`Error al crear ResumenCajaDiario: ${error.message}`);
@@ -145,22 +167,7 @@ export class ResumenCajaDiarioRepository {
       fecha.setHours(0, 0, 0, 0);
 
       if (!existResumen) {
-        let dataResumen = {
-          sucursalId,
-          totalVentas: tipoTransaccion === 'VENTA' ? totalIncrement : new Types.Decimal128('0'),
-          totalCompras: tipoTransaccion === 'COMPRA' ? totalIncrement : new Types.Decimal128('0'),
-          montoFinalSistema: totalIncrement,
-          fecha: fecha,
-          cajaId: cashierId,
-          totalIngresos: new Types.Decimal128('0'),
-          totalEgresos: new Types.Decimal128('0'),
-          ventas: [ transaccion._id as Types.ObjectId ],
-          compras: []
-        }
-
-        let resumenDiario = await this.create(dataResumen);
-
-        return resumenDiario;
+        throw new Error("No existe un resumen para la fecha " + fecha);
       }
       
       let totalSale = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : +Number(0);

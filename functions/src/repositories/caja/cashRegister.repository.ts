@@ -21,7 +21,11 @@ export class CajaRepository {
 
     let montoInicial128 = new mongoose.mongo.Decimal128(montoInicial.toString())
 
-    caja.montoEsperado = montoInicial128;
+
+    if (!caja.hasMovementCashier) {
+      caja.montoEsperado = montoInicial128;
+    }
+
     caja.montoInicial = montoInicial128;
     caja.estado = 'ABIERTA';
     caja.fechaApertura = new Date();
@@ -45,8 +49,7 @@ export class CajaRepository {
     return await nuevaCaja.save();
   }
 
-  async cerrarCaja( caja: ICaja, montoFinalDeclarado: string ): Promise<ICaja> {
-
+  async createHistorico( caja: ICaja, montoFinalDeclarado: string ): Promise<ICaja> {
     if (!caja) throw new Error('Caja no encontrada');
     if (caja.estado === 'CERRADA') throw new Error('La caja ya está cerrada');
 
@@ -62,13 +65,19 @@ export class CajaRepository {
       montoEsperado: caja.montoEsperado,
       usuarioAperturaId: (caja.usuarioAperturaId as mongoose.Types.ObjectId)
     } 
-   
 
-    // caja.montoFinalDeclarado = montoFinalDeclaradoFormateado;
-    // caja.diferencia = new mongoose.mongo.Decimal128(diferencia.toString());
-    // caja.fechaCierre = new Date();
+    caja.historico.push(cajaHistorico)
+
+    return await caja.save();
+  }
+
+
+  async cerrarCaja( caja: ICaja): Promise<ICaja> {
+
+    if (!caja) throw new Error('Caja no encontrada');
+    if (caja.estado === 'CERRADA') throw new Error('La caja ya está cerrada');
+
     caja.estado = 'CERRADA';
-    caja.historico.push(cajaHistorico);
     caja.usuarioAperturaId = null;
     caja.montoInicial = cero128;
     caja.montoEsperado = cero128;
