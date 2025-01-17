@@ -155,6 +155,7 @@ export class ResumenCajaDiarioRepository {
           totalIngresos: new Types.Decimal128('0'),
           totalEgresos: new Types.Decimal128('0'),
           ventas: [ transaccion._id as Types.ObjectId ],
+          compras: []
         }
 
         let resumenDiario = await this.create(dataResumen);

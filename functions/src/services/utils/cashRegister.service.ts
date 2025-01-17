@@ -47,7 +47,30 @@ export class CashRegisterService {
         ingreso: montoInicial,
         sucursalId: (caja.sucursalId as Types.ObjectId).toString(),
         cajaId: (caja._id as Types.ObjectId).toString()
-      }  
+      } 
+
+      const incomeIncrement = new Types.Decimal128(montoInicial.toString());
+      const sucursalId = (caja.sucursalId as Types.ObjectId);
+
+      let fecha  = new Date();
+      fecha.setHours(0, 0, 0, 0);
+      
+      
+      let dataResumen = {
+        sucursalId,
+        totalVentas: new Types.Decimal128('0'),
+        totalCompras: new Types.Decimal128('0'),
+        montoFinalSistema: incomeIncrement,
+        fecha,
+        cajaId: (caja._id as Types.ObjectId),
+        totalIngresos: new Types.Decimal128('0'),
+        totalEgresos: new Types.Decimal128('0'),
+        ventas: [],
+        compras: []
+      }
+
+      await this.resumenRepository.create(dataResumen);
+
       await this.resumenRepository.addIncomeDailySummary(resumenDiario);
 
       return caja;
