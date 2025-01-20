@@ -1,7 +1,7 @@
 import { CajaRepository } from '../../repositories/caja/cashRegister.repository';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { inject, injectable } from 'tsyringe';
-import mongoose, { mongo, Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IActualizarMontoEsperadoByVenta, IAddExpenseDailySummary, IAddIncomeDailySummary, ICloseCash, ICreataCashRegister, IOpenCashService, tipeCashRegisterMovement } from '../../interface/ICaja';
 import { MovimientoCajaRepository } from '../../repositories/caja/movimientoCaja.repository';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
@@ -16,14 +16,21 @@ export class CashRegisterService {
               @inject(ArqueoCajaRepository) private arqueoRepository: ArqueoCajaRepository) {}
   
   async abrirCaja(data : IOpenCashService) {
-    let { usuarioAperturaId, montoInicial, cajaId } = data;
+    let { usuarioAperturaId, montoInicial, cajaId, userId } = data;
 
     try {
       
       let dataOpenCash = {
         usuarioAperturaId,
         montoInicial,
-        cajaId
+        cajaId,
+        userId
+      }
+
+      let cajaPorUsuario = await this.repository.obtenerCajasAbiertasPorUsuario(usuarioAperturaId);
+
+      if (cajaPorUsuario) {
+        return "El usuario ya tiene una caja abierta";
       }
 
       let caja = await this.repository.abrirCaja(dataOpenCash);
@@ -66,9 +73,9 @@ export class CashRegisterService {
 
     try {
 
-      const caja = await this.repository.obtenerCajaPorId(cajaId);
+      const caja = await this.repository.obtenerCajaAbiertaPorUsuarioYCajaId(usuarioArqueoId, cajaId);
 
-      if (!caja) throw new Error('Caja no encontrada');
+      if (!caja) throw new Error('Caja no encontrada o no ha sido abierta por el usuario');
 
       if (caja.estado !== 'ABIERTA') throw new Error('La caja ya está cerrada');
 
@@ -76,6 +83,9 @@ export class CashRegisterService {
 
       if (closeWithoutCounting) {
         caja.estado = 'CERRADA';
+        caja.fechaApertura = null;
+        caja.fechaCierre = null;
+        caja.usuarioAperturaId = null;
         await caja.save();
         return caja;
       }

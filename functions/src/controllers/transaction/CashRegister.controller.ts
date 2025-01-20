@@ -1,6 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { Request, Response, NextFunction } from 'express';
 import { CashRegisterService } from '../../services/utils/cashRegister.service';
+import { CustomJwtPayload } from '../../utils/jwt';
 
 @injectable()
 export class CashRegisterController {
@@ -64,6 +65,8 @@ export class CashRegisterController {
     try {
 
       const data = req.body;
+      let userId = (req.user as CustomJwtPayload).id.toString();
+      data.userId = userId;
       const caja = await this.service.abrirCaja(data);
       res.status(200).json(caja);
     } catch (error) {
@@ -74,6 +77,8 @@ export class CashRegisterController {
   async closeCashRegister(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = req.body;
+      let userId = (req.user as CustomJwtPayload).id.toString();
+      data.usuarioArqueoId = userId;
       const caja = await this.service.cerrarCaja(data);
       res.status(200).json(caja);
     } catch (error) {

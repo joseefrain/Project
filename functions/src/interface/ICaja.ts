@@ -5,6 +5,7 @@ export interface IOpenCash {
   usuarioAperturaId: string;
   montoInicial: number;
   cajaId:string;
+  userId: string;
 }
 
 export interface ICloseCash {

@@ -106,6 +106,14 @@ export class CajaRepository {
   async obtenerCajasPorSucursal(sucursalId: string): Promise<ICaja[]> {
     return await this.cajaModel.find({ sucursalId });
   }
+
+  async obtenerCajasAbiertasPorUsuario(userId: string): Promise<ICaja | null> {
+    return await this.cajaModel.findOne({ usuarioAperturaId: userId, estado: 'ABIERTA' });
+  }
+
+  async obtenerCajaAbiertaPorUsuarioYCajaId(userId: string, cajaId: string): Promise<ICaja | null> {
+    return await this.cajaModel.findOne({ usuarioAperturaId: userId, cajaId, estado: 'ABIERTA' });
+  }
   
 
   // Actualizar el monto esperado en la caja
