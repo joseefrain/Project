@@ -42,7 +42,7 @@ export class UserRepository {
   }
 
   async update(id: string, data: Partial<IUser>): Promise<IUser | null> {
-    return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
+    return await this.model.findByIdAndUpdate(id, data, { new: true }).populate(["sucursalId", "roles"]).exec();
   }
 
   async delete(id: string): Promise<IUser | null> {
