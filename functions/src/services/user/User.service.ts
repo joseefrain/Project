@@ -17,10 +17,6 @@ export class UserService {
       throw new Error('User already exists');
     }
 
-    let isRootUser = await this.roleService.validateRootRole(data);
-
-    data.isRootUser = isRootUser;
-
     const newUser = await this.repository.create(data);
 
     return newUser;
@@ -47,7 +43,6 @@ export class UserService {
       id: user._id as Types.ObjectId,
       username: user.username,
       roles: user.roles as mongoose.Types.ObjectId[],
-      isRoot: user.isRootUser,
     });
 
     return { token, user };
@@ -70,10 +65,6 @@ export class UserService {
   }
 
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser | null> {
-
-    let isRootUser = await this.roleService.validateRootRole(data);
-
-    data.isRootUser = isRootUser;
 
     const user = await this.repository.update(id, data);
     if (!user) {

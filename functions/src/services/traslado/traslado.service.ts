@@ -118,9 +118,6 @@ export class TrasladoService {
 
       let usuario = await this.sucursalRepo.findUserAdminForBranch((traslado.sucursalDestinoId._id as mongoose.Types.ObjectId).toString());
 
-      
-      
-
       let username = usuario?.username || 'Sin administrador';
       let channel = "#pedidos";
       let channel2 = "#alertas-reorden";

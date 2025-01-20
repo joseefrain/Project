@@ -3,14 +3,20 @@ import bcrypt from 'bcrypt';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { IRole, Role } from '../security/Role.model';
 
+export enum ROL {
+  ADMIN = 'ADMIN',
+  ROOT = 'ROOT',
+  EMPLEADO = 'EMPLEADO',
+}
+
 // Interfaz para tipar los usuarios
 export interface IUser extends Document {
   username: string;
   password: string;
   roles: mongoose.Types.ObjectId[] | IRole[];
+  role: ROL;
   sucursalId: mongoose.Types.ObjectId | ISucursal | null;
   deleted_at: Date | null;
-  isRootUser: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -34,9 +40,12 @@ const UserSchema: Schema<IUser> = new Schema({
     type: [{ type: Schema.Types.ObjectId, ref: Role }],
     required: true,
   },
+  role: {
+    type: String,
+    required: true,
+  },
   sucursalId: { type: Schema.Types.ObjectId, ref: 'Sucursal', default: null },
   deleted_at: { type: Date, default: null },
-  isRootUser: { type: Boolean, default: false },
 });
 
 // Método para comparar contraseñas usando bcrypt
