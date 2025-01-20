@@ -17,10 +17,8 @@ export class CajaRepository {
     const caja = await this.cajaModel.findById(cajaId);
     if (!caja) throw new Error('Caja no encontrada');
     if (caja.estado === 'ABIERTA') return caja;
-    if (caja.hasMovementCashier) return caja;
 
     let montoInicial128 = new mongoose.mongo.Decimal128(montoInicial.toString())
-
 
     if (!caja.hasMovementCashier) {
       caja.montoEsperado = montoInicial128;
