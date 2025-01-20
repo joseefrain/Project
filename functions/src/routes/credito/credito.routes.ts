@@ -8,7 +8,7 @@ const router = express.Router();
 const creditoController = container.resolve(CreditoController);
 
 // Definir las rutas
-router.post('/pagoCredito', creditoController.handlePagoCredito.bind(creditoController));
+router.post('/pagoCredito', authMiddleware, creditoController.handlePagoCredito.bind(creditoController));
 
 router.get(
   '/:id',
