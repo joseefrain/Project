@@ -93,7 +93,7 @@ export class CajaRepository {
   }
 
   async obtenerCajasAbiertaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
-    return await this.cajaModel.find({ sucursalId, estado: 'ABIERTA' });
+    return await this.cajaModel.find({ sucursalId, estado: 'ABIERTA' }).populate('usuarioAperturaId');
   }
 
   async obtenerCajasCerradaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
@@ -102,7 +102,7 @@ export class CajaRepository {
 
   // Obtener todas las cajas por sucursal
   async obtenerCajasPorSucursal(sucursalId: string): Promise<ICaja[]> {
-    return await this.cajaModel.find({ sucursalId });
+    return await this.cajaModel.find({ sucursalId }).populate('usuarioAperturaId');
   }
 
   async obtenerCajasAbiertasPorUsuario(userId: string): Promise<ICaja | null> {
@@ -110,7 +110,7 @@ export class CajaRepository {
   }
 
   async obtenerCajaAbiertaPorUsuarioYCajaId(userId: string, cajaId: string): Promise<ICaja | null> {
-    return await this.cajaModel.findOne({ usuarioAperturaId: userId, cajaId, estado: 'ABIERTA' });
+    return await this.cajaModel.findOne({ usuarioAperturaId: userId, _id: cajaId, estado: 'ABIERTA' });
   }
   
 

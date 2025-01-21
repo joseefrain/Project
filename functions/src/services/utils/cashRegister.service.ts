@@ -254,4 +254,8 @@ export class CashRegisterService {
       throw new Error(error.message);
     }
   }
+
+  async obtenerCajasAbiertasPorUsuario(usuarioId: string): Promise<ICaja | null> {
+    return await this.repository.obtenerCajasAbiertasPorUsuario(usuarioId);
+  }
 }

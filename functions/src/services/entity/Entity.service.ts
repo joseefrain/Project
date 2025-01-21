@@ -13,7 +13,7 @@ export class EntityService {
     );
 
     if (entityExists) {
-      throw new Error('Entity already exists');
+      throw new Error('Entity already exists for identificationNumber');
     }
 
     let state:IClientState = {

@@ -26,25 +26,9 @@ export class UserController {
     try {
       const token = await this.service.loginUser(req.body);
 
-      let { cajaId } = req.body;
 
-      let caja: ICaja | null = null;
-      let sucursal = (token.user.sucursalId as ISucursal);
+      let cajaId: ICaja | null = await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
       
-      if (sucursal !== null) {
-        let sucursalId = (sucursal._id as Types.ObjectId).toString();
-
-        // if (!cajaId && sucursalId) {
-        //   caja = await this.cashRegisterService.abrirCaja({
-        //     montoInicial: 2000,
-        //     cajaId,
-        //     usuarioAperturaId: (token.user._id as Types.ObjectId).toString(),
-        //   });
-
-        //   cajaId = (caja._id as Types.ObjectId).toString();
-        // }
-      }
-
       res.status(200).json({ ...token, cajaId });
     } catch (error) {
       next(error);
