@@ -2,7 +2,7 @@ import { injectable } from 'tsyringe';
 import { Descuento, IDescuento, IDescuentoCreate, IListDescuentoResponse} from '../../models/transaction/Descuento.model';
 import { DescuentoGrupo, IDescuentoGrupo } from '../../models/transaction/DescuentoGrupo.model';
 import { DescuentosProductos, IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model';
-import mongoose, { mongo } from 'mongoose';
+import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 
 @injectable()
 export class DescuentoRepository {
@@ -62,6 +62,9 @@ export class DescuentoRepository {
       let descuento = (descuentoProducto.descuentoId as IDescuento);
       let fechaInicio = descuento.fechaInicio;
       let fechaFin = descuento.fechaFin;
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(0, 0, 0, 0);
+
 
       if (!descuento.activo) {
         return;
@@ -86,6 +89,8 @@ export class DescuentoRepository {
       let descuento = (descuentoGrupo.descuentoId as IDescuento);
       let fechaInicio = descuento.fechaInicio;
       let fechaFin = descuento.fechaFin;
+      fechaInicio.setHours(0, 0, 0, 0);
+      fechaFin.setHours(0, 0, 0, 0);
 
       if (!descuento.activo) {
         return;
@@ -131,10 +136,25 @@ export class DescuentoRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async delete(id: string): Promise<IDescuento | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
-      .exec();
+  async deleteProductGeneral(id: Types.ObjectId, productoId:Types.ObjectId): Promise<DeleteResult> {
+    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId});
+    return response
+  }
+
+  async deleteProductBySucursal(id: Types.ObjectId, productoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
+    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId, sucursalId});
+    return response
+  }
+
+  async deleteGroupGeneral(id: Types.ObjectId, grupoId: Types.ObjectId): Promise<DeleteResult> {
+    let response = await this.modelDescuentoGrupo.deleteOne({descuentoId:id, grupoId});
+    return response
+  }
+
+  async deleteGroupBySucursal(id: Types.ObjectId, grupoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
+    let response = await this.modelDescuentoGrupo.deleteOne({ descuentoId:id, grupoId, sucursalId });
+    return response
+    
   }
 
   async restore(id: string): Promise<IDescuento | null> {

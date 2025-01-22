@@ -18,6 +18,13 @@ export interface IDescuento extends Document {
   codigoDescunto: string
   deleted_at: Date | null;
 }
+
+export interface IDescuentoCreateResponse extends IDescuento {
+  tipoDescuentoEntidad: ITipoDescuentoEntidad
+  productId?: mongoose.Types.ObjectId;
+  groupId?: mongoose.Types.ObjectId;
+}
+
 // "sucursalId": "671ae0285c63b9b3b87a02c8"
 export interface IDescuentoCreate {
   nombre: string;
@@ -37,11 +44,19 @@ export interface IDescuentoCreate {
   sucursalId?: mongoose.Types.ObjectId,
 }
 
+
 export interface IListDescuentoResponse {
   descuentosPorProductosGenerales: IDescuentosProductos[];
   descuentosPorProductosEnSucursal: IDescuentosProductos[];
   descuentosPorGruposGenerales: IDescuentoGrupo[];
   descuentosPorGruposEnSucursal: IDescuentoGrupo[];
+}
+
+export interface IDescuentoDeleteParams {
+  id: string;
+  sucursalId?:string;
+  productoId?:string; 
+  grupoId?:string
 }
 
 const descuentoSchema: Schema = new Schema(

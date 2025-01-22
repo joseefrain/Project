@@ -58,7 +58,16 @@ export class DescuentoController {
 
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const descuento = await this.service.deleteDescuento(req.params.id);
+      const sucursalId = req.body.sucursalId;
+      const productoId = req.body.productoId;
+      const grupoId = req.body.grupoId;
+      const data = {
+        sucursalId,
+        productoId,
+        grupoId,
+        id: req.params.id
+      }
+      const descuento = await this.service.deleteDescuento(data);
       res.status(200).json(descuento);
     } catch (error) {
       next(error);

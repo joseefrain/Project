@@ -2,10 +2,12 @@ import { injectable, inject } from 'tsyringe';
 import {
   IDescuento,
   IDescuentoCreate,
+  IDescuentoCreateResponse,
+  IDescuentoDeleteParams,
   IListDescuentoResponse,
 } from '../../models/transaction/Descuento.model';
 import { DescuentoRepository } from '../../repositories/transaction/descuento.repository';
-import mongoose from 'mongoose';
+import mongoose, { DeleteResult, Types } from 'mongoose';
 
 @injectable()
 export class DescuentoService {
@@ -13,20 +15,55 @@ export class DescuentoService {
     @inject(DescuentoRepository) private repository: DescuentoRepository
   ) {}
 
-  async createDescuento(data: Partial<IDescuentoCreate>): Promise<IDescuento> {
+  async createDescuento(data: Partial<IDescuentoCreate>): Promise<IDescuentoCreateResponse> {
     
-
-
     try {
       
-
       const descuentoExists = await this.repository.findByName(data.nombre!);
 
       if (descuentoExists) {
-        throw new Error('Descuento already exists');
+        await this.updateDescuento((descuentoExists._id as Types.ObjectId).toString(), data);
+
+        let response = {
+          tipoDescuentoEntidad: data.tipoDescuentoEntidad!,
+          productId: data.productId,
+          groupId: data.groupId,
+          tipoDescuento: descuentoExists.tipoDescuento,
+          _id:descuentoExists.id,
+          activo: descuentoExists.activo,
+          minimoCantidad: descuentoExists.minimoCantidad,
+          minimoCompra: descuentoExists.minimoCompra,
+          moneda_id: descuentoExists.moneda_id,
+          nombre: descuentoExists.nombre,
+          valorDescuento: descuentoExists.valorDescuento,
+          fechaInicio: descuentoExists.fechaInicio,
+          fechaFin: descuentoExists.fechaFin,
+          codigoDescunto: descuentoExists.codigoDescunto,
+          deleted_at: descuentoExists.deleted_at,
+        } as IDescuentoCreateResponse;
+
+        return response
       }
 
-      const newDescuento = await this.repository.create(data);
+      const newDescuento = await this.repository.create(data)
+
+      let response = {
+        tipoDescuentoEntidad: data.tipoDescuentoEntidad!,
+        productId: data.productId,
+        groupId: data.groupId,
+        tipoDescuento: newDescuento.tipoDescuento,
+        _id:newDescuento.id,
+        activo: newDescuento.activo,
+        minimoCantidad: newDescuento.minimoCantidad,
+        minimoCompra: newDescuento.minimoCompra,
+        moneda_id: newDescuento.moneda_id,
+        nombre: newDescuento.nombre,
+        valorDescuento: newDescuento.valorDescuento,
+        fechaInicio: newDescuento.fechaInicio,
+        fechaFin: newDescuento.fechaFin,
+        codigoDescunto: newDescuento.codigoDescunto,
+        deleted_at: newDescuento.deleted_at,
+      } as IDescuentoCreateResponse;
 
       let tipoDescuentoEntidad = data.tipoDescuentoEntidad!;
       let productId = data.productId ? new mongoose.Types.ObjectId(data.productId) : undefined;
@@ -64,11 +101,8 @@ export class DescuentoService {
 
         await this.repository.createDescuentoGrupo(descuentoGrupo);
       }
-
       
-      
-
-      return newDescuento;
+      return response;
     } catch (error) {
       console.log(error);
 
@@ -106,12 +140,29 @@ export class DescuentoService {
     return descuento;
   }
 
-  async deleteDescuento(id: string): Promise<IDescuento | null> {
-    const descuento = await this.repository.delete(id);
-    if (!descuento) {
-      throw new Error('Group not found');
+  async deleteDescuento({ id, sucursalId, productoId, grupoId }:IDescuentoDeleteParams) {
+    let idMongoose = new Types.ObjectId(id);
+    let sucursalIdMongoose = new Types.ObjectId(sucursalId)
+    let grupoIdMongoose = new Types.ObjectId(grupoId)
+    let productIdMongoose = new Types.ObjectId(productoId)
+
+    if (grupoId) {
+      if (sucursalId) {
+        return await this.repository.deleteGroupBySucursal(idMongoose, grupoIdMongoose, sucursalIdMongoose)
+      } else {
+        return await this.repository.deleteGroupGeneral(idMongoose, grupoIdMongoose)
+      }
     }
-    return descuento;
+
+    if (productoId) {
+      if (sucursalId) {
+        return await this.repository.deleteProductBySucursal(idMongoose, productIdMongoose, sucursalIdMongoose)
+      } else {
+        return await this.repository.deleteProductGeneral(idMongoose, productIdMongoose)
+      }
+    }
+
+    return null;
   }
 
   async restoreDescuento(id: string): Promise<IDescuento | null> {
