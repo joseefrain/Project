@@ -7,7 +7,7 @@ import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
 import { IDetalleTransaccion } from './DetailTransaction.model';
 
-export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA' | 'DEVOLUCIÓN';
+export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA' | 'DEVOLUCION';
 type TypePaymentMethod = 'cash' | 'credit';
 
 export interface ITransaccion extends Document {
@@ -119,7 +119,7 @@ const transaccionSchema: Schema = new Schema(
     },
     tipoTransaccion: {
       type: String,
-      enum: ['VENTA', 'COMPRA', 'INGRESO', 'EGRESO', 'APERTURA'],
+      enum: ['VENTA', 'COMPRA', 'INGRESO', 'EGRESO', 'APERTURA', 'DEVOLUCION'],
       required: true,
     },
     paymentMethod: {

@@ -24,7 +24,7 @@ export interface ICreataCashRegister {
 
 export type IOpenCashService = Omit<IOpenCash, 'session'>;
 
-export type ITypeCashRegisterMovement =  'VENTA' | 'INGRESO' | 'EGRESO' | 'COMPRA' | 'APERTURA';
+export type ITypeCashRegisterMovement =  'VENTA' | 'INGRESO' | 'EGRESO' | 'COMPRA' | 'APERTURA' | 'DEVOLUCION';
 export type TypeEstatusTransaction = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA';
 
 export interface ITypeEstatusSales {

@@ -22,7 +22,7 @@ const movimientoCajaSchema: Schema<IMovimientoCaja> = new Schema({
   },
   tipoMovimiento: {
     type: String,
-    enum: ['VENTA', 'INGRESO', 'EGRESO', "COMPRA", "APERTURA"],
+    enum: ['VENTA', 'INGRESO', 'EGRESO', "COMPRA", "APERTURA", 'DEVOLUCION'],
     required: true,
   },
   usuarioId: {
