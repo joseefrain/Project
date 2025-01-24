@@ -159,7 +159,8 @@ export class CashRegisterService {
       descripcion: data.tipoTransaccion,   
       usuarioId: new Types.ObjectId(data.userId),
       cajaId: (caja._id as Types.ObjectId),
-      cambioCliente: cambio
+      cambioCliente: cambio,
+      trasaccionId: data.id
     }
     await this.movimientoRepository.create(movimiento);
 

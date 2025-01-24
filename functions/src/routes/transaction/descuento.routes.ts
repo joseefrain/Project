@@ -22,6 +22,11 @@ router.get(
   descuentoController.getBySucursalId.bind(descuentoController)
 );
 router.get(
+  '/:id/sucursal',
+  authMiddleware,
+  descuentoController.getBySucursalId.bind(descuentoController)
+);
+router.get(
   '/:id',
   authMiddleware,
   descuentoController.getById.bind(descuentoController)

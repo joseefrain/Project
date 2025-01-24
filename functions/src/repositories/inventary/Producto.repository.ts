@@ -6,7 +6,7 @@ import {
   Producto,
 } from '../../models/inventario/Producto.model';
 import { ISucursal, Sucursal } from '../../models/sucursales/Sucursal.model';
-import { InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
+import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
 import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { GrupoInventario } from '../../models/inventario/GrupoInventario.model';
@@ -182,7 +182,7 @@ export class ProductoRepository {
     name: string,
     sucursalId: string
   ): Promise<IProducto | null> {
-    const product = await this.model.findOne({ nombre: name });
+    const product = await this.model.findOne({ nombre: name, deleted_at: null });
 
     if (!product) return null;
 
@@ -258,10 +258,15 @@ async removeDuplicateInventario(): Promise<void> {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async delete(id: string): Promise<IProducto | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
-      .exec();
+  async delete(id: string, branchId: string): Promise<IInventarioSucursal | null> {
+    let product = (await this.modelInventarioSucursal.findOne({ productoId: id, sucursalId: branchId }) as IInventarioSucursal)
+    if (!product) {
+      throw new Error('Producto no encontrado');
+    }
+
+    product.deleted_at = new Date();
+    (await product.save()).populate('productoId');
+    return product
   }
 
   async restore(id: string): Promise<IProducto | null> {

@@ -55,7 +55,8 @@ export class ProductoController {
 
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const branch = await this.service.deleteProduct(req.params.id);
+      const sucursalId = req.body.sucursalId;
+      const branch = await this.service.deleteProduct(req.params.id, sucursalId);
       res.status(200).json(branch);
     } catch (error) {
       next(error);

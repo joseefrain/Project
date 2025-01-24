@@ -17,9 +17,6 @@ import { InventoryManagementService } from './InventoryManagement.service';
 import mongoose, { Types } from 'mongoose';
 import { TrasladoRepository } from '../../repositories/traslado/traslado.repository';
 import { InventarioSucursalRepository } from '../../repositories/inventary/inventarioSucursal.repository';
-import fileUploadService from '../utils/fileUploadService';
-import { IFilesUpload } from '../../gen/files';
-import shortid from 'shortid';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { Request } from 'express';
 import { MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
@@ -74,13 +71,8 @@ export class TrasladoService {
 
       var traslado = await this.generatePedidoHerramienta(dataGeneratePedido );
 
-        let dataFiles: IFilesUpload[] = model.archivosAdjuntos?.map((file) => {
-          return { base64: file, name: shortid.generate() } as IFilesUpload;
-        }) as IFilesUpload[];
-    
-        const archivosAdjuntos =  dataFiles.length ? await fileUploadService.uploadFiles(dataFiles) : [];
 
-      traslado.archivosAdjuntos = archivosAdjuntos;
+      traslado.archivosAdjuntos =  model.archivosAdjuntos as string[] ?? [];
 
       let dataGenerateItemDePedidoByPedido:IGenerateItemDePedidoByPedido = {
         trasladoId: (traslado._id as mongoose.Types.ObjectId).toString(),
@@ -99,10 +91,8 @@ export class TrasladoService {
 
       //  Haciendo el envio del pedido
 
-      const firmaEnvio = await fileUploadService.uploadFile(model.firmaEnvio!, shortid.generate());
-
       let sendTrasladoProducto = {
-        firmaEnvio: model.firmaEnvio == 'undefined' ? '' : firmaEnvio,
+        firmaEnvio: model.firmaEnvio!,
         comentarioEnvio: model.comentarioEnvio!,
         trasladoId: traslado._id as mongoose.Types.ObjectId,
         traslado: traslado,
@@ -179,13 +169,7 @@ export class TrasladoService {
       pedido.comentarioRecepcion = model.comentarioRecepcion!;
       pedido.usuarioIdRecibe = new mongoose.Types.ObjectId(trabajadorId);
 
-      let dataFiles: IFilesUpload[] = model.archivosAdjuntosRecibido?.map((file) => {
-        return { base64: file, name: shortid.generate() } as IFilesUpload;
-      }) as IFilesUpload[];
-  
-      const archivosAdjuntos = dataFiles.length ? await fileUploadService.uploadFiles(dataFiles) : [];
-
-      pedido.archivosAdjuntosRecibido = archivosAdjuntos;
+      pedido.archivosAdjuntosRecibido = model.archivosAdjuntosRecibido!;
 
       if (
         model.listDetalleTraslado?.filter((detalle) => detalle.recibido)
@@ -194,7 +178,7 @@ export class TrasladoService {
         pedido.estatusTraslado = 'Terminado incompleto';
       }
 
-      const firmaRecepcion = await fileUploadService.uploadFile(model.firmaRecepcion!, shortid.generate());
+      const firmaRecepcion = model.firmaRecepcion!
 
       pedido.firmaRecepcion = firmaRecepcion;
 
@@ -446,11 +430,8 @@ export class TrasladoService {
 
       let archivosAdjuntosStr: string[] = (isNoSave ? producto.archivosAdjuntosRecibido : (producto as IDetalleTrasladoEnvio).archivosAdjuntos as string[]) || [];
 
-      let dataFiles: IFilesUpload[] = archivosAdjuntosStr.map((file) => {
-        return { base64: file, name: shortid.generate() } as IFilesUpload;
-      }) as IFilesUpload[];
 
-      const archivosAdjuntos = await fileUploadService.uploadFiles(dataFiles);
+      const archivosAdjuntos = archivosAdjuntosStr
 
       // Crear el objeto ItemDePedido
       const detalleTraslado: IDetalleTrasladoCreate = {
@@ -569,11 +550,7 @@ export class TrasladoService {
       response.listDetalleTrasladoAgregados.push(...newItemsDePedido);
     } else {
 
-      let dataFiles: IFilesUpload[] = listFiles.map((file) => {
-        return { base64: file, name: shortid.generate() } as IFilesUpload;
-      }) as IFilesUpload[];
-
-      const archivosAdjuntos = await fileUploadService.uploadFiles(dataFiles);
+      const archivosAdjuntos = listFiles
 
       if (listFiles.length > 0) {
         itemDePedido.archivosAdjuntosRecibido = archivosAdjuntos;

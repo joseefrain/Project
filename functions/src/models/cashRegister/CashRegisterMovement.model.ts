@@ -8,7 +8,10 @@ export interface IMovimientoCaja extends Document {
   monto: mongoose.Types.Decimal128;
   cambioCliente?: mongoose.Types.Decimal128 | null;  // Nuevo campo opcional para cambio al cliente
   descripcion: string;
+  trasaccionId: mongoose.Types.ObjectId | null;
   fecha: Date;
+  esDineroExterno: boolean;
+  montoExterno?: mongoose.Types.Decimal128 | null;
 }
 
 const movimientoCajaSchema: Schema<IMovimientoCaja> = new Schema({

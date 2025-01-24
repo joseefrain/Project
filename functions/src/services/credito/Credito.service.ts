@@ -250,6 +250,7 @@ export class CreditoService {
         total: Number(montoPago128),
         tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
         userId: userId,
+        id: null
       }
 
       let datoMovimientoCaja:IActualizarMontoEsperadoByVenta = {
@@ -381,6 +382,7 @@ export class CreditoService {
         total: Number(montoPago128),
         tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
         userId: userId,
+        id: null
       }
 
       let datoMovimientoCaja:IActualizarMontoEsperadoByVenta = {

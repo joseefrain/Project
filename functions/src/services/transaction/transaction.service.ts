@@ -180,8 +180,7 @@ export class TransactionService {
       await this.inventoryManagementService.updateAllBranchInventory();
       await this.inventoryManagementService.saveAllMovimientoInventario();
 
-      let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId).toString(), } as ITransactionCreateCaja);
-      
+      let ventaActualizar = ({...data.venta, id: (newSale._id as Types.ObjectId), } as ITransactionCreateCaja);
       const datosActualizar = {
         data: ventaActualizar,   
       }

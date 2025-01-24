@@ -74,8 +74,8 @@ export class ProductoService {
     return branch;
   }
 
-  async deleteProduct(id: string): Promise<IProducto | null> {
-    const branch = await this.repository.delete(id);
+  async deleteProduct(id: string, sucursalId:string): Promise<IInventarioSucursal | null> {
+    const branch = await this.repository.delete(id, sucursalId);
     if (!branch) {
       throw new Error('Product not found');
     }

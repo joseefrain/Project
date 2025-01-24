@@ -7,7 +7,7 @@ import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
 import { IDetalleTransaccion } from './DetailTransaction.model';
 
-export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA';
+export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA' | 'DEVOLUCIÓN';
 type TypePaymentMethod = 'cash' | 'credit';
 
 export interface ITransaccion extends Document {
@@ -24,6 +24,8 @@ export interface ITransaccion extends Document {
   paymentMethod: TypePaymentMethod;
   transactionDetails: mongoose.Types.ObjectId[] | IDetalleTransaccion[];
   cajaId: mongoose.Types.ObjectId | ICaja;
+  transaccionOrigenId?: mongoose.Types.ObjectId | ITransaccion; // Relación con la transacción original
+  motivoDevolucion?: string; 
 }
 
 export interface ITrasaccionProducto {
@@ -68,6 +70,26 @@ export interface ITransaccionCreate {
   paymentMethod: TypePaymentMethod; // nuevo
   credito?: ICreditoCreate; // nuevo
   tipoTransaccion: TypeTransaction;
+}
+
+// Devoluciones interface
+
+export interface IDevolucionesProducto {
+  quantity: number;
+  productId: string;
+}
+
+export interface IDevolucionesCreate {
+  userId: string;
+  sucursalId: string;
+  products: IDevolucionesProducto[];
+  monto:number
+  cajaId:string;
+  trasaccionOrigenId: string;
+  esDineroExterno:boolean
+  montoExterno?: number | null;
+  entidadId?: string; 
+  esTodaLaVenta:boolean
 }
 
 const transaccionSchema: Schema = new Schema(
