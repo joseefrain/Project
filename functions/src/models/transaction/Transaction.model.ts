@@ -72,11 +72,17 @@ export interface ITransaccionCreate {
   tipoTransaccion: TypeTransaction;
 }
 
+export interface ITransaccionNoDto {
+  transaccion: ITransaccion;
+  datalleTransaccion: IDetalleTransaccion[];
+}
+
 // Devoluciones interface
 
 export interface IDevolucionesProducto {
   quantity: number;
   productId: string;
+  price: number;
 }
 
 export interface IDevolucionesCreate {

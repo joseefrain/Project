@@ -1,7 +1,9 @@
 import { inject, injectable } from 'tsyringe';
 import { IClientState, IEntity } from '../../models/entity/Entity.model';
 import { EntityRepository } from '../../repositories/entity/Entity.repository';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
+import { ICredito } from '../../models/credito/Credito.model';
+import { cero128, restarDecimal128, restarDecimal1282 } from '../../gen/handleDecimal128';
 
 @injectable()
 export class EntityService {
@@ -35,6 +37,75 @@ export class EntityService {
       throw new Error('Entity not found');
     }
     return entity;
+  }
+
+  async returnTransaction(credito:ICredito, montoDevolucion:Types.Decimal128) {
+
+    let entidad = await this.getEntityById((credito.entidadId as Types.ObjectId).toString());
+    if (!entidad) {
+      throw new Error('Entity not found');
+
+    }
+
+    if (credito.tipoCredito === 'VENTA') {
+      const saldoPendiente = credito.saldoPendiente;
+      const saldoAbonado = restarDecimal128(credito.saldoCredito, saldoPendiente);
+
+      const clienteState = entidad.state as IClientState;
+    
+      // Ajustar amountReceivable (saldo pendiente)
+      let nuevoSaldoPendienteCredito = restarDecimal1282(saldoPendiente, montoDevolucion);
+      if (nuevoSaldoPendienteCredito < cero128) {
+        nuevoSaldoPendienteCredito = cero128; // No puede ser negativo
+      }
+    
+      // Ajustar advancesReceipts (anticipos recibidos)
+      let montoDevolucionPagada = montoDevolucion > saldoAbonado ? saldoAbonado : montoDevolucion // Solo afecta lo ya pagado
+      let nuevoSaldoAbonadoCredito = restarDecimal128(saldoAbonado, montoDevolucionPagada)
+
+      const ajusteAmountReceivable = restarDecimal128(saldoPendiente, nuevoSaldoPendienteCredito) // Cuánto disminuye el saldo pendiente global
+      const ajusteAdvancesReceipts = restarDecimal128(saldoAbonado, nuevoSaldoAbonadoCredito) 
+    
+      // Actualizar valores globales del cliente
+      const nuevoAmountReceivable = restarDecimal128(clienteState.amountReceivable, ajusteAmountReceivable);
+      const nuevoAdvancesReceipts = restarDecimal128(clienteState.advancesReceipts, ajusteAdvancesReceipts)
+    
+      // Devolver los nuevos valores en Decimal128
+      clienteState.amountReceivable = nuevoAmountReceivable;
+      clienteState.advancesReceipts = nuevoAdvancesReceipts;
+
+      entidad.state = {...entidad.state,...clienteState};
+    } else {
+      const saldoPendiente = credito.saldoPendiente;
+      const saldoAbonado = restarDecimal128(credito.saldoCredito, saldoPendiente);
+
+      const clienteState = entidad.state as IClientState;
+
+      // Ajustar amountPayable (saldo pendiente)
+      let nuevoSaldoPendienteCredito = restarDecimal1282(saldoPendiente, montoDevolucion);
+      if (nuevoSaldoPendienteCredito < cero128) {
+        nuevoSaldoPendienteCredito = cero128; // No puede ser negativo
+      }
+
+      // Ajustar advancesDelivered (anticipos entregados)
+      let montoDevolucionPagada = montoDevolucion > saldoAbonado ? saldoAbonado : montoDevolucion // Solo afecta lo ya pagado
+      let nuevoSaldoAbonadoCredito = restarDecimal128(saldoAbonado, montoDevolucionPagada)
+      if (nuevoSaldoAbonadoCredito < cero128) {
+        nuevoSaldoAbonadoCredito = cero128; // No puede ser negativo
+      }
+
+      // Actualizar valores globales del cliente
+      const nuevoAmountPayable = restarDecimal128(clienteState.amountPayable, restarDecimal128(saldoPendiente, nuevoSaldoPendienteCredito));
+      const nuevoAdvancesDelivered = restarDecimal128(clienteState.advancesDelivered, montoDevolucionPagada)
+
+      // Devolver los nuevos valores en Decimal128
+      clienteState.amountPayable = nuevoAmountPayable;
+      clienteState.advancesDelivered = nuevoAdvancesDelivered;
+
+      entidad.state = {...entidad.state,...clienteState};
+    }
+
+    await entidad.save();
   }
 
   async getAllEntities(

@@ -60,6 +60,8 @@ export interface IInit {
   branchId: string;
   listInventarioSucursalId: string[];
   userId: string;
+  listProductId?: string[]
+  searchWithProductId?: boolean
 }
 
 export interface IAddQuantity {

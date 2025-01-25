@@ -25,6 +25,11 @@ export class CreditoRepository {
     return credit;
   }
 
+  async findByTransactioId(transactionId: string): Promise<ICredito | null> {
+    const credit = this.model.findOne({ transaccionId: new mongoose.Types.ObjectId(transactionId) });
+    return await credit.exec();
+  }
+
   async findAllByEntity(entidadId: string): Promise<ICredito[]> {
     const credit = this.model.find({ entidadId: new mongoose.Types.ObjectId(entidadId) });
     return await credit.exec();

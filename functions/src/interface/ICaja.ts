@@ -25,7 +25,7 @@ export interface ICreataCashRegister {
 export type IOpenCashService = Omit<IOpenCash, 'session'>;
 
 export type ITypeCashRegisterMovement =  'VENTA' | 'INGRESO' | 'EGRESO' | 'COMPRA' | 'APERTURA' | 'DEVOLUCION';
-export type TypeEstatusTransaction = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA';
+export type TypeEstatusTransaction = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA' | 'DEVOLUCION';
 
 export interface ITypeEstatusSales {
   PENDIENE: TypeEstatusTransaction,
@@ -33,6 +33,7 @@ export interface ITypeEstatusSales {
   ENMORA: TypeEstatusTransaction,
   PAGADA: TypeEstatusTransaction,
   CANCELADA: TypeEstatusTransaction,
+  DEVOLUCION: TypeEstatusTransaction,
 }
 
 export const tipoEstatusSales:ITypeEstatusSales = {
@@ -41,6 +42,7 @@ export const tipoEstatusSales:ITypeEstatusSales = {
   ENMORA: 'EN MORA',
   PAGADA: 'PAGADA',
   CANCELADA: 'CANCELADA',
+  DEVOLUCION: 'DEVOLUCION',
 }
 
 export interface ICashRegisterMovementObejct {

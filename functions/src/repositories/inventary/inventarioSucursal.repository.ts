@@ -94,6 +94,29 @@ export class InventarioSucursalRepository {
     return listInventarioSucursal.filter(bodega => bodega.productoId);
   }
 
+  async getListProductByProductIds(
+    sucursalId: string,
+    listProductId: string[]
+  ) {
+    // Convertir los strings a ObjectId si es necesario
+    const sucursalObjectId = new Types.ObjectId(sucursalId);
+    const idsToFind = listProductId.map(id => new Types.ObjectId(id));
+
+    // Hacer la consulta usando Mongoose
+    const listInventarioSucursal = await this.model.find({
+      sucursalId: sucursalObjectId,
+      deleted_at: null, // Filtrar por estado de BodegaActivoDesglose
+      productoId: { $in: idsToFind }, // Usar $in para buscar los IDs
+    })
+      .populate({
+        path: 'productoId',
+        match: { delete_at: null }, // Filtrar por el estado de ActivoDesglose
+      })
+
+    // Filtrar cualquier resultado donde no se haya hecho el populate exitosamente
+    return listInventarioSucursal.filter(bodega => bodega.productoId);
+  }
+
   async findBySucursalIdAndProductId(sucursarlIdStr:string, productoIdStr:string) {
     let sucursalId = new mongoose.Types.ObjectId(sucursarlIdStr);
     let productoId = new mongoose.Types.ObjectId(productoIdStr);

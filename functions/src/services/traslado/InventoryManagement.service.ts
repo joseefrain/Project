@@ -1,3 +1,4 @@
+
 import mongoose, { mongo } from 'mongoose';
 import { InventarioSucursalRepository } from '../../repositories/inventary/inventarioSucursal.repository';
 import { inject, injectable } from 'tsyringe';
@@ -21,16 +22,21 @@ export class InventoryManagementService implements IManageHerramientaModel {
   ) {}
 
 
-  async init({ branchId, listInventarioSucursalId, userId }: IInit): Promise<void> {
+  async init({ branchId, listInventarioSucursalId, userId, listProductId, searchWithProductId = false }: IInit): Promise<IInventarioSucursal[]> {
+    this._listInventarioSucursal = searchWithProductId
+      ? await this.inventarioSucursalRepo.getListProductByProductIds(
+          branchId,
+          listProductId as string[]
+        )
+      : await this.inventarioSucursalRepo.getListProductByInventarioSucursalIds(
+          branchId,
+          listInventarioSucursalId
+        );
+    this._listInventoryMoved = [];
+    this._listUpdatedBranchInventory = [];
+    this.userId = new mongoose.Types.ObjectId(userId);
 
-    this._listInventarioSucursal =
-      await this.inventarioSucursalRepo.getListProductByInventarioSucursalIds(
-        branchId,
-        listInventarioSucursalId
-      );
-      this._listInventoryMoved = [];
-      this._listUpdatedBranchInventory = [];
-      this.userId = new mongoose.Types.ObjectId(userId);
+    return this._listInventarioSucursal
   }
 
   async initHandleStockProductBranch(userId: string): Promise<void> {

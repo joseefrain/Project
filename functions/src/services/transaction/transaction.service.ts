@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { TransactionRepository } from '../../repositories/transaction/transaction.repository';
 import mongoose, { Types } from 'mongoose';
-import { ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITrasaccionProducto, TypeTransaction } from '../../models/transaction/Transaction.model';
+import { IDevolucionesCreate, ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITransaccionNoDto, ITrasaccionProducto, TypeTransaction } from '../../models/transaction/Transaction.model';
 import { ITipoDescuento } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { IProducto } from '../../models/inventario/Producto.model';
@@ -16,10 +16,12 @@ import { notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { DescuentoRepository } from '../../repositories/transaction/descuento.repository';
 import { IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model'; 
 import { CashRegisterService } from '../utils/cashRegister.service';
-import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../interface/ICaja';
+import { ITransactionCreateCaja, tipoEstatusSales, TypeEstatusTransaction } from '../../interface/ICaja';
 import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
+import { CreditoRepository } from '../../repositories/credito/Credito.repository';
+import { restarDecimal128 } from '../../gen/handleDecimal128';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -34,7 +36,8 @@ export class TransactionService {
     @inject(DescuentoRepository) private descuentoRepository: DescuentoRepository,
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
     @inject(CreditoService) private creditoService: CreditoService,
-    @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository
+    @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository,
+    @inject(CreditoService) private service: CreditoService,
   ) {}
 
   async addTransactionToQueue(data: ICreateTransactionProps) {
@@ -275,6 +278,15 @@ export class TransactionService {
     return ventaDto;
   }
 
+  async getTransactionByIdNoDto(id: string): Promise<ITransaccionNoDto | null> {
+    let venta = (await this.repository.findTransaccionById(id) as ITransaccion);
+
+    let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
+
+
+    return {transaccion: venta, datalleTransaccion: detalleVenta};
+  }
+
  async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionCreate> {
     let products: ITrasaccionProducto[] = [];
 
@@ -342,5 +354,179 @@ export class TransactionService {
 
   async getAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
     return this.repository.findAllDetalleVentaByVentaId(ventaId);
+  }
+
+  async createDevolucion(data: IDevolucionesCreate) {
+
+    let transaccion = await this.getTransactionByIdNoDto(data.trasaccionOrigenId);
+
+    if (!transaccion?.transaccion) {
+      throw new Error('Transaccion no encontrada');
+    }
+
+    let productIdsByBranch = data.products?.map((detalle) => detalle.productId) as string[];
+
+      let dataInit:IInit = {
+        userId: data.userId,
+        branchId: data.sucursalId!,
+        listInventarioSucursalId: [],
+        listProductId: productIdsByBranch,
+        searchWithProductId: true
+      }
+
+      let listInventarioSucursal = await this.inventoryManagementService.init(dataInit);
+
+      let sucursalId = new mongoose.Types.ObjectId(data.sucursalId!);
+      let usuarioId = new mongoose.Types.ObjectId(data.userId!);
+      let cajaId = new mongoose.Types.ObjectId(data.cajaId!);
+
+      let getDetalleVenta = (productId:string) => {
+        let productoIdObj = new mongoose.Types.ObjectId(productId);
+        let detalleVenta = transaccion.datalleTransaccion.find((item) => (item.productoId as IProducto)._id === productoIdObj);
+
+        return detalleVenta
+      }
+
+      let getProductoPrice = (productId:string) => {
+        let detalleVenta = getDetalleVenta(productId)
+        let price = parseFloat((detalleVenta?.total as mongoose.Types.Decimal128).toString()) / (detalleVenta?.cantidad as number);
+
+        return price
+      }
+
+      let totalDevolucion = data.products?.reduce((acc, item) => acc + getProductoPrice(item.productId) * item.quantity, 0) as number;
+
+      let totalTransaccion = restarDecimal128(transaccion.transaccion.total, new mongoose.Types.Decimal128(totalDevolucion.toString()))
+
+      let newVenta = {
+        usuarioId: usuarioId,
+        sucursalId: sucursalId,
+        subtotal: new mongoose.Types.Decimal128(totalDevolucion.toString()),
+        total: new mongoose.Types.Decimal128(totalDevolucion?.toString()!),
+        descuento: new mongoose.Types.Decimal128("0"),
+        deleted_at: null,
+        fechaRegistro: new Date(),
+        tipoTransaccion: ('DEVOLUCION' as TypeTransaction),
+        paymentMethod: transaccion.transaccion.paymentMethod,
+        entidadId : (transaccion?.transaccion as ITransaccion).entidadId,
+        estadoTrasaccion: tipoEstatusSales.DEVOLUCION,
+        cajaId: cajaId,
+        transaccionOrigenId: transaccion.transaccion._id as mongoose.Types.ObjectId,
+      }
+
+      const newReturn = await this.repository.create(newVenta);
+
+      for await (const element of data.products!) {
+        let productoId = new mongoose.Types.ObjectId(element.productId);
+        let inventarioSucursal = listInventarioSucursal.find((item) => (item.productoId as IProducto)._id === productoId);
+        let inventarioSucursalId = ((inventarioSucursal as IInventarioSucursal)._id as Types.ObjectId)
+        let subtotal = element.price * element.quantity;
+        let descuentoMonto = 0;
+        let total = subtotal - descuentoMonto;
+        let tipoAplicacion:ITipoDescuentoEntidad = 'Product';
+
+        let detalleVenta = {
+          ventaId: (newReturn._id as mongoose.Types.ObjectId),
+          productoId: productoId,
+          precio: new mongoose.Types.Decimal128(element.price?.toString()!),
+          cantidad: element.quantity,
+          subtotal: new mongoose.Types.Decimal128(subtotal.toString()),
+          total: new mongoose.Types.Decimal128(total.toString()),
+          descuento: new mongoose.Types.Decimal128(descuentoMonto.toString()),
+          deleted_at: null,
+          tipoCliente: 'Regular' as 'Regular',
+          tipoDescuentoEntidad: tipoAplicacion,
+        }
+
+        let newdDetailReturn = await this.repository.createDetalleVenta(detalleVenta);
+
+        if (transaccion.transaccion.tipoTransaccion === 'COMPRA') {
+
+          let dataSubTractQuantity:ISubtractQuantity = {
+            inventarioSucursalId: inventarioSucursalId,
+            quantity: element.quantity,
+            isNoSave:true,
+            tipoMovimiento:  tipoMovimientoInventario.DEVOLUCION
+          }
+          
+         let inventarioSucursal = (await this.inventoryManagementService.subtractQuantity(dataSubTractQuantity) as IInventarioSucursal)
+  
+         if (inventarioSucursal.stock <= inventarioSucursal.puntoReCompra) {
+            listInventarioSucursal.push(inventarioSucursal);
+          }
+          
+        } else if (transaccion.transaccion.tipoTransaccion === 'VENTA') {
+          let dataAddQuantity:IAddQuantity = {
+            quantity: element.quantity,
+            inventarioSucursalId: inventarioSucursalId,
+            isNoSave:true,
+            tipoMovimiento:  tipoMovimientoInventario.DEVOLUCION,
+          };
+  
+          await this.inventoryManagementService.addQuantity(dataAddQuantity)
+        }
+
+        (newReturn.transactionDetails as mongoose.Types.ObjectId[]).push(newdDetailReturn._id as mongoose.Types.ObjectId);
+
+        let detalleTransaccionOrigen = getDetalleVenta(element.productId);
+
+        if (!data.esTodaLaVenta) {
+          if (detalleTransaccionOrigen) {
+            if (detalleTransaccionOrigen.cantidad === element.quantity) {
+              detalleTransaccionOrigen.deleted_at = new Date();
+              await detalleTransaccionOrigen.save();
+              
+            } else {
+              
+              detalleTransaccionOrigen.cantidad = detalleTransaccionOrigen.cantidad - element.quantity;
+              await detalleTransaccionOrigen.save();
+            }
+          }
+        }
+      }
+
+      if (data.esTodaLaVenta) {
+        transaccion.transaccion.deleted_at = new Date();
+        await transaccion.transaccion.save();
+      } else {
+        let subTotal = `${data.products?.reduce((acc, item) => acc + item.price * item.quantity, 0)}`
+        transaccion.transaccion.subtotal = new mongoose.Types.Decimal128(subTotal);
+        transaccion.transaccion.total = totalTransaccion
+        await transaccion.transaccion.save();
+      }
+
+      await this.inventoryManagementService.updateAllBranchInventory();
+      await this.inventoryManagementService.saveAllMovimientoInventario();
+
+      let ventaActualizar = {
+        id: newReturn._id as Types.ObjectId,
+        tipoTransaccion: transaccion.transaccion.tipoTransaccion,
+        cajaId: (newReturn.cajaId as Types.ObjectId).toString(),
+        userId: data.userId,
+        total: totalDevolucion,
+        subtotal: totalDevolucion,
+        monto: data.monto,
+      } as ITransactionCreateCaja;
+
+      const datosActualizar = {
+        data: ventaActualizar,   
+      }
+
+      if (transaccion.transaccion.paymentMethod === 'credit') {
+        const dineroADevolver = await this.creditoService.returnTransactionById(data.trasaccionOrigenId, totalDevolucion);
+
+        ventaActualizar.total = dineroADevolver;
+        ventaActualizar.monto = dineroADevolver;
+
+        await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
+      }
+
+      await newReturn.save();
+      
+      if (transaccion.transaccion.paymentMethod === 'cash') {
+        await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
+      }
+
+      await this.resumenRepository.addTransactionDailySummary(newReturn, sucursalId);
   }
 }

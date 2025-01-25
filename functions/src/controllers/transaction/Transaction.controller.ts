@@ -21,6 +21,15 @@ export class TransactionController {
     }
   }
 
+  async descuento(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.service.createDevolucion(req.body);
+      res.status(201).json(result); // Enviar el resultado
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getVentasBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const ventas = await this.service.findByTypeAndBranch(req.params.id, "VENTA");

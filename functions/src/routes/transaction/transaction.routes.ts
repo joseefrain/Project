@@ -15,6 +15,13 @@ router.post(
   authMiddleware,
   transactionController.create.bind(transactionController)
 );
+
+router.post(
+  '/devolucion',
+  authMiddleware,
+  transactionController.descuento.bind(transactionController)
+);
+
 router.get(
   '/:id',
   authMiddleware,

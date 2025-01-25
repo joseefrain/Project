@@ -30,7 +30,7 @@ export class TransactionRepository {
     return await descuento.save();
   }
   async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
-    const detalleVenta = await this.modelDetalleTransaction.find({ ventaId: ventaId }).populate("productoId");
+    const detalleVenta = await this.modelDetalleTransaction.find({ ventaId: ventaId, deleted_at:null }).populate("productoId");
 
     return detalleVenta;
   }

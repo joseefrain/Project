@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { parse } from "path";
 import { ICredito, ICuotasCredito, ModalidadCredito } from "../../models/credito/Credito.model";
 import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero.model";
@@ -8,10 +8,11 @@ import { inject, injectable } from "tsyringe";
 import { TransactionRepository } from "../../repositories/transaction/transaction.repository";
 import { ITransaccion } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
+import { cero128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
 import { CashRegisterService } from "../utils/cashRegister.service";
 import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja } from "../../interface/ICaja";
+import { EntityService } from "../entity/Entity.service";
 
 export interface IHandlePagoCreditoProps {
   creditoIdStr: string;
@@ -29,6 +30,7 @@ export class CreditoService {
     @inject(TransactionRepository) private ventaRepository: TransactionRepository,
     @inject(EntityRepository) private entityRepository: EntityRepository,
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
+    @inject(EntityService) private entityService: EntityService,
   ) {}
 
   async createCredito(data: Partial<ICredito>, ): Promise<ICredito> {
@@ -405,6 +407,47 @@ export class CreditoService {
   async findCreditoById(id: string): Promise<ICredito | null> {
     const credito = await this.creditoRepository.findById(id);
     return credito;
+  }
+
+  async returnTransactionById(id: string, totalDevolucionInt:number) {
+    const credito = await this.creditoRepository.findByTransactioId(id);
+    let totalDevolucion = new mongoose.Types.Decimal128(totalDevolucionInt.toString());
+
+    if (!credito) {
+      throw new Error("Crédito no encontrado");
+    }
+
+    await this.entityService.returnTransaction(credito, totalDevolucion);
+
+    let nuevoSaldoPendiente = restarDecimal128(credito.saldoPendiente, totalDevolucion);
+
+    let dineroADevolver = cero128;
+
+    if (nuevoSaldoPendiente < cero128) {
+      dineroADevolver = nuevoSaldoPendiente;
+      nuevoSaldoPendiente = cero128;
+    }
+
+    credito.saldoPendiente = nuevoSaldoPendiente;
+
+    if (credito.modalidadCredito === 'PLAZO' && nuevoSaldoPendiente > cero128) {
+      let countCuantoPendiente = new Types.Decimal128(credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE').length.toString())
+
+      credito.cuotaMensual = dividirDecimal128(nuevoSaldoPendiente, countCuantoPendiente);
+      credito.cuotasCredito.map(cuota => {
+        if (cuota.estadoPago === 'PENDIENTE') {
+          cuota.montoCuota = credito.cuotaMensual;
+        }
+      });
+
+    } else if (credito.modalidadCredito === 'PAGO' && nuevoSaldoPendiente > cero128) {
+      const porcentajePagoMinimo = new mongoose.Types.Decimal128("0.20");
+      credito.pagoMinimoMensual = multiplicarDecimal128(nuevoSaldoPendiente, porcentajePagoMinimo);
+    }
+
+    await credito.save();
+
+    return parseInt(dineroADevolver.toString());
   }
 
   async findCreditoBySucursalId(sucursalId: string): Promise<ICredito[] | null> {
