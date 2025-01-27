@@ -70,6 +70,7 @@ export interface ITransaccionCreate {
   paymentMethod: TypePaymentMethod; // nuevo
   credito?: ICreditoCreate; // nuevo
   tipoTransaccion: TypeTransaction;
+  id?: string;
 }
 
 export interface ITransaccionNoDto {
@@ -82,20 +83,17 @@ export interface ITransaccionNoDto {
 export interface IDevolucionesProducto {
   quantity: number;
   productId: string;
-  price: number;
+  newUnityPrice: number | null;
 }
 
 export interface IDevolucionesCreate {
   userId: string;
-  sucursalId: string;
   products: IDevolucionesProducto[];
   monto:number
   cajaId:string;
   trasaccionOrigenId: string;
   esDineroExterno:boolean
   montoExterno?: number | null;
-  entidadId?: string; 
-  esTodaLaVenta:boolean
 }
 
 const transaccionSchema: Schema = new Schema(

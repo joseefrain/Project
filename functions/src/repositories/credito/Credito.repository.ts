@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { Credito, ICredito } from '../../models/credito/Credito.model';
 import mongoose from 'mongoose';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class CreditoRepository {
@@ -57,7 +58,7 @@ export class CreditoRepository {
 
   async delete(id: string): Promise<ICredito | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 }

@@ -6,6 +6,7 @@ import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
 import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, tipoMovimientoInventario } from '../../interface/IInventario';
 import { dividirDecimal128, multiplicarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class InventoryManagementService implements IManageHerramientaModel {
@@ -65,7 +66,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
       cantidadInicial: inventarioSucursal.stock,
       cantidadFinal: inventarioSucursal.stock - quantity,
       tipoMovimiento: tipoMovimiento,
-      fechaMovimiento: new Date(),
+      fechaMovimiento: getDateInManaguaTimezone(),
       usuarioId: this.userId,
     });
 
@@ -74,9 +75,9 @@ export class InventoryManagementService implements IManageHerramientaModel {
     inventarioSucursal.stock -= quantity;
     
     if (inventarioSucursal.stock === 0)
-      inventarioSucursal.deleted_at = new Date();
+      inventarioSucursal.deleted_at = getDateInManaguaTimezone();
 
-    inventarioSucursal.ultimo_movimiento = new Date();
+    inventarioSucursal.ultimo_movimiento = getDateInManaguaTimezone();
 
     isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursal) : await inventarioSucursal.save();
 
@@ -134,14 +135,14 @@ export class InventoryManagementService implements IManageHerramientaModel {
       cantidadInicial: inventarioSucursalReal.stock,
       cantidadFinal: inventarioSucursalReal.stock + quantity,
       tipoMovimiento: tipoMovimiento,
-      fechaMovimiento: new Date(),
+      fechaMovimiento: getDateInManaguaTimezone(),
       usuarioId: this.userId,
     });
 
     isNoSave ? this._listInventoryMoved.push(movimientoInventario) : await movimientoInventario.save();
 
     inventarioSucursalReal.stock += quantity;
-    inventarioSucursalReal.ultimo_movimiento = new Date();
+    inventarioSucursalReal.ultimo_movimiento = getDateInManaguaTimezone();
     inventarioSucursalReal.deleted_at = null;
 
     isNoSave ? this._listUpdatedBranchInventory.push(inventarioSucursalReal) : await inventarioSucursalReal.save();
@@ -155,7 +156,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
       cantidadInicial: inventarioSucursal.stock,
       cantidadFinal: inventarioSucursal.stock + inventarioSucursal.stock,
       tipoMovimiento: 'entrada',
-      fechaMovimiento: new Date(),
+      fechaMovimiento: getDateInManaguaTimezone(),
       usuarioId: this.userId,
     });
 

@@ -1,4 +1,5 @@
 import { WebClient } from '@slack/web-api';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 interface ProductReorder {
   name: string;
@@ -87,7 +88,7 @@ export const notifyManagerOfIncomingProducts = async (
   const slackToken = process.env.SLACK_BOT_TOKEN;
   const slackClient = new WebClient(slackToken);
 
-  const currentDate = new Date().toLocaleString();
+  const currentDate = getDateInManaguaTimezone().toLocaleString();
 
   const productDetails = productList
     .map((product, index) => `• ${index + 1}. ${product.name} - Cantidad: ${product.quantity}`)

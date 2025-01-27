@@ -4,6 +4,7 @@ import { injectable } from 'tsyringe';
 import { IActualizarMontoEsperado, ICreataCashRegister, IOpenCash } from '../../interface/ICaja';
 import { cero128, restarDecimal128 } from '../../gen/handleDecimal128';
 import { hasSubscribers } from 'diagnostics_channel';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class CajaRepository {
@@ -26,7 +27,7 @@ export class CajaRepository {
 
     caja.montoInicial = montoInicial128;
     caja.estado = 'ABIERTA';
-    caja.fechaApertura = new Date();
+    caja.fechaApertura = getDateInManaguaTimezone();
     caja.usuarioAperturaId = new Types.ObjectId(usuarioAperturaId);
 
     return await caja.save();
@@ -34,7 +35,7 @@ export class CajaRepository {
 
   async create ({ montoInicial, usuarioAperturaId, sucursalId, consecutivo }: ICreataCashRegister): Promise<ICaja> {
     const nuevaCaja = new this.cajaModel({
-      fechaApertura: new Date(),
+      fechaApertura: getDateInManaguaTimezone(),
       estado: 'CERRADA',
       usuarioAperturaId,
       sucursalId,
@@ -52,14 +53,14 @@ export class CajaRepository {
     if (caja.estado === 'CERRADA') throw new Error('La caja ya está cerrada');
 
     let montoFinalDeclaradoFormateado = new mongoose.mongo.Decimal128(montoFinalDeclarado)
-    let diferencia = caja.montoEsperado ? restarDecimal128(caja.montoEsperado, montoFinalDeclaradoFormateado) : 0;
+    let diferencia = caja.montoEsperado ? restarDecimal128(caja.montoEsperado, montoFinalDeclaradoFormateado) : cero128;
 
     let cajaHistorico:ICajaHistorico = {
       fechaApertura: (caja.fechaApertura as Date),
-      fechaCierre: new Date(),
+      fechaCierre: getDateInManaguaTimezone(),
       montoInicial: caja.montoInicial,
       montoFinalDeclarado: montoFinalDeclaradoFormateado,
-      diferencia: new mongoose.mongo.Decimal128(diferencia.toString()),
+      diferencia: diferencia,
       montoEsperado: caja.montoEsperado,
       usuarioAperturaId: (caja.usuarioAperturaId as mongoose.Types.ObjectId)
     } 
@@ -107,6 +108,10 @@ export class CajaRepository {
 
   async obtenerCajasAbiertasPorUsuario(userId: string): Promise<ICaja | null> {
     return await this.cajaModel.findOne({ usuarioAperturaId: userId, estado: 'ABIERTA' });
+  }
+
+  async obtenerCajasAbiertasPorUsuarioYSucursal(userId: string, sucursalId: string): Promise<ICaja | null> {
+    return await this.cajaModel.findOne({ usuarioAperturaId: userId, sucursalId, estado: 'ABIERTA' });
   }
 
   async obtenerCajaAbiertaPorUsuarioYCajaId(userId: string, cajaId: string): Promise<ICaja | null> {

@@ -27,6 +27,7 @@ import { CustomJwtPayload } from '../../utils/jwt';
 import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
 import { IHandleStockProductBranch, IInit, tipoMovimientoInventario } from '../../interface/IInventario';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class TrasladoService {
@@ -165,7 +166,7 @@ export class TrasladoService {
 
       // Actualizando el pedido
       pedido.estatusTraslado = 'Terminado';
-      pedido.fechaRecepcion = new Date();
+      pedido.fechaRecepcion = getDateInManaguaTimezone();
       pedido.comentarioRecepcion = model.comentarioRecepcion!;
       pedido.usuarioIdRecibe = new mongoose.Types.ObjectId(trabajadorId);
 
@@ -325,7 +326,7 @@ export class TrasladoService {
       itemDePedido.regresado = true;
      
       inventarioSucursal.stock += itemDePedido.cantidad;
-      inventarioSucursal.ultimo_movimiento = new Date();
+      inventarioSucursal.ultimo_movimiento = getDateInManaguaTimezone();
 
       inventarioSucursal.save();
       itemDePedido.save();
@@ -338,7 +339,7 @@ export class TrasladoService {
         cantidadInicial: inventarioSucursal.stock,
         cantidadFinal: inventarioSucursal.stock - itemDePedido.cantidad,
         tipoMovimiento: 'devolución',
-        fechaMovimiento: new Date(),
+        fechaMovimiento: getDateInManaguaTimezone(),
         usuarioId: user?.id,
       });
 
@@ -373,7 +374,7 @@ export class TrasladoService {
 
     const newPedido = new Traslado({
       estatusTraslado: 'Solicitado',
-      fechaRegistro: new Date(),
+      fechaRegistro: getDateInManaguaTimezone(),
       tipoPedido: 0,
       estado: true,
       consecutivo: newConsecutivo,
@@ -403,7 +404,7 @@ export class TrasladoService {
     if (!traslado) throw new Error('Pedido no encontrado');
 
     traslado.estatusTraslado = 'En Proceso';
-    traslado.fechaEnvio = new Date();
+    traslado.fechaEnvio = getDateInManaguaTimezone();
     traslado.usuarioIdEnvia = new mongoose.Types.ObjectId(usuarioEnviaId);
 
     // Firma
@@ -563,7 +564,7 @@ export class TrasladoService {
         stock: model.cantidad,
         sucursalId: new mongoose.Types.ObjectId(bodegaId),
         productoId: inventarioSucursalEnvia.productoId,
-        ultimo_movimiento: new Date(),
+        ultimo_movimiento: getDateInManaguaTimezone(),
         deleted_at: null,
         precio: model.precio,
         puntoReCompra: model.puntoReCompra,

@@ -9,6 +9,7 @@ import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario
 import mongoose from 'mongoose';
 import { ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { IUser, User } from '../../models/usuarios/User.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class SucursalRepository {
@@ -111,7 +112,7 @@ export class SucursalRepository {
 
   async delete(id: string): Promise<ISucursal | null> {
     return await this.modelSucursal
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 

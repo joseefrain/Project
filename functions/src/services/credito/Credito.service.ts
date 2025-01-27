@@ -13,6 +13,7 @@ import { IClientState } from "../../models/entity/Entity.model";
 import { CashRegisterService } from "../utils/cashRegister.service";
 import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja } from "../../interface/ICaja";
 import { EntityService } from "../entity/Entity.service";
+import { getDateInManaguaTimezone } from "../../utils/date";
 
 export interface IHandlePagoCreditoProps {
   creditoIdStr: string;
@@ -36,7 +37,7 @@ export class CreditoService {
   async createCredito(data: Partial<ICredito>, ): Promise<ICredito> {
     try {
 
-      data.fecheInicio = new Date();
+      data.fecheInicio = getDateInManaguaTimezone();
       data.estadoCredito = 'ABIERTO';
       data.saldoPendiente = data.saldoCredito;
 
@@ -82,7 +83,7 @@ export class CreditoService {
             montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
             fechaVencimiento: fechaVencimiento,
             estadoPago: 'PENDIENTE',
-            fechaCuota: new Date() // Fecha de creación de la cuota
+            fechaCuota: getDateInManaguaTimezone() // Fecha de creación de la cuota
           });
         }
     
@@ -103,7 +104,7 @@ export class CreditoService {
           montoCapital: new mongoose.Types.Decimal128('0'), // Asumiendo que es igual al montoCuota
           fechaVencimiento: fechaVencimiento,
           estadoPago: 'PENDIENTE',
-          fechaCuota: new Date() // Fecha de creación de la cuota
+          fechaCuota: getDateInManaguaTimezone() // Fecha de creación de la cuota
         });
 
         data.pagoMinimoMensual = nuevoPagoMinimo;
@@ -169,7 +170,7 @@ export class CreditoService {
       credito.pagosCredito.push({
         montoPago: montoPago128,
         saldoPendiente: nuevoSaldo,
-        fechaPago: new Date()
+        fechaPago: getDateInManaguaTimezone()
       });
     
       // Actualizar el estado de la cuota actual (la última cuota generada)
@@ -194,7 +195,7 @@ export class CreditoService {
           montoCapital: nuevoPagoMinimo,
           fechaVencimiento: fechaVencimiento,
           estadoPago: 'PENDIENTE',
-          fechaCuota: new Date()
+          fechaCuota: getDateInManaguaTimezone()
         });
 
         if (credito.tipoCredito === 'VENTA') {
@@ -238,7 +239,7 @@ export class CreditoService {
       await this.creditoRepository.updateWith((credito._id as mongoose.Types.ObjectId).toString(), credito);
 
       let movimiento:Partial<IMovimientoFinanciero> = {
-        fechaMovimiento: new Date(),
+        fechaMovimiento: getDateInManaguaTimezone(),
         tipoMovimiento: credito.tipoCredito === 'VENTA' ? "ABONO" : "CARGO",
         monto: montoPago128,
         creditoId: (credito._id as mongoose.Types.ObjectId)
@@ -309,7 +310,7 @@ export class CreditoService {
     
       // Actualizar el estado de la cuota pagada
       cuotaPendiente.estadoPago = 'PAGADO';
-      cuotaPendiente.fechaCuota = new Date(); // Fecha del pago realizado
+      cuotaPendiente.fechaCuota = getDateInManaguaTimezone(); // Fecha del pago realizado
     
       // Actualizar el saldo pendiente del crédito
       const nuevoSaldo = restarDecimal128(credito.saldoPendiente, montoCuota);
@@ -319,7 +320,7 @@ export class CreditoService {
       credito.pagosCredito.push({
         montoPago: montoPago128,
         saldoPendiente: nuevoSaldo,
-        fechaPago: new Date()
+        fechaPago: getDateInManaguaTimezone()
       });
     
       // Verificar si todas las cuotas han sido pagadas
@@ -369,7 +370,7 @@ export class CreditoService {
       await this.creditoRepository.updateWith((credito._id as mongoose.Types.ObjectId).toString(), credito);
 
       let movimiento:Partial<IMovimientoFinanciero> = {
-        fechaMovimiento: new Date(),
+        fechaMovimiento: getDateInManaguaTimezone(),
         tipoMovimiento: credito.tipoCredito === 'VENTA' ? "ABONO" : "CARGO",
         monto: montoPago128,
         creditoId: (credito._id as mongoose.Types.ObjectId)

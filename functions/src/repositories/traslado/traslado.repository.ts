@@ -6,6 +6,7 @@ import {
   IDetalleTraslado,
   IDetalleTrasladoCreate,
 } from '../../models/traslados/DetalleTraslado.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class TrasladoRepository {
@@ -67,7 +68,7 @@ export class TrasladoRepository {
 
   async delete(id: string): Promise<ITraslado | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 

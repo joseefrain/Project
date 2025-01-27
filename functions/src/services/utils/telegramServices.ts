@@ -1,4 +1,5 @@
 import axiosInstance from '../../utils/axiosInstance';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 type Product = {
   name: string;
@@ -20,7 +21,7 @@ export const notifyTelegramManagerOfIncomingProducts = async (
   senderName: string,
   chatId: string
 ) => {
-  const currentDate = new Date().toLocaleString();
+  const currentDate = getDateInManaguaTimezone().toLocaleString();
 
   // Detalles del producto con emojis
   const productDetails = productList

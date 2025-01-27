@@ -1,3 +1,5 @@
+import { getDateInManaguaTimezone } from "../../utils/date";
+
 const accountSid = 'AC765fa1004417bf97128e3ca10824aacd';
 const authToken = 'f590cfbf94ad7e8c92d2b8538adccfee';
 const client = require('twilio')(accountSid, authToken);
@@ -25,7 +27,7 @@ export const notifyWhatsappManagerOfIncomingProducts = async (
     .map((product, index) => `*${index + 1}.* ${product.name} - *Cantidad:* ${product.quantity}`)
     .join('\n'); 
 
-  const currentDate = new Date().toLocaleString();
+  const currentDate = getDateInManaguaTimezone().toLocaleString();
   const totalQuantity = productList.reduce((total, product) => total + product.quantity, 0);
   const totalProduct = productList.length;
 

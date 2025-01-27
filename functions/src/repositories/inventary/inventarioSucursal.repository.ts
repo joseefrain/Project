@@ -2,6 +2,7 @@ import { injectable } from 'tsyringe';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose, { mongo, Types } from 'mongoose';
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class InventarioSucursalRepository {
@@ -60,7 +61,7 @@ export class InventarioSucursalRepository {
 
   async delete(id: string): Promise<IInventarioSucursal | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 

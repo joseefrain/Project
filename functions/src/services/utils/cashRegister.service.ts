@@ -7,6 +7,7 @@ import { MovimientoCajaRepository } from '../../repositories/caja/movimientoCaja
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 import { ArqueoCajaRepository } from '../../repositories/caja/countingCash.repository';
 import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class CashRegisterService {
@@ -19,6 +20,10 @@ export class CashRegisterService {
     let { usuarioAperturaId, montoInicial, cajaId, userId } = data;
 
     try {
+
+      const cajaExist = await this.repository.obtenerCajaPorId(cajaId);
+      if (!cajaExist) throw new Error('Caja no encontrada');
+
       
       let dataOpenCash = {
         usuarioAperturaId,
@@ -26,11 +31,13 @@ export class CashRegisterService {
         cajaId,
         userId
       }
-
-      let cajaPorUsuario = await this.repository.obtenerCajasAbiertasPorUsuario(usuarioAperturaId);
+      const sucursalId = (cajaExist.sucursalId as Types.ObjectId);
+      const sucursalIdStr = sucursalId.toString();
+      
+      let cajaPorUsuario = await this.repository.obtenerCajasAbiertasPorUsuarioYSucursal(usuarioAperturaId, sucursalIdStr);
 
       if (cajaPorUsuario) {
-        return "El usuario ya tiene una caja abierta";
+        return `El usuario ya tiene una caja abierta en esta sucursal caja: ${cajaExist.consecutivo}`;
       }
 
       let caja = await this.repository.abrirCaja(dataOpenCash);
@@ -44,13 +51,12 @@ export class CashRegisterService {
         monto: new Types.Decimal128(montoInicial.toString()),
         tipoMovimiento: tipeCashRegisterMovement.APERTURA,
         usuarioId:new Types.ObjectId(usuarioAperturaId),
-        fecha: new Date(),
+        fecha: getDateInManaguaTimezone(),
         descripcion: 'Apertura de caja',
       }
 
       await this.movimientoRepository.create(movimiento);
 
-      const sucursalId = (caja.sucursalId as Types.ObjectId);
 
       await this.resumenRepository.create((caja._id as Types.ObjectId), sucursalId);
 
@@ -65,7 +71,8 @@ export class CashRegisterService {
 
   async createCaja({ montoInicial, usuarioAperturaId, sucursalId }: ICreataCashRegister): Promise<ICaja> {
     const cashiers = await this.repository.obtenerCajasPorSucursal(sucursalId);
-    let consecutivo = cashiers.length + 1;
+    const lastCashier = cashiers[cashiers.length - 1];
+    let consecutivo = lastCashier.consecutivo + 1;
     return await this.repository.create({ montoInicial, usuarioAperturaId, sucursalId, consecutivo });
   }
 
@@ -155,7 +162,7 @@ export class CashRegisterService {
     let movimiento = {
       tipoMovimiento: data.tipoTransaccion,
       monto: monto,
-      fecha: new Date(),
+      fecha: getDateInManaguaTimezone(),
       descripcion: data.tipoTransaccion,   
       usuarioId: new Types.ObjectId(data.userId),
       cajaId: (caja._id as Types.ObjectId),
@@ -192,7 +199,7 @@ export class CashRegisterService {
       let movimiento = {
         tipoMovimiento: tipeCashRegisterMovement.INGRESO,
         monto,
-        fecha: new Date(),
+        fecha: getDateInManaguaTimezone(),
         descripcion: 'Este es un ingreso',
         usuarioId: new Types.ObjectId(usuarioId),
         cajaId: (caja._id as Types.ObjectId)
@@ -237,7 +244,7 @@ export class CashRegisterService {
       let movimiento = {
         tipoMovimiento: tipeCashRegisterMovement.EGRESO,
         monto,
-        fecha: new Date(),
+        fecha: getDateInManaguaTimezone(),
         descripcion: 'Este es  un egreso',
         usuarioId: new Types.ObjectId(usuarioId),
         cajaId: (caja._id as Types.ObjectId)

@@ -2,6 +2,7 @@ import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 import { IAddExpenseDailySummary, IAddIncomeDailySummary } from '../../interface/ICaja';
 import { ITransaccion } from '../../models/transaction/Transaction.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 export class ResumenCajaDiarioRepository {
   private model: Model<IResumenCajaDiario>;
@@ -13,7 +14,7 @@ export class ResumenCajaDiarioRepository {
   // Método para crear un nuevo resumen de caja diario
   async create(cajaId:Types.ObjectId, sucursalId: Types.ObjectId): Promise<IResumenCajaDiario> {
     try {
-      let fecha  = new Date();
+      let fecha  = getDateInManaguaTimezone();
       fecha.setHours(0, 0, 0, 0);
       
       let exist = await this.findByDateAndCashier(cajaId);
@@ -108,7 +109,7 @@ export class ResumenCajaDiarioRepository {
 
   async findByDateAndCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const date = new Date();
+      const date = getDateInManaguaTimezone();
       date.setHours(0, 0, 0, 0);
       return await this.model.findOne(
         { fecha: date, cajaId: cashierId },
@@ -121,7 +122,7 @@ export class ResumenCajaDiarioRepository {
 
   async findTodayResumenByCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const date = new Date()
+      const date = getDateInManaguaTimezone()
       date.setHours(0, 0, 0, 0);
       return await this.model.findOne({ cajaId: cashierId, fecha: date }).populate([
         {
@@ -163,7 +164,7 @@ export class ResumenCajaDiarioRepository {
 
       let existResumen = await this.findByDateAndCashier(cashierId);
 
-      const fecha = new Date();
+      const fecha = getDateInManaguaTimezone();
       fecha.setHours(0, 0, 0, 0);
 
       if (!existResumen) {
@@ -206,7 +207,7 @@ export class ResumenCajaDiarioRepository {
       const sucursalIdMongo = new Types.ObjectId(sucursalId);
       const cajaIdMongo = new Types.ObjectId(cajaId);
 
-      let date  = new Date();
+      let date  = getDateInManaguaTimezone();
       date.setHours(0, 0, 0, 0);
   
       // Actualizar el resumen diario para incrementar totalIngresos y montoFinalSistema
@@ -233,7 +234,7 @@ export class ResumenCajaDiarioRepository {
     const cajaIdMongo = new Types.ObjectId(cajaId);
 
     const resumenHoy = await this.model.findOneAndUpdate(
-      { fecha: new Date(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
+      { fecha: getDateInManaguaTimezone(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
       { $inc: { totalEgresos: expenseIncrement, montoFinalSistema: -expenseIncrement } },
       { new: true, upsert: true } // Asegurarse de pasar la sesión
     ).exec();

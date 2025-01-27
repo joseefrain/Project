@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { Entity, IEntity } from '../../models/entity/Entity.model';
 import mongoose from 'mongoose';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class EntityRepository {
@@ -44,7 +45,7 @@ export class EntityRepository {
 
   async delete(id: string): Promise<IEntity | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 

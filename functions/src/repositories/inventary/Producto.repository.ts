@@ -10,6 +10,7 @@ import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario
 import mongoose from 'mongoose';
 import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { GrupoInventario } from '../../models/inventario/GrupoInventario.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class ProductoRepository {
@@ -65,7 +66,7 @@ export class ProductoRepository {
         productoId: productSave._id,
         sucursalId: sucursal._id,
         stock: data.stock,
-        ultimo_movimiento: new Date(),
+        ultimo_movimiento: getDateInManaguaTimezone(),
         precio: data.precio,
         puntoReCompra: data.puntoReCompra,
         costoUnitario: data.costoUnitario
@@ -97,8 +98,8 @@ export class ProductoRepository {
         sucursalId,
         grupoId,
         stock: data.stock!,
-        create_at: new Date(),
-        update_at: new Date(),
+        create_at: getDateInManaguaTimezone(),
+        update_at: getDateInManaguaTimezone(),
         puntoReCompra: data.puntoReCompra!,
         id: inventarioSucursal._id as mongoose.Types.ObjectId,
         barCode: data.barCode!,
@@ -264,7 +265,7 @@ async removeDuplicateInventario(): Promise<void> {
       throw new Error('Producto no encontrado');
     }
 
-    product.deleted_at = new Date();
+    product.deleted_at = getDateInManaguaTimezone();
     (await product.save()).populate('productoId');
     return product
   }

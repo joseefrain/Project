@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { MovimientoFinanciero, IMovimientoFinanciero } from '../../models/credito/MovimientoFinanciero.model';
 import { mongo } from 'mongoose';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class MovimientoFinancieroRepository {
@@ -35,7 +36,7 @@ export class MovimientoFinancieroRepository {
 
   async delete(id: string): Promise<IMovimientoFinanciero | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 }

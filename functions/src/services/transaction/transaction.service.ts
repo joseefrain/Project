@@ -21,7 +21,8 @@ import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 import { CreditoRepository } from '../../repositories/credito/Credito.repository';
-import { restarDecimal128 } from '../../gen/handleDecimal128';
+import { cero128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -72,7 +73,7 @@ export class TransactionService {
         total: new mongoose.Types.Decimal128(venta.total?.toString()!),
         descuento: new mongoose.Types.Decimal128(venta.discount?.toString()! || "0"),
         deleted_at: null,
-        fechaRegistro: new Date(),
+        fechaRegistro: getDateInManaguaTimezone(),
         tipoTransaccion: data.venta.tipoTransaccion,
         paymentMethod: venta.paymentMethod,
         entidadId : new mongoose.Types.ObjectId(venta.entidadId!),
@@ -207,7 +208,7 @@ export class TransactionService {
           plazoCredito: venta.credito?.plazoCredito as number,
           cuotaMensual: venta.credito?.cuotaMensual as mongoose.Types.Decimal128,
           pagoMinimoMensual: venta.credito?.pagoMinimoMensual as mongoose.Types.Decimal128,
-          fechaVencimiento: new Date()
+          fechaVencimiento: getDateInManaguaTimezone()
         }
 
         await this.creditoService.createCredito(credito);
@@ -337,7 +338,8 @@ export class TransactionService {
       fechaRegistro: venta.fechaRegistro,
       products: products,
       paymentMethod: venta.paymentMethod,
-      tipoTransaccion: venta.tipoTransaccion
+      tipoTransaccion: venta.tipoTransaccion,
+      id: (venta._id as mongoose.Types.ObjectId).toString()
     }
 
     return ventaDto;
@@ -360,15 +362,18 @@ export class TransactionService {
 
     let transaccion = await this.getTransactionByIdNoDto(data.trasaccionOrigenId);
 
+
     if (!transaccion?.transaccion) {
       throw new Error('Transaccion no encontrada');
     }
+
+    let sucursalIdStr = transaccion.transaccion.sucursalId.toString();
 
     let productIdsByBranch = data.products?.map((detalle) => detalle.productId) as string[];
 
       let dataInit:IInit = {
         userId: data.userId,
-        branchId: data.sucursalId!,
+        branchId: sucursalIdStr,
         listInventarioSucursalId: [],
         listProductId: productIdsByBranch,
         searchWithProductId: true
@@ -376,7 +381,7 @@ export class TransactionService {
 
       let listInventarioSucursal = await this.inventoryManagementService.init(dataInit);
 
-      let sucursalId = new mongoose.Types.ObjectId(data.sucursalId!);
+      let sucursalId = transaccion.transaccion.sucursalId;
       let usuarioId = new mongoose.Types.ObjectId(data.userId!);
       let cajaId = new mongoose.Types.ObjectId(data.cajaId!);
 
@@ -389,23 +394,25 @@ export class TransactionService {
 
       let getProductoPrice = (productId:string) => {
         let detalleVenta = getDetalleVenta(productId)
-        let price = parseFloat((detalleVenta?.total as mongoose.Types.Decimal128).toString()) / (detalleVenta?.cantidad as number);
+        let price = parseFloat((detalleVenta?.subtotal as mongoose.Types.Decimal128).toString()) / (detalleVenta?.cantidad as number);
 
         return price
       }
 
-      let totalDevolucion = data.products?.reduce((acc, item) => acc + getProductoPrice(item.productId) * item.quantity, 0) as number;
+      let totalDevolucion = data.monto + (data.montoExterno ?? 0);
+      let totalDevolucion128 = new mongoose.Types.Decimal128(totalDevolucion.toString());
 
-      let totalTransaccion = restarDecimal128(transaccion.transaccion.total, new mongoose.Types.Decimal128(totalDevolucion.toString()))
+      let newTotalTransaccion = restarDecimal128(transaccion.transaccion.total, totalDevolucion128)
+      let subTotalTransaccion = cero128;
 
       let newVenta = {
         usuarioId: usuarioId,
         sucursalId: sucursalId,
-        subtotal: new mongoose.Types.Decimal128(totalDevolucion.toString()),
-        total: new mongoose.Types.Decimal128(totalDevolucion?.toString()!),
+        subtotal: totalDevolucion128,
+        total: totalDevolucion128,
         descuento: new mongoose.Types.Decimal128("0"),
         deleted_at: null,
-        fechaRegistro: new Date(),
+        fechaRegistro: getDateInManaguaTimezone(),
         tipoTransaccion: ('DEVOLUCION' as TypeTransaction),
         paymentMethod: transaccion.transaccion.paymentMethod,
         entidadId : (transaccion?.transaccion as ITransaccion).entidadId,
@@ -417,22 +424,30 @@ export class TransactionService {
       const newReturn = await this.repository.create(newVenta);
 
       for await (const element of data.products!) {
+        let detalleTransaccionOrigen = getDetalleVenta(element.productId) as IDetalleTransaccion;
         let productoId = new mongoose.Types.ObjectId(element.productId);
-        let inventarioSucursal = listInventarioSucursal.find((item) => (item.productoId as IProducto)._id === productoId);
-        let inventarioSucursalId = ((inventarioSucursal as IInventarioSucursal)._id as Types.ObjectId)
-        let subtotal = element.price * element.quantity;
-        let descuentoMonto = 0;
-        let total = subtotal - descuentoMonto;
+
+        let inventarioSucursal = listInventarioSucursal.find((item) => (item.productoId as IProducto)._id === productoId) as IInventarioSucursal;
+        let inventarioSucursalId = (inventarioSucursal._id as Types.ObjectId)
+
+        let quantity128 = new mongoose.Types.Decimal128(element.quantity.toString());
+
+        let precio = element.newUnityPrice ?? parseFloat(detalleTransaccionOrigen.precio.toString());
+        let subTotal128 = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
+        subTotalTransaccion = sumarDecimal128(subTotalTransaccion, subTotal128);
+
+
+        let total = precio * element.quantity;
         let tipoAplicacion:ITipoDescuentoEntidad = 'Product';
 
         let detalleVenta = {
           ventaId: (newReturn._id as mongoose.Types.ObjectId),
           productoId: productoId,
-          precio: new mongoose.Types.Decimal128(element.price?.toString()!),
+          precio: new mongoose.Types.Decimal128(precio.toString()),
           cantidad: element.quantity,
-          subtotal: new mongoose.Types.Decimal128(subtotal.toString()),
+          subtotal: subTotal128,
           total: new mongoose.Types.Decimal128(total.toString()),
-          descuento: new mongoose.Types.Decimal128(descuentoMonto.toString()),
+          descuento: cero128,
           deleted_at: null,
           tipoCliente: 'Regular' as 'Regular',
           tipoDescuentoEntidad: tipoAplicacion,
@@ -468,12 +483,11 @@ export class TransactionService {
 
         (newReturn.transactionDetails as mongoose.Types.ObjectId[]).push(newdDetailReturn._id as mongoose.Types.ObjectId);
 
-        let detalleTransaccionOrigen = getDetalleVenta(element.productId);
 
-        if (!data.esTodaLaVenta) {
+        if (newTotalTransaccion > cero128) {
           if (detalleTransaccionOrigen) {
             if (detalleTransaccionOrigen.cantidad === element.quantity) {
-              detalleTransaccionOrigen.deleted_at = new Date();
+              detalleTransaccionOrigen.deleted_at = getDateInManaguaTimezone();
               await detalleTransaccionOrigen.save();
               
             } else {
@@ -485,13 +499,12 @@ export class TransactionService {
         }
       }
 
-      if (data.esTodaLaVenta) {
-        transaccion.transaccion.deleted_at = new Date();
+      if (newTotalTransaccion === cero128) {
+        transaccion.transaccion.deleted_at = getDateInManaguaTimezone();
         await transaccion.transaccion.save();
       } else {
-        let subTotal = `${data.products?.reduce((acc, item) => acc + item.price * item.quantity, 0)}`
-        transaccion.transaccion.subtotal = new mongoose.Types.Decimal128(subTotal);
-        transaccion.transaccion.total = totalTransaccion
+        transaccion.transaccion.subtotal = subTotalTransaccion;
+        transaccion.transaccion.total = newTotalTransaccion
         await transaccion.transaccion.save();
       }
 
@@ -527,6 +540,6 @@ export class TransactionService {
         await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
       }
 
-      await this.resumenRepository.addTransactionDailySummary(newReturn, sucursalId);
+      await this.resumenRepository.addTransactionDailySummary(newReturn, sucursalId as Types.ObjectId);
   }
 }

@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { IUser, User } from '../../models/usuarios/User.model';
 import { Sucursal } from '../../models/sucursales/Sucursal.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class UserRepository {
@@ -47,7 +48,7 @@ export class UserRepository {
 
   async delete(id: string): Promise<IUser | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 

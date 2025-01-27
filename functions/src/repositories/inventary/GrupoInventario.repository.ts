@@ -7,6 +7,7 @@ import {
   IGrupoInventarioWithPopulate,
 } from '../../models/inventario/GrupoInventario.model';
 import mongoose from 'mongoose';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class GrupoInventarioRepository {
@@ -132,7 +133,7 @@ export class GrupoInventarioRepository {
 
   async delete(id: string): Promise<IGrupoInventario | null> {
     return await this.model
-      .findByIdAndUpdate(id, { deleted_at: new Date() }, { new: true })
+      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
       .exec();
   }
 
