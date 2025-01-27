@@ -22,6 +22,7 @@ export class CajaRepository {
     let montoInicial128 = new mongoose.mongo.Decimal128(montoInicial.toString())
 
     if (!caja.hasMovementCashier) {
+      caja.ganancia = cero128;
       caja.montoEsperado = montoInicial128;
     }
 
@@ -42,7 +43,8 @@ export class CajaRepository {
       montoInicial,
       montoEsperado: montoInicial,
       hasSubscribers: false,
-      consecutivo
+      consecutivo,
+      ganancia: cero128
     });
 
     return await nuevaCaja.save();
@@ -62,7 +64,8 @@ export class CajaRepository {
       montoFinalDeclarado: montoFinalDeclaradoFormateado,
       diferencia: diferencia,
       montoEsperado: caja.montoEsperado,
-      usuarioAperturaId: (caja.usuarioAperturaId as mongoose.Types.ObjectId)
+      usuarioAperturaId: (caja.usuarioAperturaId as mongoose.Types.ObjectId),
+      ganancia: caja.ganancia
     } 
 
     caja.historico.push(cajaHistorico)
@@ -85,6 +88,7 @@ export class CajaRepository {
     caja.fechaApertura = null;
     caja.fechaCierre = null;
     caja.hasMovementCashier = false;
+    caja.ganancia = cero128;
 
     return await caja.save();
   }
@@ -128,7 +132,7 @@ export class CajaRepository {
 
     let caja = await this.cajaModel.findByIdAndUpdate(
       cajaId,
-      { $inc: { montoEsperado: adjustedMonto }, hasMovementCashier: true },
+      { $inc: { montoEsperado: adjustedMonto, ganancia: adjustedMonto }, hasMovementCashier: true },
       { new: true }
     );
 

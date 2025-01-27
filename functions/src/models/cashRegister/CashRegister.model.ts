@@ -11,6 +11,7 @@ export interface ICajaHistorico {
   diferencia: mongoose.Types.Decimal128;
   montoEsperado: mongoose.Types.Decimal128;
   usuarioAperturaId: mongoose.Types.ObjectId | IUser;
+  ganancia: mongoose.Types.Decimal128;
 }
 
 const cajaHistoricoSchema: Schema<ICajaHistorico> = new Schema(
@@ -22,6 +23,7 @@ const cajaHistoricoSchema: Schema<ICajaHistorico> = new Schema(
     diferencia: { type: mongoose.Types.Decimal128, required: true },
     montoEsperado: { type: mongoose.Types.Decimal128, required: true },
     usuarioAperturaId: { type: Schema.Types.ObjectId, ref: User, required: true },
+    ganancia: { type: mongoose.Types.Decimal128, required: true },
   },
   { _id: false }
 );
@@ -39,6 +41,7 @@ export interface ICaja extends Document {
   hasMovementCashier: boolean;
   historico: ICajaHistorico[];
   consecutivo: number;
+  ganancia: mongoose.Types.Decimal128;
 }
 
 const cajaSchema: Schema<ICaja> = new Schema({
@@ -85,6 +88,10 @@ const cajaSchema: Schema<ICaja> = new Schema({
   hasMovementCashier: {
     type: Boolean,
     default: false,
+  },
+  ganancia: {
+    type: Schema.Types.Decimal128,
+    required: true,
   },
   historico: [{ type: cajaHistoricoSchema, required: true }],
 });
