@@ -231,7 +231,7 @@ export class TransactionService {
       //   );
       
       
-
+      venta.id = (newSale._id as mongoose.Types.ObjectId).toString();
       return venta;
     } catch (error) {
       console.log(error);
@@ -330,7 +330,7 @@ export class TransactionService {
     }
 
     let ventaDto: ITransaccionCreate = {
-      userId: (venta.usuarioId as IUser).username,
+      userId: ((venta.usuarioId as IUser)._id as Types.ObjectId).toString(),
       sucursalId: venta.sucursalId.toString(),
       subtotal: Number(venta.subtotal),
       total: Number(venta.total),

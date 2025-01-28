@@ -72,7 +72,8 @@ export class CashRegisterService {
   async createCaja({ montoInicial, usuarioAperturaId, sucursalId }: ICreataCashRegister): Promise<ICaja> {
     const cashiers = await this.repository.obtenerCajasPorSucursal(sucursalId);
     const lastCashier = cashiers[cashiers.length - 1];
-    let consecutivo = lastCashier.consecutivo + 1;
+    let consecutivo = 1
+    if(lastCashier) consecutivo = lastCashier.consecutivo + 1 
     return await this.repository.create({ montoInicial, usuarioAperturaId, sucursalId, consecutivo });
   }
 
