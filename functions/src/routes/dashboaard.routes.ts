@@ -10,6 +10,6 @@ const dashboardController = container.resolve(DashboardController);
 // router.use(authMiddleware);
 
 // Definir las rutas
-router.get('/transaction-metrics/:sucursalId', dashboardController.getTransactionMetrics.bind(dashboardController));
+router.get('/product-metrics/:sucursalId', dashboardController.getTransactionMetrics.bind(dashboardController));
 
 export default router;
