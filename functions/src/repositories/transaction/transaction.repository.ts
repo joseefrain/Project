@@ -3,6 +3,7 @@ import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transac
 import mongoose, { mongo } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
+import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
 export class TransactionRepository {
@@ -84,5 +85,28 @@ export class TransactionRepository {
   }
   async update(id: string, data: Partial<ITransaccion>, ): Promise<ITransaccion | null> {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
+  async findById(id: string): Promise<ITransaccion | null> {
+    return await this.model.findById(id).exec();
+  }
+
+  async findPaidTransactionsDayBySucursalId(sucursalId: string): Promise<ITransaccion[]> {
+    const startOfDay = getDateInManaguaTimezone();
+    startOfDay.setDate(startOfDay.getDate() - 1); 
+    startOfDay.setHours(0, 0, 0, 0);
+  
+    const endOfDay = getDateInManaguaTimezone();
+    endOfDay.setDate(endOfDay.getDate() - 1); 
+    endOfDay.setHours(23, 59, 59, 999);
+  
+    const transacciones = await Transaccion.find({
+      sucursalId,
+      fechaRegistro: { $gte: startOfDay, $lte: endOfDay },
+      tipoTransaccion: 'VENTA',
+      estadoTrasaccion: 'PAGADA',
+    }).populate('transactionDetails');
+
+    return transacciones;
   }
 }

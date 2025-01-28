@@ -340,4 +340,12 @@ async removeDuplicateInventario(): Promise<void> {
 
     return productoGrupo;
   }
+
+  async findByIds(productosVendidos): Promise<IProducto[]> {
+    const productos = await Producto.find({
+      _id: { $in: Object.keys(productosVendidos) },
+    });
+
+    return productos;
+  }
 }

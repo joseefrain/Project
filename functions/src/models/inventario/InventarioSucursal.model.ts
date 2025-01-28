@@ -39,6 +39,9 @@ const inventarioSucursalSchema: Schema = new Schema(
   }
 );
 
+inventarioSucursalSchema.index({ productoId: 1, sucursalId: 1 });
+inventarioSucursalSchema.index({ stock: 1 });
+
 export const InventarioSucursal = mongoose.model<IInventarioSucursal>(
   'InventarioSucursal',
   inventarioSucursalSchema

@@ -118,6 +118,59 @@ export class InventarioSucursalRepository {
     return listInventarioSucursal.filter(bodega => bodega.productoId);
   }
 
+  async getListProductByProductIdsMetricas(
+    sucursalId: string,
+    listProductId: string[]
+  ): Promise<IInventarioSucursal[]> {
+    try {
+      // Convertir IDs a ObjectId
+      const sucursalObjectId = new Types.ObjectId(sucursalId);
+      const idsToFind = listProductId.map((id) => new Types.ObjectId(id));
+  
+      // Construir la pipeline de agregación
+      const pipeline = [
+        {
+          $match: {
+            sucursalId: sucursalObjectId,
+            productoId: { $in: idsToFind },
+            deleted_at: { $eq: null },
+          },
+        },
+        {
+          $lookup: {
+            from: "productos", // Nombre de la colección de productos
+            localField: "productoId", // Campo local en inventarioSucursal
+            foreignField: "_id", // Campo en la colección de productos
+            as: "producto", // Nombre del campo donde se almacenará la información del producto
+          },
+        },
+        {
+          $unwind: "$producto", // Desenrollar el array de productos (lookup genera un array)
+        },
+        {
+          $project: {
+            productoId: 1,
+            sucursalId: 1,
+            stock: 1,
+            puntoReCompra: 1,
+            costoUnitario: 1,
+            "producto.nombre": 1, // Incluir solo el nombre del producto
+          },
+        },
+      ];
+  
+      // Ejecutar la consulta con aggregate
+      const listInventarioSucursal = await this.model.aggregate(pipeline);
+  
+      return listInventarioSucursal;
+    } catch (error) {
+      console.error("Error en getListProductByProductIdsMetricas:", error);
+      throw error;
+    }
+  }
+  
+  
+
   async findBySucursalIdAndProductId(sucursarlIdStr:string, productoIdStr:string) {
     let sucursalId = new mongoose.Types.ObjectId(sucursarlIdStr);
     let productoId = new mongoose.Types.ObjectId(productoIdStr);

@@ -156,4 +156,8 @@ const transaccionSchema: Schema = new Schema(
   }
 );
 
+// indices 
+transaccionSchema.index({ sucursalId: 1, fechaRegistro: -1 });
+transaccionSchema.index({ estadoTrasaccion: 1 });
+
 export const Transaccion = mongoose.model<ITransaccion>('Transaccion', transaccionSchema);
