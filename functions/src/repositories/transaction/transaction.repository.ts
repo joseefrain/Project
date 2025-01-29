@@ -58,7 +58,7 @@ export class TransactionRepository {
     return ventaDescuentosAplicados;
   }
   async findByTypeAndBranch(sucursalId: string, type: TypeTransaction): Promise<ITransaccion[]> {
-    const venta = await this.model.find({ sucursalId: sucursalId, tipoTransaccion: type }).populate([{
+    const venta = await this.model.find({ sucursalId: sucursalId, tipoTransaccion: type, estadoTrasaccion:"PAGADA" }).populate([{
       path: 'usuarioId',
     }, {
       path: 'transactionDetails',
@@ -93,11 +93,9 @@ export class TransactionRepository {
 
   async findPaidTransactionsDayBySucursalId(sucursalId: string): Promise<ITransaccion[]> {
     const startOfDay = getDateInManaguaTimezone();
-    startOfDay.setDate(startOfDay.getDate() - 1); 
     startOfDay.setHours(0, 0, 0, 0);
   
     const endOfDay = getDateInManaguaTimezone();
-    endOfDay.setDate(endOfDay.getDate() - 1); 
     endOfDay.setHours(23, 59, 59, 999);
   
     const transacciones = await Transaccion.find({

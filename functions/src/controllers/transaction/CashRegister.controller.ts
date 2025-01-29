@@ -85,4 +85,16 @@ export class CashRegisterController {
       next(error);
     }
   }
+
+  async obtenerCajasAbiertasPorUsuarioYSucursal (req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const usuarioId = req.body.usuarioId;
+      const sucursalId = req.body.sucursalId;
+
+      const cajas = await this.service.obtenerCajasAbiertasPorUsuarioYSucursal(usuarioId, sucursalId);
+      res.status(200).json(cajas);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -15,6 +15,10 @@ export class CashRegisterService {
               @inject(MovimientoCajaRepository) private movimientoRepository: MovimientoCajaRepository,
               @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository,
               @inject(ArqueoCajaRepository) private arqueoRepository: ArqueoCajaRepository) {}
+
+  async obtenerCajasAbiertasPorUsuarioYSucursal(usuarioId: string, sucursalId: string): Promise<ICaja | null> {
+    return await this.repository.obtenerCajasAbiertasPorUsuarioYSucursal(usuarioId, sucursalId);
+  }
   
   async abrirCaja(data : IOpenCashService) {
     let { usuarioAperturaId, montoInicial, cajaId, userId } = data;

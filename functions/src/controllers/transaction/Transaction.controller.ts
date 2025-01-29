@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ICreateTransactionProps, TransactionService } from '../../services/transaction/transaction.service';
 import { CustomJwtPayload } from '../../utils/jwt';
 import mongoose from 'mongoose';
+import { TypeTransaction } from '../../models/transaction/Transaction.model';
 
 @injectable()
 export class TransactionController {
@@ -32,7 +33,7 @@ export class TransactionController {
 
   async getVentasBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const ventas = await this.service.findByTypeAndBranch(req.params.id, "VENTA");
+      const ventas = await this.service.findByTypeAndBranch(req.params.id, TypeTransaction.VENTA);
       res.status(200).json(ventas);
     } catch (error) {
       console.log(error.message);
@@ -43,7 +44,7 @@ export class TransactionController {
 
   async getComprasBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const compras = await this.service.findByTypeAndBranch(req.params.id, "COMPRA");
+      const compras = await this.service.findByTypeAndBranch(req.params.id, TypeTransaction.COMPRA);
       res.status(200).json(compras);
     } catch (error) {
       console.log(error.message);

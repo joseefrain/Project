@@ -38,5 +38,7 @@ router.post(
 router.get('/abiertas/:id', authMiddleware, cashRegisterController.obtenerCajasAbiertaPorSucursal.bind(cashRegisterController));
 router.get('/cerradas/:id', authMiddleware, cashRegisterController.obtenerCajasCerradaPorSucursal.bind(cashRegisterController));
 
+router.get('/userAndBranch', authMiddleware, cashRegisterController.obtenerCajasAbiertasPorUsuarioYSucursal.bind(cashRegisterController));
+
 
 export default router;

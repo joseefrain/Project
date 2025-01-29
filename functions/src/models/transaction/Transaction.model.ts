@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { IUser } from '../usuarios/User.model';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
@@ -7,7 +7,14 @@ import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
 import { IDetalleTransaccion } from './DetailTransaction.model';
 
-export type TypeTransaction = 'VENTA' | 'COMPRA' | 'INGRESO' | 'EGRESO' | 'APERTURA' | 'DEVOLUCION';
+export enum TypeTransaction {
+  VENTA = 'VENTA',
+  COMPRA = 'COMPRA',
+  INGRESO = 'INGRESO',
+  EGRESO = 'EGRESO',
+  APERTURA = 'APERTURA',
+  DEVOLUCION = 'DEVOLUCION',
+};
 type TypePaymentMethod = 'cash' | 'credit';
 
 export interface ITransaccion extends Document {
@@ -39,6 +46,35 @@ export interface ITrasaccionProducto {
   costoUnitario?: number;
   inventarioSucursalId: string;
   discount: null | ITransaccionDescuento;
+}
+
+export interface IDescuentoAplicado {
+  id: string;
+  name: string;
+  type: 'producto' | 'grupo';
+  amount: number;
+  percentage: number;
+  productId: string | null;
+  groupId: string | null;
+  sucursalId: string;
+  fechaInicio: Date;
+  fechaFin: Date;
+  minimoCompra: number;
+  minimoCantidad: number;
+  activo:boolean
+}
+
+export interface ITrasaccionProductoResponse {
+  ventaId: string;
+  productId: string;
+  groupId: string;
+  clientType: 'Regular' | 'Proveedor';
+  productName: string;
+  quantity: number;
+  price: number;
+  costoUnitario?: number;
+  inventarioSucursalId: string;
+  discount: null | IDescuentoAplicado;
 }
 
 export interface ITransaccionDescuento {
@@ -73,6 +109,24 @@ export interface ITransaccionCreate {
   id?: string;
 }
 
+export interface ITransaccionResponse {
+  userId: string;
+  sucursalId: string;
+  products: ITrasaccionProductoResponse[];
+  subtotal: number;
+  total: number;
+  discount: number;
+  fechaRegistro?: Date;
+  monto?:number;
+  cambioCliente?:number;
+  cajaId?:string;
+  entidadId?: string; // nuevo
+  paymentMethod: TypePaymentMethod; // nuevo
+  credito?: ICreditoCreate; // nuevo
+  tipoTransaccion: TypeTransaction;
+  id?: string;
+}
+
 export interface ITransaccionNoDto {
   transaccion: ITransaccion;
   datalleTransaccion: IDetalleTransaccion[];
@@ -83,7 +137,7 @@ export interface ITransaccionNoDto {
 export interface IDevolucionesProducto {
   quantity: number;
   productId: string;
-  newUnityPrice: number | null;
+  discountApplied: boolean;
 }
 
 export interface IDevolucionesCreate {
@@ -117,7 +171,7 @@ const transaccionSchema: Schema = new Schema(
     },
     estadoTrasaccion: {
       type: String,
-      enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA'],
+      enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA', 'DEVOLUCION'],
       required: true,
       default: 'PENDIENTE',
     },

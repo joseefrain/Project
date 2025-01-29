@@ -1,7 +1,11 @@
-import mongoose, { Decimal128 } from "mongoose";
+import mongoose, { Decimal128, Types } from "mongoose";
 import Big from 'big.js';
 
 export let cero128 = new mongoose.Types.Decimal128('0.00');
+
+export const formatObejectId = (id: any): Types.ObjectId => {
+  return new Types.ObjectId(id.toString());
+}
 
 // Función para sumar con precisión usando big.js
 export function sumarDecimal128(decimal1: mongoose.Types.Decimal128, decimal2: mongoose.Types.Decimal128): mongoose.Types.Decimal128 {

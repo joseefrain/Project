@@ -6,7 +6,7 @@ import { CreditoRepository } from "../../repositories/credito/Credito.repository
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
 import { TransactionRepository } from "../../repositories/transaction/transaction.repository";
-import { ITransaccion } from "../../models/transaction/Transaction.model";
+import { ITransaccion, TypeTransaction } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { cero128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
@@ -251,7 +251,7 @@ export class CreditoService {
         monto: Number(montoPago128),
         cambioCliente: 0,
         total: Number(montoPago128),
-        tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
+        tipoTransaccion: credito.tipoCredito === TypeTransaction.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
         userId: userId,
         id: null
       }
@@ -383,7 +383,7 @@ export class CreditoService {
         monto: Number(montoPago128),
         cambioCliente: 0,
         total: Number(montoPago128),
-        tipoTransaccion: credito.tipoCredito === 'VENTA' ? 'VENTA' : 'COMPRA',
+        tipoTransaccion: credito.tipoCredito === TypeTransaction.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
         userId: userId,
         id: null
       }
