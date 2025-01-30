@@ -133,7 +133,6 @@ export class InventarioSucursalRepository {
           $match: {
             sucursalId: sucursalObjectId,
             productoId: { $in: idsToFind },
-            deleted_at: { $eq: null },
           },
         },
         {

@@ -34,6 +34,8 @@ export class DashboardServices {
       await this.transactionRepository.findPaidTransactionsDayBySucursalId(
         sucursalId
       );
+      
+      if(transacciones.length === 0) throw new Error("No hay transacciones para el día");
 
     // let listInventarioSucursalIds = venta.products?.map((detalle) =>detalle.inventarioSucursalId) as string[];
     let listProductoIdIdsSets = new Set<any>();
