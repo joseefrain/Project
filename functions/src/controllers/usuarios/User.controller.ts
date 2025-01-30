@@ -30,7 +30,7 @@ export class UserController {
 
       let cajaId: ICaja | null = null;
 
-      if(role !== "ROOT") await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
+      if(role !== "ROOT") cajaId = await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
       
       res.status(200).json({ ...token, cajaId });
     } catch (error) {
