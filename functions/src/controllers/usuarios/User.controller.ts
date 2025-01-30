@@ -26,8 +26,11 @@ export class UserController {
     try {
       const token = await this.service.loginUser(req.body);
 
+      let role = token.user.role;
 
-      let cajaId: ICaja | null = await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
+      let cajaId: ICaja | null = null;
+
+      if(role !== "ROOT") await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
       
       res.status(200).json({ ...token, cajaId });
     } catch (error) {
