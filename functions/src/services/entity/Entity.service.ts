@@ -3,7 +3,7 @@ import { IClientState, IEntity } from '../../models/entity/Entity.model';
 import { EntityRepository } from '../../repositories/entity/Entity.repository';
 import mongoose, { Types } from 'mongoose';
 import { ICredito } from '../../models/credito/Credito.model';
-import { cero128, restarDecimal128, restarDecimal1282 } from '../../gen/handleDecimal128';
+import { cero128, compareDecimal128, restarDecimal128, restarDecimal1282 } from '../../gen/handleDecimal128';
 
 @injectable()
 export class EntityService {
@@ -55,7 +55,7 @@ export class EntityService {
     
       // Ajustar amountReceivable (saldo pendiente)
       let nuevoSaldoPendienteCredito = restarDecimal1282(saldoPendiente, montoDevolucion);
-      if (nuevoSaldoPendienteCredito < cero128) {
+      if (compareDecimal128(cero128, nuevoSaldoPendienteCredito)) {
         nuevoSaldoPendienteCredito = cero128; // No puede ser negativo
       }
     
@@ -83,14 +83,14 @@ export class EntityService {
 
       // Ajustar amountPayable (saldo pendiente)
       let nuevoSaldoPendienteCredito = restarDecimal1282(saldoPendiente, montoDevolucion);
-      if (nuevoSaldoPendienteCredito < cero128) {
+      if (compareDecimal128(cero128, nuevoSaldoPendienteCredito)) {
         nuevoSaldoPendienteCredito = cero128; // No puede ser negativo
       }
 
       // Ajustar advancesDelivered (anticipos entregados)
       let montoDevolucionPagada = montoDevolucion > saldoAbonado ? saldoAbonado : montoDevolucion // Solo afecta lo ya pagado
       let nuevoSaldoAbonadoCredito = restarDecimal128(saldoAbonado, montoDevolucionPagada)
-      if (nuevoSaldoAbonadoCredito < cero128) {
+      if (compareDecimal128(cero128, nuevoSaldoAbonadoCredito)) {
         nuevoSaldoAbonadoCredito = cero128; // No puede ser negativo
       }
 

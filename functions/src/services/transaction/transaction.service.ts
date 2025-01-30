@@ -21,7 +21,7 @@ import { ICredito, ModalidadCredito } from '../../models/credito/Credito.model';
 import { CreditoService } from '../credito/Credito.service';
 import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 import { CreditoRepository } from '../../repositories/credito/Credito.repository';
-import { cero128, dividirDecimal128, formatObejectId, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
+import { cero128, compareDecimal128, compareToCero, dividirDecimal128, formatObejectId, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { IDescuentoGrupo } from '../../models/transaction/DescuentoGrupo.model';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
@@ -296,7 +296,7 @@ export class TransactionService {
     for await (const detalle of detalleVenta) {
       let descuento:IDescuentoAplicado | null = null;
 
-      if (detalle.descuento.toString() !== "0") {
+      if (!compareToCero(detalle.descuento)) {
         
         let descuentoAplicado = await this.repository.findVentaDescuentosAplicadosByDetalleVentaId((detalle._id as mongoose.Types.ObjectId).toString());
 
@@ -471,7 +471,7 @@ export class TransactionService {
 
         let newdDetailReturn = await this.repository.createDetalleVenta(detalleVenta);
 
-        if (tipoTransaccionDevolucion === 'COMPRA') {
+        if (transaccion.transaccion.tipoTransaccion === 'COMPRA') {
 
           let dataSubTractQuantity:ISubtractQuantity = {
             inventarioSucursalId: inventarioSucursalId,
@@ -486,7 +486,7 @@ export class TransactionService {
             listInventarioSucursal.push(inventarioSucursal);
           }
           
-        } else if (tipoTransaccionDevolucion === 'VENTA') {
+        } else if (transaccion.transaccion.tipoTransaccion === 'VENTA') {
           let dataAddQuantity:IAddQuantity = {
             quantity: element.quantity,
             inventarioSucursalId: inventarioSucursalId,
@@ -500,7 +500,7 @@ export class TransactionService {
         (newReturn.transactionDetails as mongoose.Types.ObjectId[]).push(newdDetailReturn._id as mongoose.Types.ObjectId);
 
 
-        if (newTotalTransaccion > cero128) {
+        if (compareDecimal128(newTotalTransaccion, cero128)) {
           if (detalleTransaccionOrigen) {
             if (detalleTransaccionOrigen.cantidad === element.quantity) {
               detalleTransaccionOrigen.deleted_at = getDateInManaguaTimezone();
@@ -515,8 +515,9 @@ export class TransactionService {
         }
       }
 
-      if (newTotalTransaccion === cero128) {
+      if (compareToCero(newTotalTransaccion)) {
         transaccion.transaccion.deleted_at = getDateInManaguaTimezone();
+        transaccion.transaccion.estadoTrasaccion = tipoEstatusSales.DEVOLUCION;
         await transaccion.transaccion.save();
       } else {
         transaccion.transaccion.subtotal = subTotalTransaccion;
@@ -562,6 +563,11 @@ export class TransactionService {
 
       await this.resumenRepository.addTransactionDailySummary(newReturn, sucursalId as Types.ObjectId);
 
-      return { devolucion:newReturn, transaccionOriginal: transaccion.transaccion, caja: caja } 
+      //@ts-ignore
+      let devolucionMapeada = await this.getTransactionById(newReturn._id.toString());
+      //@ts-ignore
+      let transaccionActualizada = await this.getTransactionById(transaccion.transaccion._id.toString());
+
+      return { devolucion:devolucionMapeada, transaccionActualizada, caja: caja } 
   }
 }

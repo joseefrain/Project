@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe";
 import { TransactionRepository } from "../../repositories/transaction/transaction.repository";
 import { ITransaccion, TypeTransaction } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { cero128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
+import { cero128, compareDecimal128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
 import { CashRegisterService } from "../utils/cashRegister.service";
 import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja } from "../../interface/ICaja";
@@ -178,7 +178,7 @@ export class CreditoService {
       cuotaActual.estadoPago = 'PAGADO';
 
       let cero = new mongoose.Types.Decimal128('0.00');
-      let isNextCredit = nuevoSaldo > cero
+      let isNextCredit = compareDecimal128(nuevoSaldo, cero)
     
       // Generar una nueva cuota si aún queda saldo pendiente
       if (isNextCredit) {
@@ -424,14 +424,14 @@ export class CreditoService {
 
     let dineroADevolver = cero128;
 
-    if (nuevoSaldoPendiente < cero128) {
+    if (compareDecimal128(cero128, nuevoSaldoPendiente)) {
       dineroADevolver = nuevoSaldoPendiente;
       nuevoSaldoPendiente = cero128;
     }
 
     credito.saldoPendiente = nuevoSaldoPendiente;
 
-    if (credito.modalidadCredito === 'PLAZO' && nuevoSaldoPendiente > cero128) {
+    if (credito.modalidadCredito === 'PLAZO' && compareDecimal128(nuevoSaldoPendiente, cero128)) {
       let countCuantoPendiente = new Types.Decimal128(credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE').length.toString())
 
       credito.cuotaMensual = dividirDecimal128(nuevoSaldoPendiente, countCuantoPendiente);
@@ -441,7 +441,7 @@ export class CreditoService {
         }
       });
 
-    } else if (credito.modalidadCredito === 'PAGO' && nuevoSaldoPendiente > cero128) {
+    } else if (credito.modalidadCredito === 'PAGO' && compareDecimal128(nuevoSaldoPendiente, cero128)) {
       const porcentajePagoMinimo = new mongoose.Types.Decimal128("0.20");
       credito.pagoMinimoMensual = multiplicarDecimal128(nuevoSaldoPendiente, porcentajePagoMinimo);
     }

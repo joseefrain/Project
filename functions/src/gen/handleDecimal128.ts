@@ -1,4 +1,4 @@
-import mongoose, { Decimal128, Types } from "mongoose";
+import mongoose, {Types } from "mongoose";
 import Big from 'big.js';
 
 export let cero128 = new mongoose.Types.Decimal128('0.00');
@@ -68,11 +68,16 @@ export const dividirDecimal128 = (decimal1: mongoose.Types.Decimal128, decimal2:
     return resultado
 }
 
-export function compareDecimal128(decimalA: Decimal128, decimalB: Decimal128): boolean {
+export function compareDecimal128(decimalA: mongoose.Types.Decimal128, decimalB: mongoose.Types.Decimal128): boolean {
   const bigA = new Big(decimalA.toString());
   const bigB = new Big(decimalB.toString());
 
   if (bigA.gt(bigB)) return true;
   if (bigA.lt(bigB)) return false;
   return false;
+}
+
+export function compareToCero(decimal: mongoose.Types.Decimal128): boolean {
+  
+  return decimal.toString() === "0" || decimal.toString() === "0.00" || decimal.toString() === "0.0"
 }
