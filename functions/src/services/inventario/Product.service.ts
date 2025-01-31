@@ -66,6 +66,7 @@ export class ProductoService {
     product.stock = data.stock as number;
     product.precio = data.precio as mongoose.Types.Decimal128;
     product.puntoReCompra = data.puntoReCompra as number;
+    product.costoUnitario = data.costoUnitario as mongoose.Types.Decimal128;
 
     const branch = await this.inventarioSucursalRepository.update(id, data);
     if (!branch) {

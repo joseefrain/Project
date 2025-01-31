@@ -253,6 +253,21 @@ export class TransactionService {
     return transactionDto;
   }
 
+  async findDevolucionesBySucursalId(sucursalId: string): Promise<ITransaccionCreate[]> {
+    const ventas = await this.repository.findByTypeAndBranchDevolucion(sucursalId);
+
+    let ventasDto: ITransaccionCreate[] = [];
+  
+    // Iterar sobre cada venta y obtener los detalles de venta
+    for (const venta of ventas) {
+      const detalleVenta = await this.repository.findAllDetalleVentaByVentaId((venta._id as Types.ObjectId).toString());
+      const ventaDto = (await this.mapperDataReturn(venta, detalleVenta) as ITransaccionCreate);
+      ventasDto.push(ventaDto);
+    }
+  
+    return ventasDto;
+  }
+
   async findAllVentaBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITransaccionCreate[]> {
     const ventas = await this.repository.findAllVentaBySucursalIdAndUserId(sucursalId, userId);
 
@@ -291,6 +306,51 @@ export class TransactionService {
     return {transaccion: venta, datalleTransaccion: detalleVenta};
   }
 
+  async mapperDataReturn(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {
+    let products: ITrasaccionProductoResponse[] = [];
+
+    for await (const detalle of detalleVenta) {
+      let descuento:IDescuentoAplicado | null = null;
+
+      let producto:ITrasaccionProductoResponse = {
+        productId: ((detalle.productoId as IProducto)._id as mongoose.Types.ObjectId).toString(),
+        clientType: detalle.tipoCliente,
+        productName: (detalle.productoId as IProducto).nombre,
+        quantity: detalle.cantidad,
+        price: Number(detalle.precio),
+        ventaId: (venta._id as mongoose.Types.ObjectId).toString(),
+        inventarioSucursalId: "",
+        groupId: "",
+        discount: descuento,
+        costoUnitario: 0,
+        ajusteACobrar: detalle.ajusteACobrar
+      }
+   
+      products.push(producto);
+    }
+
+    let tipoTransaccionOrigen = (venta.transaccionOrigenId ? (venta.transaccionOrigenId as ITransaccion).tipoTransaccion : null) as TypeTransaction;
+    let user = (venta.usuarioId as IUser);
+
+    let ventaDto: ITransaccionResponse = {
+      userId: (user._id as Types.ObjectId).toString(),
+      sucursalId: venta.sucursalId.toString(),
+      subtotal: Number(venta.subtotal),
+      total: Number(venta.total),
+      discount: Number(venta.descuento),
+      fechaRegistro: venta.fechaRegistro,
+      products: products,
+      paymentMethod: venta.paymentMethod,
+      tipoTransaccion: venta.tipoTransaccion,
+      id: (venta._id as mongoose.Types.ObjectId).toString(),
+      tipoTransaccionOrigen,
+      totalAjusteACobrar: venta.totalAjusteACobrar,
+      username: user.username
+    }
+
+    return ventaDto;
+  }
+
  async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {
     let products: ITrasaccionProductoResponse[] = [];
 
@@ -322,12 +382,13 @@ export class TransactionService {
             fechaFin: descuentoId.fechaFin,
             minimoCompra: descuentoId.minimoCompra,
             minimoCantidad: descuentoId.minimoCantidad,
-            activo: descuentoId.activo
+            activo: descuentoId.activo,
+            minimiType: descuentoId.minimiType
           }
         }
       }
 
-      let producto = {
+      let producto:ITrasaccionProductoResponse = {
         productId: ((detalle.productoId as IProducto)._id as mongoose.Types.ObjectId).toString(),
         clientType: detalle.tipoCliente,
         productName: (detalle.productoId as IProducto).nombre,
@@ -337,14 +398,17 @@ export class TransactionService {
         inventarioSucursalId: "",
         groupId: "",
         discount: descuento,
-        costoUnitario: 0
+        costoUnitario: 0,
+        ajusteACobrar: cero128
       }
    
       products.push(producto);
     }
 
+    let user = (venta.usuarioId as IUser);
+
     let ventaDto: ITransaccionResponse = {
-      userId: ((venta.usuarioId as IUser)._id as Types.ObjectId).toString(),
+      userId: (user._id as Types.ObjectId).toString(),
       sucursalId: venta.sucursalId.toString(),
       subtotal: Number(venta.subtotal),
       total: Number(venta.total),
@@ -353,7 +417,10 @@ export class TransactionService {
       products: products,
       paymentMethod: venta.paymentMethod,
       tipoTransaccion: venta.tipoTransaccion,
-      id: (venta._id as mongoose.Types.ObjectId).toString()
+      id: (venta._id as mongoose.Types.ObjectId).toString(),
+      tipoTransaccionOrigen: venta.tipoTransaccion,
+      totalAjusteACobrar: venta.totalAjusteACobrar,
+      username: user.username
     }
 
     return ventaDto;

@@ -65,7 +65,7 @@ export class DescuentoRepository {
       let fechaInicio = descuento.fechaInicio;
       let fechaFin = descuento.fechaFin;
       fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(0, 0, 0, 0);
+      fechaFin.setHours(23, 59, 59, 999);
 
 
       if (!descuento.activo) {
@@ -73,9 +73,10 @@ export class DescuentoRepository {
       }
 
       if (fechaInicio && fechaFin) {
-        if (fechaInicio > hoy && fechaFin > hoy || fechaInicio < hoy && fechaFin < hoy) {
-          return
+        if (!(fechaInicio <= hoy && hoy <= fechaFin)) {
+          return;
         }
+        
       }
       
       if (descuentoProducto.sucursalId) {
@@ -92,14 +93,14 @@ export class DescuentoRepository {
       let fechaInicio = descuento.fechaInicio;
       let fechaFin = descuento.fechaFin;
       fechaInicio.setHours(0, 0, 0, 0);
-      fechaFin.setHours(0, 0, 0, 0);
+      fechaFin.setHours(23, 59, 59, 999);
 
       if (!descuento.activo) {
         return;
       }
 
       if (fechaInicio && fechaFin) {
-        if (fechaInicio > hoy && fechaFin > hoy || fechaInicio < hoy && fechaFin < hoy) {
+        if (!(fechaInicio <= hoy && hoy <= fechaFin)) {
           return;
         }
       }

@@ -40,6 +40,7 @@ export class DescuentoService {
           fechaFin: descuentoExists.fechaFin,
           codigoDescunto: descuentoExists.codigoDescunto,
           deleted_at: descuentoExists.deleted_at,
+          minimiType: descuentoExists.minimiType
         } as IDescuentoCreateResponse;
 
         return response
@@ -63,6 +64,7 @@ export class DescuentoService {
         fechaFin: newDescuento.fechaFin,
         codigoDescunto: newDescuento.codigoDescunto,
         deleted_at: newDescuento.deleted_at,
+        minimiType: newDescuento.minimiType
       } as IDescuentoCreateResponse;
 
       let tipoDescuentoEntidad = data.tipoDescuentoEntidad!;
@@ -105,10 +107,6 @@ export class DescuentoService {
       return response;
     } catch (error) {
       console.log(error);
-
-      
-      
-
       throw new Error(error.message);
     }
   }

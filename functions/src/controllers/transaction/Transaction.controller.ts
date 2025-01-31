@@ -53,6 +53,17 @@ export class TransactionController {
     }
   }
 
+  async getDevolucionesBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const ventas = await this.service.findDevolucionesBySucursalId(req.params.id);
+      res.status(200).json(ventas);
+    } catch (error) {
+      console.log(error.message);
+      
+      next(error);
+    }
+  }
+
   async getTransactionById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const venta = await this.service.getTransactionById(req.params.id);

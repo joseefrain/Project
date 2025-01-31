@@ -76,6 +76,22 @@ export class TransactionRepository {
 
     return venta;
   }
+
+  async findByTypeAndBranchDevolucion(sucursalId: string): Promise<ITransaccion[]> {
+    const venta = await this.model.find({ sucursalId: sucursalId, tipoTransaccion: "DEVOLUCION" }).populate([{
+      path: 'usuarioId',
+    }, {
+      path: 'transactionDetails',
+      populate: {
+        path: 'productoId',
+      },
+    }, {
+      path: 'transaccionOrigenId',
+    }]);
+
+    return venta;
+  }
+
   async findAllVentaBySucursalIdAndUserId(sucursalId: string, userId: string): Promise<ITransaccion[]> {
     const venta = await this.model.find({ sucursalId: sucursalId, usuarioId: userId, tipoTransaccion: "VENTA" });
 

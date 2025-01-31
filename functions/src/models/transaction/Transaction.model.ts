@@ -6,6 +6,7 @@ import Caja, { ICaja } from "../cashRegister/CashRegister.model"
 import { IEntity } from '../entity/Entity.model';
 import { ModalidadCredito } from '../credito/Credito.model';
 import { IDetalleTransaccion } from './DetailTransaction.model';
+import { IDescountTypePV } from './Descuento.model';
 
 export enum TypeTransaction {
   VENTA = 'VENTA',
@@ -60,9 +61,10 @@ export interface IDescuentoAplicado {
   sucursalId: string;
   fechaInicio: Date;
   fechaFin: Date;
-  minimoCompra: number;
-  minimoCantidad: number;
-  activo:boolean
+  minimoCompra?: Types.Decimal128;
+  minimoCantidad?: number;
+  activo:boolean,
+  minimiType:IDescountTypePV
 }
 
 export interface ITrasaccionProductoResponse {
@@ -76,6 +78,7 @@ export interface ITrasaccionProductoResponse {
   costoUnitario?: number;
   inventarioSucursalId: string;
   discount: null | IDescuentoAplicado;
+  ajusteACobrar: Types.Decimal128
 }
 
 export interface ITransaccionDescuento {
@@ -126,6 +129,9 @@ export interface ITransaccionResponse {
   credito?: ICreditoCreate; // nuevo
   tipoTransaccion: TypeTransaction;
   id?: string;
+  totalAjusteACobrar:Types.Decimal128;
+  tipoTransaccionOrigen: TypeTransaction | null;
+  username: string;
 }
 
 export interface ITransaccionNoDto {
@@ -207,6 +213,7 @@ const transaccionSchema: Schema = new Schema(
     },
     totalAjusteACobrar: { type: Schema.Types.Decimal128, default: 0 },
     transaccionOrigenId: { type: Schema.Types.ObjectId, default: null },
+    motivoDevolucion: { type: String, default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'update_at' },
