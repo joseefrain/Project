@@ -410,9 +410,8 @@ export class CreditoService {
     return credito;
   }
 
-  async returnTransactionById(id: string, totalDevolucionInt:number) {
+  async returnTransactionById(id: string, totalDevolucion:Types.Decimal128) {
     const credito = await this.creditoRepository.findByTransactioId(id);
-    let totalDevolucion = new mongoose.Types.Decimal128(totalDevolucionInt.toString());
 
     if (!credito) {
       throw new Error("Crédito no encontrado");

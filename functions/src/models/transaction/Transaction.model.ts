@@ -33,6 +33,7 @@ export interface ITransaccion extends Document {
   cajaId: mongoose.Types.ObjectId | ICaja;
   transaccionOrigenId?: mongoose.Types.ObjectId | ITransaccion; // Relación con la transacción original
   motivoDevolucion?: string; 
+  totalAjusteACobrar:Types.Decimal128;
 }
 
 export interface ITrasaccionProducto {
@@ -204,6 +205,8 @@ const transaccionSchema: Schema = new Schema(
       ref: Caja,
       required: true,
     },
+    totalAjusteACobrar: { type: Schema.Types.Decimal128, default: 0 },
+    transaccionOrigenId: { type: Schema.Types.ObjectId, default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'update_at' },

@@ -14,6 +14,7 @@ export interface IDetalleTransaccion extends Document {
   descuento: mongoose.Types.Decimal128;
   deleted_at: Date | null;
   tipoDescuentoEntidad: ITipoDescuentoEntidad,
+  ajusteACobrar: mongoose.Types.Decimal128;
 }
 
 const detalleTransaccionSchema: Schema = new Schema(
@@ -36,6 +37,7 @@ const detalleTransaccionSchema: Schema = new Schema(
     descuento: { type: Schema.Types.Decimal128, default: 0 },
     tipoDescuentoEntidad: { type: String, enum: ['Product', 'Group'], required: true },
     deleted_at: { type: Date, default: null },
+    ajusteACobrar: { type: Schema.Types.Decimal128, default: 0 },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'update_at' },

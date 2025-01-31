@@ -25,6 +25,7 @@ import { cero128, compareDecimal128, compareToCero, dividirDecimal128, formatObe
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { IDescuentoGrupo } from '../../models/transaction/DescuentoGrupo.model';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
+import { parse } from 'path';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -375,6 +376,11 @@ export class TransactionService {
 
     let transaccion = await this.getTransactionByIdNoDto(data.trasaccionOrigenId);
 
+    let totalDevolucion128 = cero128;
+    let totalAjusteACobrar = cero128;
+    let newTotalTransaccionOrigen = cero128;
+    let subTotalTransaccionOrigen = cero128;
+
 
     if (!transaccion?.transaccion) {
       throw new Error('Transaccion no encontrada');
@@ -405,23 +411,11 @@ export class TransactionService {
         return detalleVenta
       }
 
-      let getProductoPrice = (productId:string) => {
-        let detalleVenta = getDetalleVenta(productId)
-        let price = parseFloat((detalleVenta?.subtotal as mongoose.Types.Decimal128).toString()) / (detalleVenta?.cantidad as number);
-
-        return price
-      }
-
-      let totalDevolucion = data.monto + (data.montoExterno ?? 0);
-      let totalDevolucion128 = new mongoose.Types.Decimal128(totalDevolucion.toString());
-
-      let newTotalTransaccion = restarDecimal128(transaccion.transaccion.total, totalDevolucion128)
-      let subTotalTransaccion = cero128;
-
       let newVenta = {
         usuarioId: usuarioId,
         sucursalId: sucursalId,
         subtotal: totalDevolucion128,
+        totalAjusteACobrar: totalAjusteACobrar,
         total: totalDevolucion128,
         descuento: new mongoose.Types.Decimal128("0"),
         deleted_at: null,
@@ -439,27 +433,57 @@ export class TransactionService {
       const newReturn = await this.repository.create(newVenta);
 
       for await (const element of data.products!) {
+        // para lo devuelto siempre se devuelve el precio original
         let detalleTransaccionOrigen = getDetalleVenta(element.productId) as IDetalleTransaccion;
+        let detalleTransaccionOrigenId = detalleTransaccionOrigen._id as mongoose.Types.ObjectId;
+        let cantidadOriginal = new Types.Decimal128(detalleTransaccionOrigen.cantidad.toString());
         let productoId = new mongoose.Types.ObjectId(element.productId);
 
-        let inventarioSucursal = listInventarioSucursal.find((item) => formatObejectId((item.productoId as IProducto)._id).toString() === productoId.toString()) as IInventarioSucursal;
+        let ajusteACobrar = cero128
+
+        let inventarioSucursal = listInventarioSucursal.find(
+          (item) =>
+            formatObejectId((item.productoId as IProducto)._id).toString() ===
+            productoId.toString()
+        ) as IInventarioSucursal;
+
         let inventarioSucursalId = (inventarioSucursal._id as Types.ObjectId)
 
         let quantity128 = new mongoose.Types.Decimal128(element.quantity.toString());
+        let cantidadRetenida = new Types.Decimal128((detalleTransaccionOrigen.cantidad -element.quantity).toString());
 
-        let precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, quantity128);
+        let precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, cantidadOriginal);
 
         let precio = element.discountApplied ? precioApplyDiscount : inventarioSucursal.precio;
         let subTotal128 = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
-        subTotalTransaccion = restarDecimal128(transaccion.transaccion.subtotal, subTotal128);
 
-        let total = multiplicarDecimal128(precio, quantity128)
+        if (detalleTransaccionOrigen.total !== detalleTransaccionOrigen.subtotal && !element.discountApplied) {
+
+          let nuevoTotalSinDescuento = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+          let nuevoTotalConDescuento = multiplicarDecimal128(precioApplyDiscount, new Types.Decimal128(cantidadRetenida.toString()));
+
+          ajusteACobrar = restarDecimal128(nuevoTotalSinDescuento, nuevoTotalConDescuento)
+
+          totalAjusteACobrar = sumarDecimal128(totalAjusteACobrar, ajusteACobrar)
+
+          await this.repository.deletedDescuentoAplicadoByTransaccionDetailsId(detalleTransaccionOrigenId.toString());
+
+          detalleTransaccionOrigen.descuento = cero128;
+        }
+        
+        // Actualizar el total de la transaccion segun si se aplica descuento
+        let subtotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
+        newTotalTransaccionOrigen = sumarDecimal128(newTotalTransaccionOrigen, multiplicarDecimal128(precio, cantidadRetenida))
+        subTotalTransaccionOrigen = sumarDecimal128(subTotalTransaccionOrigen, subtotalRetenido);
+
+        let total = multiplicarDecimal128(precioApplyDiscount, quantity128)
+        totalDevolucion128 = sumarDecimal128(totalDevolucion128, total);
         let tipoAplicacion:ITipoDescuentoEntidad = 'Product';
 
         let detalleVenta = {
           ventaId: (newReturn._id as mongoose.Types.ObjectId),
           productoId: productoId,
-          precio: precio,
+          precio: precioApplyDiscount,
           cantidad: element.quantity,
           subtotal: subTotal128,
           total: total,
@@ -467,9 +491,12 @@ export class TransactionService {
           deleted_at: null,
           tipoCliente: 'Regular' as 'Regular',
           tipoDescuentoEntidad: tipoAplicacion,
+          ajusteACobrar
         }
 
         let newdDetailReturn = await this.repository.createDetalleVenta(detalleVenta);
+
+       
 
         if (transaccion.transaccion.tipoTransaccion === 'COMPRA') {
 
@@ -500,28 +527,38 @@ export class TransactionService {
         (newReturn.transactionDetails as mongoose.Types.ObjectId[]).push(newdDetailReturn._id as mongoose.Types.ObjectId);
 
 
-        if (compareDecimal128(newTotalTransaccion, cero128)) {
+        if (compareDecimal128(newTotalTransaccionOrigen, cero128)) {
           if (detalleTransaccionOrigen) {
             if (detalleTransaccionOrigen.cantidad === element.quantity) {
               detalleTransaccionOrigen.deleted_at = getDateInManaguaTimezone();
               await detalleTransaccionOrigen.save();
               
             } else {
-              
-              detalleTransaccionOrigen.cantidad = detalleTransaccionOrigen.cantidad - element.quantity;
+              detalleTransaccionOrigen.precio = precio;
+              detalleTransaccionOrigen.subtotal = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+              detalleTransaccionOrigen.total = multiplicarDecimal128(precio, cantidadRetenida);
+              detalleTransaccionOrigen.cantidad = parseInt(cantidadRetenida.toString());
               await detalleTransaccionOrigen.save();
             }
           }
         }
       }
 
-      if (compareToCero(newTotalTransaccion)) {
+      newReturn.totalAjusteACobrar = totalAjusteACobrar;
+      newReturn.subtotal = totalDevolucion128;
+      newReturn.total = restarDecimal128(totalDevolucion128, totalAjusteACobrar);
+
+      if (compareToCero(newTotalTransaccionOrigen)) {
         transaccion.transaccion.deleted_at = getDateInManaguaTimezone();
         transaccion.transaccion.estadoTrasaccion = tipoEstatusSales.DEVOLUCION;
         await transaccion.transaccion.save();
       } else {
-        transaccion.transaccion.subtotal = subTotalTransaccion;
-        transaccion.transaccion.total = newTotalTransaccion
+        let isAplyDiscoundTransaction = data.products?.some((item) => item.discountApplied);
+        if (!isAplyDiscoundTransaction) {
+          transaccion.transaccion.descuento = cero128;
+        }
+        transaccion.transaccion.subtotal = subTotalTransaccionOrigen;
+        transaccion.transaccion.total = newTotalTransaccionOrigen
         await transaccion.transaccion.save();
       }
 
@@ -533,8 +570,8 @@ export class TransactionService {
         tipoTransaccion: tipoTransaccionDevolucion,
         cajaId: (newReturn.cajaId as Types.ObjectId).toString(),
         userId: data.userId,
-        total: totalDevolucion,
-        subtotal: totalDevolucion,
+        total: parseFloat(totalDevolucion128.toString()),
+        subtotal: parseFloat(totalDevolucion128.toString()),
         monto: data.monto,
         cambioCliente: 0,
 
@@ -547,7 +584,7 @@ export class TransactionService {
       let caja: ICaja | null = null
 
       if (transaccion.transaccion.paymentMethod === 'credit') {
-        const dineroADevolver = await this.creditoService.returnTransactionById(data.trasaccionOrigenId, totalDevolucion);
+        const dineroADevolver = await this.creditoService.returnTransactionById(data.trasaccionOrigenId, totalDevolucion128);
 
         ventaActualizar.total = dineroADevolver;
         ventaActualizar.monto = dineroADevolver;

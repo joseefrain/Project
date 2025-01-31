@@ -1,6 +1,6 @@
 import { injectable } from 'tsyringe';
 import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
-import mongoose, { mongo } from 'mongoose';
+import mongoose, { DeleteResult, mongo } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
@@ -30,6 +30,13 @@ export class TransactionRepository {
     const descuento = new this.modelVentaDescuentosAplicados(data);
     return await descuento.save();
   }
+
+  async deletedDescuentoAplicadoByTransaccionDetailsId(detalleTransaccionId:string):Promise<DeleteResult> {
+
+   let respuesta = await this.modelVentaDescuentosAplicados.deleteOne({detalleVentaId:detalleTransaccionId}).exec()
+   return respuesta
+  }
+
   async findAllDetalleVentaByVentaId(ventaId: string): Promise<IDetalleTransaccion[]> {
     const detalleVenta = await this.modelDetalleTransaction.find({ ventaId: ventaId, deleted_at:null }).populate("productoId");
 
