@@ -4,17 +4,20 @@ import { DescuentoGrupo, IDescuentoGrupo } from '../../models/transaction/Descue
 import { DescuentosProductos, IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model';
 import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 
 @injectable()
 export class DescuentoRepository {
   private model: typeof Descuento;
   private modelDescuentoProducto: typeof DescuentosProductos;
   private modelDescuentoGrupo: typeof DescuentoGrupo;
+  private modelVentaDescuentosAplicados: typeof TransaccionDescuentosAplicados;
 
   constructor() {
     this.model = Descuento;
     this.modelDescuentoProducto = DescuentosProductos;
     this.modelDescuentoGrupo = DescuentoGrupo;
+    this.modelVentaDescuentosAplicados = TransaccionDescuentosAplicados;
   }
 
   async create(data: Partial<IDescuentoCreate>, ): Promise<IDescuento> {
@@ -140,21 +143,25 @@ export class DescuentoRepository {
   }
 
   async deleteProductGeneral(id: Types.ObjectId, productoId:Types.ObjectId): Promise<DeleteResult> {
+    await this.model.deleteOne({ _id: id });
     let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId});
     return response
   }
 
   async deleteProductBySucursal(id: Types.ObjectId, productoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
+    await this.model.deleteOne({ _id: id });
     let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId, sucursalId});
     return response
   }
 
   async deleteGroupGeneral(id: Types.ObjectId, grupoId: Types.ObjectId): Promise<DeleteResult> {
+    await this.model.deleteOne({ _id: id });
     let response = await this.modelDescuentoGrupo.deleteOne({descuentoId:id, grupoId});
     return response
   }
 
   async deleteGroupBySucursal(id: Types.ObjectId, grupoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
+    await this.model.deleteOne({ _id: id });
     let response = await this.modelDescuentoGrupo.deleteOne({ descuentoId:id, grupoId, sucursalId });
     return response
     
@@ -171,4 +178,32 @@ export class DescuentoRepository {
   async getDescuentoProductoByDescuentoId(id: string): Promise<IDescuentosProductos | null> {
     return await this.modelDescuentoProducto.findOne({ descuentoId: id });
   }
+
+  async findDescuentosAplicadosByDTId(detalleVentaIds: Types.ObjectId[]): Promise<ITransaccionDescuentosAplicados[]> {
+    const ventaDescuentosAplicados = 
+      await this.modelVentaDescuentosAplicados.find({
+        detalleVentaId: { $in: detalleVentaIds },
+      })
+      .populate([
+      {
+        path: 'descuentosProductosId',
+        populate: {
+          path: 'descuentoId',
+        },
+      },
+      {
+        path: 'descuentoGrupoId',
+        populate: {
+          path: 'descuentoId',
+        },
+      },
+    ]);
+
+    return ventaDescuentosAplicados;
+  }
+
+  async updateDescuentoAplicado(id: string, data: Partial<ITransaccionDescuentosAplicados>): Promise<ITransaccionDescuentosAplicados | null> {
+    return await this.modelVentaDescuentosAplicados.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
 }

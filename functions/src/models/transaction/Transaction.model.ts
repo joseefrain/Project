@@ -65,6 +65,7 @@ export interface IDescuentoAplicado {
   minimoCantidad?: number;
   activo:boolean,
   minimiType:IDescountTypePV
+  tipoDescuento: string;
 }
 
 export interface ITrasaccionProductoResponse {

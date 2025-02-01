@@ -8,6 +8,8 @@ import {
 } from '../../models/transaction/Descuento.model';
 import { DescuentoRepository } from '../../repositories/transaction/descuento.repository';
 import mongoose, { DeleteResult, Types } from 'mongoose';
+import { ITransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
+import { IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model';
 
 @injectable()
 export class DescuentoService {
@@ -18,6 +20,19 @@ export class DescuentoService {
   async createDescuento(data: Partial<IDescuentoCreate>): Promise<IDescuentoCreateResponse> {
     
     try {
+
+      let minimoCompra = data.minimoCompra ? data.minimoCompra : undefined;
+      let minimoCantidad = data.minimoCantidad ? data.minimoCantidad : undefined;
+      let productId = data.productId ? new mongoose.Types.ObjectId(data.productId) : undefined;
+      let groupId = data.groupId ? new mongoose.Types.ObjectId(data.groupId) : undefined;
+
+      if (!minimoCompra && !minimoCantidad) {
+        throw new Error('Debe especificar minimoCompra o minimoCantidad');
+      }
+
+      if (!productId && !groupId) {
+        throw new Error('Debe especificar el producto o el grupo');
+      }
       
       const descuentoExists = await this.repository.findByName(data.nombre!);
 
@@ -68,20 +83,9 @@ export class DescuentoService {
       } as IDescuentoCreateResponse;
 
       let tipoDescuentoEntidad = data.tipoDescuentoEntidad!;
-      let productId = data.productId ? new mongoose.Types.ObjectId(data.productId) : undefined;
-      let groupId = data.groupId ? new mongoose.Types.ObjectId(data.groupId) : undefined;
+     
       let descuentoId = newDescuento._id as mongoose.Types.ObjectId;
-      let sucursalId = data.sucursalId ? new mongoose.Types.ObjectId(data.sucursalId) : undefined;
-      let minimoCompra = data.minimoCompra ? data.minimoCompra : undefined;
-      let minimoCantidad = data.minimoCantidad ? data.minimoCantidad : undefined;
-
-      if (!minimoCompra && !minimoCantidad) {
-        throw new Error('Debe especificar minimoCompra o minimoCantidad');
-      }
-
-      if (!productId && !groupId) {
-        throw new Error('Debe especificar el producto o el grupo');
-      }
+      let sucursalId = data.sucursalId ? new mongoose.Types.ObjectId(data.sucursalId) : undefined;  
 
       if (tipoDescuentoEntidad === 'Product') {
         let descuentoProducto = {
@@ -165,5 +169,11 @@ export class DescuentoService {
 
   async restoreDescuento(id: string): Promise<IDescuento | null> {
     return this.repository.restore(id);
+  }
+
+  async findDescuentosAplicadosByDTId(detalleVentaIds: Types.ObjectId[]): Promise<ITransaccionDescuentosAplicados[]> {
+    let descuentoAplicados = await this.repository.findDescuentosAplicadosByDTId(detalleVentaIds);
+
+    return descuentoAplicados;
   }
 }

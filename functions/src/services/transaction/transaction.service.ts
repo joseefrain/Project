@@ -368,22 +368,34 @@ export class TransactionService {
 
           let productId = descuentoAplicado.descuentosProductosId ? (descuentoAplicado.descuentosProductosId as IDescuentosProductos).productId.toString() : null;
           let groupId = descuentoAplicado.descuentoGrupoId ? (descuentoAplicado.descuentoGrupoId as IDescuentoGrupo).grupoId.toString() : null;
+
+          let sucursalId = descuentoAplicado.descuentosProductosId
+            ? (
+                (
+                  descuentoAplicado.descuentosProductosId as IDescuentosProductos
+                ).sucursalId as mongoose.Types.ObjectId
+              ).toString()
+            : (
+                (descuentoAplicado.descuentoGrupoId as IDescuentoGrupo)
+                  .sucursalId as mongoose.Types.ObjectId
+              ).toString();
           
           descuento = {
             id: (descuentoId._id as mongoose.Types.ObjectId).toString(),
             name: descuentoId.nombre,
-            amount: descuentoId.valorDescuento ,
+            amount: Number(descuentoAplicado.monto),
             percentage: Number(descuentoAplicado.valor),
             type: tipoAplicacion === "Product" ? "producto" : "grupo",
             productId: productId,
             groupId: groupId,
-            sucursalId: (descuentoAplicado.detalleVentaId as mongoose.Types.ObjectId).toString(),
+            sucursalId: sucursalId,
             fechaInicio: descuentoId.fechaInicio,
             fechaFin: descuentoId.fechaFin,
             minimoCompra: descuentoId.minimoCompra,
             minimoCantidad: descuentoId.minimoCantidad,
             activo: descuentoId.activo,
-            minimiType: descuentoId.minimiType
+            minimiType: descuentoId.minimiType,
+            tipoDescuento: descuentoId.tipoDescuento
           }
         }
       }
@@ -439,9 +451,18 @@ export class TransactionService {
     return this.repository.findAllDetalleVentaByVentaId(ventaId);
   }
 
+  async findDescuentoByDescuentoAplicado(descuentoAplicado: ITransaccionDescuentosAplicados): Promise<IDescuento> {
+    let descuentoTipo = descuentoAplicado.descuentosProductosId ? descuentoAplicado.descuentosProductosId : descuentoAplicado.descuentoGrupoId;
+    let descuentoId = ((descuentoTipo as IDescuentosProductos).descuentoId as IDescuento);
+   return descuentoId;
+  }
+
   async createDevolucion(data: IDevolucionesCreate) {
 
     let transaccion = await this.getTransactionByIdNoDto(data.trasaccionOrigenId);
+    let detalleTransaccionIds = transaccion?.transaccion.transactionDetails as mongoose.Types.ObjectId[];
+
+    let descuentosAplicados = await this.descuentoRepository.findDescuentosAplicadosByDTId(detalleTransaccionIds);
 
     let totalDevolucion128 = cero128;
     let totalAjusteACobrar = cero128;
@@ -502,6 +523,8 @@ export class TransactionService {
       for await (const element of data.products!) {
         // para lo devuelto siempre se devuelve el precio original
         let detalleTransaccionOrigen = getDetalleVenta(element.productId) as IDetalleTransaccion;
+        let descuentoAplicado = descuentosAplicados.find((item) => item.detalleVentaId === detalleTransaccionOrigen._id);
+        let descuento = await this.findDescuentoByDescuentoAplicado(descuentoAplicado!);
         let detalleTransaccionOrigenId = detalleTransaccionOrigen._id as mongoose.Types.ObjectId;
         let cantidadOriginal = new Types.Decimal128(detalleTransaccionOrigen.cantidad.toString());
         let productoId = new mongoose.Types.ObjectId(element.productId);
@@ -521,9 +544,48 @@ export class TransactionService {
 
         let precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, cantidadOriginal);
 
-        let precio = element.discountApplied ? precioApplyDiscount : inventarioSucursal.precio;
+        let newPriceAplyDiscount = cero128;
+
+        if (element.discountApplied) {
+          let descuentoAplicadoId = (descuentoAplicado?._id as mongoose.Types.ObjectId).toString();
+          let valorDescuento = new Types.Decimal128(descuento.valorDescuento.toString());
+
+          let total = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+          
+          if (descuento.tipoDescuento === "porcentaje") {
+
+            let porcentaje = new Types.Decimal128((descuento.valorDescuento / 100).toString());
+
+            let procentajeDelTotal = multiplicarDecimal128(total, porcentaje);
+
+            let totalConDescuento = restarDecimal128(total, procentajeDelTotal);
+
+            newPriceAplyDiscount = dividirDecimal128(totalConDescuento, cantidadRetenida);
+
+            await this.descuentoRepository.updateDescuentoAplicado(descuentoAplicadoId.toString(), {
+              monto: procentajeDelTotal
+            });
+
+          } else if (descuento.tipoDescuento === "valor") {
+
+            let totalConDescuento = restarDecimal128(total, valorDescuento);
+
+            let cienporciento = new Types.Decimal128("100");
+
+            const porcentaje = multiplicarDecimal128(dividirDecimal128(valorDescuento, total), cienporciento);
+
+            newPriceAplyDiscount = multiplicarDecimal128(totalConDescuento, cantidadRetenida);
+
+            await this.descuentoRepository.updateDescuentoAplicado(descuentoAplicadoId.toString(), {
+              valor: porcentaje,
+            });
+          }
+        }
+
+        let precio = element.discountApplied ? newPriceAplyDiscount : inventarioSucursal.precio;
         let subTotal128 = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
 
+        // logica para calcular el totalAjusteACobrar
         if (detalleTransaccionOrigen.total !== detalleTransaccionOrigen.subtotal && !element.discountApplied) {
 
           let nuevoTotalSinDescuento = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);

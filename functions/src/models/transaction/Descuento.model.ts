@@ -80,6 +80,7 @@ const descuentoSchema: Schema = new Schema(
     activo: { type: Boolean, default: true },
     moneda_id: { type: Schema.Types.ObjectId, ref: 'Moneda', required: true },
     deleted_at: { type: Date, default: null },
+    minimiType: { type: String, enum: ['cantidad', 'compra'], required: true },
   },
   { timestamps: true }
 );
