@@ -1,3 +1,6 @@
+import { DateTime } from "luxon";
+import { format } from "path";
+
 export function getDateInManaguaTimezone(): Date {
   const hoy = new Date();
 
@@ -31,4 +34,13 @@ export function getDateInManaguaTimezone(): Date {
 
   // Convertir el string a un objeto Date
   return new Date(fechaISO);
+}
+
+export function isValidDateWithFormat(
+  dateString: string,
+  format: string = "yyyy-MM-dd"
+): DateTime | null {
+  // Parsea con el formato especificado y modo estricto
+  const date = DateTime.fromFormat(dateString, format);
+  return date.isValid ? date : null
 }

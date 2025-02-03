@@ -15,6 +15,7 @@ import {
   sumarDecimal128,
 } from '../../gen/handleDecimal128';
 import { IProductoMasVendido, IProductosMetrics, IResponseGetProductMetrics } from '../../interface/IDashboard';
+import { isValidDateWithFormat } from '../../utils/date';
 
 @injectable()
 export class DashboardServices {
@@ -29,15 +30,22 @@ export class DashboardServices {
     @inject(ProductoRepository) private productoRepository: ProductoRepository
   ) {}
 
-  async getTransactionMetrics(sucursalId):Promise<IResponseGetProductMetrics> {
+  async getTransactionMetrics(sucursalId:string, fechaInicioStr:string, fechaFinStr:string):Promise<IResponseGetProductMetrics> {
+
+    let fechaInicio = isValidDateWithFormat(fechaInicioStr, "dd-MM-yyyy");
+    let fechaFin = isValidDateWithFormat(fechaFinStr, "dd-MM-yyyy");
+
+    if(!fechaInicio || !fechaFin) throw new Error("Fecha no valida");
+
     const transacciones =
       await this.transactionRepository.findPaidTransactionsDayBySucursalId(
-        sucursalId
+        sucursalId,
+        fechaInicio.toJSDate(),
+        fechaFin.toJSDate()
       );
       
       if(transacciones.length === 0) throw new Error("No hay transacciones para el día");
 
-    // let listInventarioSucursalIds = venta.products?.map((detalle) =>detalle.inventarioSucursalId) as string[];
     let listProductoIdIdsSets = new Set<any>();
 
     transacciones.forEach((transaccion) => {

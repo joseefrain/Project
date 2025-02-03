@@ -10,8 +10,8 @@ export class DashboardController {
 
   async getTransactionMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { sucursalId } = req.params;
-      const metrics = await this.service.getTransactionMetrics(sucursalId);
+      const { sucursalId, fechaInicio, fechaFin } = req.params;
+      const metrics = await this.service.getTransactionMetrics(sucursalId, fechaInicio, fechaFin);
       res.status(200).json(metrics);
     } catch (error) {
       next(error);

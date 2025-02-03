@@ -114,16 +114,14 @@ export class TransactionRepository {
     return await this.model.findById(id).exec();
   }
 
-  async findPaidTransactionsDayBySucursalId(sucursalId: string): Promise<ITransaccion[]> {
-    const startOfDay = getDateInManaguaTimezone();
-    startOfDay.setHours(0, 0, 0, 0);
+  async findPaidTransactionsDayBySucursalId(sucursalId: string, startDate: Date, endDate: Date): Promise<ITransaccion[]> {
+    startDate.setHours(0, 0, 0, 0);
   
-    const endOfDay = getDateInManaguaTimezone();
-    endOfDay.setHours(23, 59, 59, 999);
+    endDate.setHours(23, 59, 59, 999);
   
     const transacciones = await Transaccion.find({
       sucursalId,
-      fechaRegistro: { $gte: startOfDay, $lte: endOfDay },
+      fechaRegistro: { $gte: startDate, $lte: endDate },
       tipoTransaccion: 'VENTA',
       estadoTrasaccion: 'PAGADA',
     }).populate('transactionDetails');
