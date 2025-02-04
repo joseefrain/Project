@@ -22,9 +22,10 @@ import {
   IProductoConMasGananciaNetaDelDia,
   ISaleMetricsOrNull,
   IPurshaceMetricsOrNull,
+  IReturnMetricResponse,
 } from '../../interface/IDashboard';
 import { isValidDateWithFormat } from '../../utils/date';
-import { TypeTransaction } from '../../models/transaction/Transaction.model';
+import { ITransaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
 
 @injectable()
 export class DashboardServices {
@@ -62,7 +63,7 @@ export class DashboardServices {
     let listProductoIdIdsSets = new Set<any>();
 
     transacciones.forEach((transaccion) => {
-      transaccion.transactionDetails.forEach((detalle) => {
+      transaccion.transactionDetails?.forEach((detalle) => {
         listProductoIdIdsSets.add(detalle.productoId.toString()); // Agregar a Set
       });
     });
@@ -79,7 +80,7 @@ export class DashboardServices {
     const productWithTransactions = {};
 
     transacciones.forEach((transaccion) => {
-      transaccion.transactionDetails.forEach((detalle) => {
+      transaccion.transactionDetails?.forEach((detalle) => {
         let detalleCantidad128 = new Types.Decimal128(
           detalle.cantidad.toString()
         );
@@ -361,7 +362,7 @@ export class DashboardServices {
     branchId: string,
     fechaInicioStr: string,
     fechaFinStr: string
-  ) {
+  ): Promise<IReturnMetricResponse> {
     let fechaInicio = isValidDateWithFormat(fechaInicioStr, 'dd-MM-yyyy');
     let fechaFin = isValidDateWithFormat(fechaFinStr, 'dd-MM-yyyy');
 
@@ -380,7 +381,7 @@ export class DashboardServices {
     let listProductoIdIdsSets = new Set<any>();
 
     returns.forEach((transaccion) => {
-      transaccion.transactionDetails.forEach((detalle) => {
+      transaccion.transactionDetails?.forEach((detalle) => {
         listProductoIdIdsSets.add(detalle.productoId.toString()); // Agregar a Set
       });
     });
@@ -394,60 +395,84 @@ export class DashboardServices {
         listProductoIdIds
       );
 
-    const productWithTransactions = {};
-    let quantityReturnedProducts = 0;
-    let amountReturned = cero128;
+    let response = {
+      'VENTA': {
+        amountReturned: cero128,
+        quantityReturned: 0,
+        listProduct: []
+      },
+      'COMPRA': {
+        amountReturned: cero128,
+        quantityReturned: 0,
+        listProduct: []
+      }
+    };
 
     //
     returns.forEach((singleReturn) => {
-      singleReturn.transactionDetails.forEach((detalle) => {
+      singleReturn.transactionDetails?.forEach((detalle) => {
+
         let detalleCantidad128 = new Types.Decimal128(
           detalle.cantidad.toString()
         );
+
         let inventarioSucursal = branchInventoryList.find(
           (item) => item.productoId.toString() === detalle.productoId.toString()
         ) as IInventarioSucursal;
+
         let costoUnitario = multiplicarDecimal128(
           inventarioSucursal.costoUnitario,
           detalleCantidad128
         );
+
         let total128 = new Types.Decimal128(detalle.total.toString());
 
-        let key = `${detalle.productoId}_${singleReturn.tipoTransaccion}`;
+        let key = `${detalle.productoId}_${(singleReturn.transaccionOrigenId as ITransaccion).tipoTransaccion}`;
+        let keyResponse = `${(singleReturn.transaccionOrigenId as ITransaccion).tipoTransaccion}`
 
-        if (productWithTransactions[key]) {
-          productWithTransactions[key].cantidad += detalle.cantidad;
-          quantityReturnedProducts += detalle.cantidad;
-          productWithTransactions[key].total = sumarDecimal128(
-            productWithTransactions[key].total,
+        let tipoDevolucion = response[keyResponse]
+
+        let item = tipoDevolucion.listProduct.length > 0 ? tipoDevolucion.listProduct.find((item) => item.productoId.toString() === detalle.productoId.toString()) : null 
+
+        if (item) {
+          item.cantidad += detalle.cantidad;
+
+          tipoDevolucion.quantityReturned += detalle.cantidad;
+
+          item.total = sumarDecimal128(
+            item.total,
             detalle.total
           );
-          amountReturned = sumarDecimal128(amountReturned, detalle.total);
-          productWithTransactions[key].costoUnitario = sumarDecimal128(
-            productWithTransactions[key].costoUnitario,
+
+          tipoDevolucion.amountReturned = sumarDecimal128(tipoDevolucion.amountReturned, detalle.total);
+
+          item.costoUnitario = sumarDecimal128(
+            item.costoUnitario,
             costoUnitario
           );
-          productWithTransactions[key].gananciaNeta = sumarDecimal128(
-            productWithTransactions[key].gananciaNeta,
+
+          item.gananciaNeta = sumarDecimal128(
+            item.gananciaNeta,
             restarDecimal128(total128, costoUnitario)
           );
         } else {
-          amountReturned = sumarDecimal128(amountReturned, detalle.total);
-          quantityReturnedProducts += detalle.cantidad;
-          productWithTransactions[key] = {
+
+          tipoDevolucion.amountReturned = sumarDecimal128(cero128, detalle.total);
+          tipoDevolucion.quantityReturned += detalle.cantidad;
+
+          tipoDevolucion.listProduct.push({
             cantidad: detalle.cantidad,
             total: detalle.total,
             costoUnitario: costoUnitario,
             gananciaNeta: restarDecimal128(total128, costoUnitario),
-          };
+            //@ts-ignore
+            nombre: inventarioSucursal.producto.nombre,
+            productoId: detalle.productoId
+          })
         }
       });
     });
 
-    return {
-      amountReturned: amountReturned,
-      quantityReturned: quantityReturnedProducts,
-      listProducts: productWithTransactions,
-    };
+    return response;
   }
 }

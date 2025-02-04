@@ -53,3 +53,19 @@ export interface IResponseGetProductMetrics {
   venta: ISaleMetricsOrNull;
   compra: IPurshaceMetricsOrNull
 }
+
+interface IProductResturnMetrics extends IProductosMetrics {
+  nombre: string;
+  productoId: string;
+}
+
+interface IReturnTypeTransaction {
+  amountReturned: Types.Decimal128;
+  quantityReturned: number;
+  listProduct: IProductResturnMetrics[];
+}
+
+export interface IReturnMetricResponse {
+  VENTA: IReturnTypeTransaction;
+  COMPRA: IReturnTypeTransaction;
+}

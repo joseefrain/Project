@@ -80,4 +80,13 @@ export class TransactionController {
       next(error);
     }
   }
+
+  async getResumenDiarioByCashierId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const resumenDiario = await this.service.getResumenDiarioByCashierId(req.params.id);
+      res.status(200).json(resumenDiario);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

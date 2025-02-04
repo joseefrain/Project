@@ -2,7 +2,8 @@ import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 import { IAddExpenseDailySummary, IAddIncomeDailySummary } from '../../interface/ICaja';
 import { ITransaccion } from '../../models/transaction/Transaction.model';
-import { getDateInManaguaTimezone } from '../../utils/date';
+import { getDateInManaguaTimezone, useTodayDateRange } from '../../utils/date';
+import { DateTime } from 'luxon';
 
 export class ResumenCajaDiarioRepository {
   private model: Model<IResumenCajaDiario>;
@@ -109,12 +110,12 @@ export class ResumenCajaDiarioRepository {
 
   async findByDateAndCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const date = getDateInManaguaTimezone();
-      date.setHours(0, 0, 0, 0);
-      return await this.model.findOne(
-        { fecha: date, cajaId: cashierId },
-        {} // Objeto de proyección (puede estar vacío si necesitas todos los campos)
-      ) as IResumenCajaDiario;
+     const [startDateISO, endDateISO] = useTodayDateRange();
+
+      let resumenDiario = await this.model.findOne(
+        { fecha: { $gte: startDateISO, $lte: endDateISO }, cajaId: cashierId },
+      ) as IResumenCajaDiario
+      return resumenDiario ;
     } catch (error) {
       throw new Error(`Error al obtener resúmenes en rango de fechas: ${error.message}`);
     }
@@ -122,9 +123,9 @@ export class ResumenCajaDiarioRepository {
 
   async findTodayResumenByCashier(cashierId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
     try {
-      const date = getDateInManaguaTimezone()
-      date.setHours(0, 0, 0, 0);
-      return await this.model.findOne({ cajaId: cashierId, fecha: date }).populate([
+      const [startDateISO, endDateISO] = useTodayDateRange();
+
+      return await this.model.findOne({ cajaId: cashierId, fecha: { $gte: startDateISO, $lte: endDateISO }, }).populate([
         {
           path: 'ventas',
           populate: {
@@ -156,7 +157,7 @@ export class ResumenCajaDiarioRepository {
     }
   }
 
-  async addTransactionDailySummary(transaccion: ITransaccion, sucursalId: Types.ObjectId): Promise<IResumenCajaDiario | null> {
+  async addTransactionDailySummary(transaccion: ITransaccion): Promise<IResumenCajaDiario | null> {
     try {
       const tipoTransaccion = transaccion.tipoTransaccion;
       const totalIncrement = transaccion.total;
@@ -164,11 +165,10 @@ export class ResumenCajaDiarioRepository {
 
       let existResumen = await this.findByDateAndCashier(cashierId);
 
-      const fecha = getDateInManaguaTimezone();
-      fecha.setHours(0, 0, 0, 0);
+      const [startDateISO, endDateISO] = useTodayDateRange();
 
       if (!existResumen) {
-        throw new Error("No existe un resumen para la fecha " + fecha);
+        throw new Error("No existe un resumen para la fecha " + startDateISO);
       }
       
       let totalSale = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : +Number(0);
@@ -176,7 +176,7 @@ export class ResumenCajaDiarioRepository {
       let montoFinalSistema = tipoTransaccion === 'VENTA' ? +Number(totalIncrement) : -Number(totalIncrement);
   
       const resumenHoy = await this.model.findOneAndUpdate(
-        { fecha: fecha, sucursalId },
+        { fecha: { $gte: startDateISO, $lte: endDateISO }, cajaId: cashierId },
         { $inc: { totalVentas: totalSale, totalCompras: totalPurchase, montoFinalSistema: montoFinalSistema } },
         { new: true, upsert: true } 
       ).exec();
@@ -207,12 +207,11 @@ export class ResumenCajaDiarioRepository {
       const sucursalIdMongo = new Types.ObjectId(sucursalId);
       const cajaIdMongo = new Types.ObjectId(cajaId);
 
-      let date  = getDateInManaguaTimezone();
-      date.setHours(0, 0, 0, 0);
+      const [startDateISO, endDateISO] = useTodayDateRange();
   
       // Actualizar el resumen diario para incrementar totalIngresos y montoFinalSistema
       const resumenHoy = await this.model.findOneAndUpdate(
-        { fecha: date, sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
+        { fecha: { $gte: startDateISO, $lte: endDateISO }, sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
         { $inc: { totalIngresos: incomeIncrement, montoFinalSistema: incomeIncrement } },
         { new: true, upsert: true } ,
       ).exec();
@@ -233,8 +232,10 @@ export class ResumenCajaDiarioRepository {
     const expenseIncrement = new Types.Decimal128(expense.toString());
     const cajaIdMongo = new Types.ObjectId(cajaId);
 
+    const [startDateISO, endDateISO] = useTodayDateRange();
+
     const resumenHoy = await this.model.findOneAndUpdate(
-      { fecha: getDateInManaguaTimezone(), sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
+      { fecha: { $gte: startDateISO, $lte: endDateISO }, sucursalId: sucursalIdMongo, cajaId: cajaIdMongo },
       { $inc: { totalEgresos: expenseIncrement, montoFinalSistema: -expenseIncrement } },
       { new: true, upsert: true } // Asegurarse de pasar la sesión
     ).exec();

@@ -52,6 +52,11 @@ router.get(
   transactionController.getDevolucionesBySucursal.bind(transactionController)
 );
 
+router.get(
+  '/resumen/:id',
+  transactionController.getResumenDiarioByCashierId.bind(transactionController)
+)
+
 // router.get('/', authMiddleware, ventaController.getAll.bind(ventaController));
 // router.get(
 //   '/:id/branch',

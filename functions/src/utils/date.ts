@@ -44,3 +44,20 @@ export function isValidDateWithFormat(
   const date = DateTime.fromFormat(dateString, format);
   return date.isValid ? date : null
 }
+
+export const useTodayDateRange = () => {
+  const starDateJs = getDateInManaguaTimezone();
+  const endDateJS = getDateInManaguaTimezone();
+  let startDateISO = new Date(starDateJs.setHours(-6, 0, 0, 0)).toISOString()
+
+  let endDateISO = new Date(endDateJS.setHours(17, 59, 59, 59)).toISOString()
+
+  return [startDateISO, endDateISO]
+};
+
+export const useSetDateRange = (startDate: Date, endDate: Date) => {
+  let startDateISO = new Date(startDate.setHours(-6, 0, 0, 0)).toISOString()
+  let endDateISO = new Date(endDate.setHours(17, 59, 59, 999)).toISOString()
+
+  return [startDateISO, endDateISO]
+};

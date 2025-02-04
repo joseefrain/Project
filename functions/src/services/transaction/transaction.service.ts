@@ -26,6 +26,7 @@ import { getDateInManaguaTimezone } from '../../utils/date';
 import { IDescuentoGrupo } from '../../models/transaction/DescuentoGrupo.model';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
 import { parse } from 'path';
+import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -198,7 +199,7 @@ export class TransactionService {
         await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
       }
 
-      await this.resumenRepository.addTransactionDailySummary(newSale, sucursalId);
+      await this.resumenRepository.addTransactionDailySummary(newSale);
 
       if (newSale.paymentMethod === 'credit') {
         let credito:Partial<ICredito> = {
@@ -524,7 +525,7 @@ export class TransactionService {
         // para lo devuelto siempre se devuelve el precio original
         let detalleTransaccionOrigen = getDetalleVenta(element.productId) as IDetalleTransaccion;
         let descuentoAplicado = descuentosAplicados.find((item) => item.detalleVentaId === detalleTransaccionOrigen._id);
-        let descuento = await this.findDescuentoByDescuentoAplicado(descuentoAplicado!);
+        let descuento = descuentoAplicado ? await this.findDescuentoByDescuentoAplicado(descuentoAplicado!) : null
         let detalleTransaccionOrigenId = detalleTransaccionOrigen._id as mongoose.Types.ObjectId;
         let cantidadOriginal = new Types.Decimal128(detalleTransaccionOrigen.cantidad.toString());
         let productoId = new mongoose.Types.ObjectId(element.productId);
@@ -546,7 +547,7 @@ export class TransactionService {
 
         let newPriceAplyDiscount = cero128;
 
-        if (element.discountApplied) {
+        if (element.discountApplied && descuento) {
           let descuentoAplicadoId = (descuentoAplicado?._id as mongoose.Types.ObjectId).toString();
           let valorDescuento = new Types.Decimal128(descuento.valorDescuento.toString());
 
@@ -727,7 +728,7 @@ export class TransactionService {
         caja = await this.cashRegisterService.actualizarMontoEsperadoByTrasaccion(datosActualizar!); 
       }
 
-      await this.resumenRepository.addTransactionDailySummary(newReturn, sucursalId as Types.ObjectId);
+      await this.resumenRepository.addTransactionDailySummary(newReturn);
 
       //@ts-ignore
       let devolucionMapeada = await this.getTransactionById(newReturn._id.toString());
@@ -735,5 +736,11 @@ export class TransactionService {
       let transaccionActualizada = await this.getTransactionById(transaccion.transaccion._id.toString());
 
       return { devolucion:devolucionMapeada, transaccionActualizada, caja: caja } 
+  }
+
+  async getResumenDiarioByCashierId(id: string): Promise<IResumenCajaDiario | null> {
+    let cashier = new mongoose.Types.ObjectId(id)
+    const resumenDiario = await this.resumenRepository.findByDateAndCashier(cashier);
+    return resumenDiario;
   }
 }
