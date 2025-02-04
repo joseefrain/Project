@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
 
 export interface IProductoMasVendido {
   producto: string;
@@ -8,7 +8,7 @@ export interface IProductoMasVendido {
   costoUnitario: Types.Decimal128;
 }
 
-export interface productoConMasTotalVendidoDelDia {
+export interface IProductoConMasTotalVendidoDelDia {
   producto: string;
   cantidad: number;
   total: Types.Decimal128;
@@ -16,7 +16,7 @@ export interface productoConMasTotalVendidoDelDia {
   costoUnitario: Types.Decimal128;
 }
 
-export interface productoConMasGananciaNetaDelDia {
+export interface IProductoConMasGananciaNetaDelDia {
   producto: any;
   cantidad: number;
   total: Types.Decimal128;
@@ -30,11 +30,20 @@ export interface IProductosMetrics {
   total: Types.Decimal128;
   gananciaNeta: Types.Decimal128;
   costoUnitario: Types.Decimal128;
-}[]
+}
+[];
 
 export interface IResponseGetProductMetrics {
-  productoMasVendido: IProductoMasVendido;
-  productoConMasTotalVenidioDelDia: productoConMasTotalVendidoDelDia;
-  productoConMasGananciaNetaDelDia: productoConMasGananciaNetaDelDia;
-  productos: IProductosMetrics;
+  venta: {
+    productoMayorCantidad: IProductoMasVendido;
+    productoMayorTotal: IProductoConMasTotalVendidoDelDia;
+    productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
+    listaProductos: IProductosMetrics;
+  };
+  compra: {
+    productoMayorCantidad: IProductoMasVendido;
+    productoMayorTotal: IProductoConMasTotalVendidoDelDia;
+    productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
+    listaProductos: IProductosMetrics;
+  };
 }

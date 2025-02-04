@@ -14,8 +14,9 @@ import {
   restarDecimal128,
   sumarDecimal128,
 } from '../../gen/handleDecimal128';
-import { IProductoMasVendido, IProductosMetrics, IResponseGetProductMetrics } from '../../interface/IDashboard';
+import { IProductoMasVendido, IProductosMetrics, IResponseGetProductMetrics, IProductoConMasTotalVendidoDelDia, IProductoConMasGananciaNetaDelDia } from '../../interface/IDashboard';
 import { isValidDateWithFormat } from '../../utils/date';
+import { TypeTransaction } from '../../models/transaction/Transaction.model';
 
 @injectable()
 export class DashboardServices {
@@ -64,7 +65,7 @@ export class DashboardServices {
         listProductoIdIds
       );
 
-    const productosVendidos = {};
+    const productWithTransactions = {};
 
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails.forEach((detalle) => {
@@ -80,22 +81,24 @@ export class DashboardServices {
         );
         let total128 = new Types.Decimal128(detalle.total.toString());
 
-        if (productosVendidos[detalle.productoId]) {
-          productosVendidos[detalle.productoId].cantidad += detalle.cantidad;
-          productosVendidos[detalle.productoId].total = sumarDecimal128(
-            productosVendidos[detalle.productoId].total,
+        let key = `${detalle.productoId}_${transaccion.tipoTransaccion}`;
+
+        if (productWithTransactions[key]) {
+          productWithTransactions[key].cantidad += detalle.cantidad;
+          productWithTransactions[key].total = sumarDecimal128(
+            productWithTransactions[key].total,
             detalle.total
           );
-          productosVendidos[detalle.productoId].costoUnitario = sumarDecimal128(
-            productosVendidos[detalle.productoId].costoUnitario,
+          productWithTransactions[key].costoUnitario = sumarDecimal128(
+            productWithTransactions[key].costoUnitario,
             costoUnitario
           );
-          productosVendidos[detalle.productoId].gananciaNeta = sumarDecimal128(
-            productosVendidos[detalle.productoId].gananciaNeta,
+          productWithTransactions[key].gananciaNeta = sumarDecimal128(
+            productWithTransactions[key].gananciaNeta,
             restarDecimal128(total128, costoUnitario)
           );
         } else {
-          productosVendidos[detalle.productoId] = {
+          productWithTransactions[key] = {
             cantidad: detalle.cantidad,
             total: detalle.total,
             costoUnitario: costoUnitario,
@@ -105,20 +108,74 @@ export class DashboardServices {
       });
     });
 
-    let productoMasVendido = await this.getProductoMasVendidoDelDia(productosVendidos, branchInventoryList);
-    let productos = await this.getProductosVendidos(productosVendidos, branchInventoryList);
-    let productoConMasTotalVenidioDelDia = await this.getProductoConMasTotalVendidoDelDia(productosVendidos, branchInventoryList);
-    let productoConMasGananciaNetaDelDia= await this.getProductoConMasGananciaNetaDelDia(productosVendidos, branchInventoryList);
+    // Ventas
+    let productoMasVendido = await this.getProductoMasTransaccionado(
+      productWithTransactions,
+      branchInventoryList,
+      TypeTransaction.VENTA
+    );
+    let productos = await this.getProductosPorTransaccion(
+      productWithTransactions,
+      branchInventoryList,
+      TypeTransaction.VENTA
+    );
+    let productoConMasTotalVenidioDelDia =
+      await this.getProductoConMasTotalTransaccionado(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.VENTA
+      );
+    let productoConMasGananciaNetaDelDia =
+      await this.getProductoConMasGananciaNetaDelDia(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.VENTA
+      );
 
-    return {
-      productoMasVendido: productoMasVendido,
-      productoConMasTotalVenidioDelDia: productoConMasTotalVenidioDelDia,
-      productoConMasGananciaNetaDelDia: productoConMasGananciaNetaDelDia,
-      productos: productos,
-    };
+
+      // Compras 
+      let productoMasComprado = await this.getProductoMasTransaccionado(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.COMPRA
+      );
+      let productosComprados = await this.getProductosPorTransaccion(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.COMPRA
+      );
+      let productoConMasTotalComprado =
+        await this.getProductoConMasTotalTransaccionado(
+          productWithTransactions,
+          branchInventoryList,
+          TypeTransaction.COMPRA
+        );
+      let productoRentableComprado =
+        await this.getProductoConMasGananciaNetaDelDia(
+          productWithTransactions,
+          branchInventoryList,
+          TypeTransaction.COMPRA
+        );
+
+        let response = {
+          venta:{
+            productoMayorCantidad: productoMasVendido,
+            productoMayorTotal: productoConMasTotalVenidioDelDia,
+            productoMayorGanancia: productoConMasGananciaNetaDelDia,
+            listaProductos: productos,
+          },
+          compra: {
+            productoMayorCantidad: productoMasComprado,
+            productoMayorTotal: productoConMasTotalComprado,
+            productoMayorGanancia: productoRentableComprado,
+            listaProductos: productosComprados,
+          }
+        };
+
+    return response
   }
 
-  async getProductoMasVendidoDelDia(productosVendidos, listInventarioSucursal: IInventarioSucursal[]): Promise<IProductoMasVendido> {
+  async getProductoMasTransaccionado(productosVendidos, listInventarioSucursal: IInventarioSucursal[], tipoTransaccion: TypeTransaction): Promise<IProductoMasVendido> {
     let productoMasVendido = '';
     let maxCantidad = 0;
     let maxTotal = cero128;
@@ -126,17 +183,24 @@ export class DashboardServices {
     let maxCostoUnitario = cero128;
 
     for (const productoId in productosVendidos) {
-      if (productosVendidos[productoId].cantidad > maxCantidad) {
-        maxCantidad = productosVendidos[productoId].cantidad;
-        maxTotal = productosVendidos[productoId].total;
-        productoMasVendido = productoId;
-        maxGananciaNeta = productosVendidos[productoId].gananciaNeta;
-        maxCostoUnitario = productosVendidos[productoId].costoUnitario;
+      let [ id, tipoTransaccionPro ] = productoId.split('_');
+      let condition = tipoTransaccionPro !== tipoTransaccion;
+
+      let key = `${id}_${tipoTransaccion}`;
+
+      if (condition) continue;
+      
+      if (productosVendidos[key].cantidad > maxCantidad) {
+        maxCantidad = productosVendidos[key].cantidad;
+        maxTotal = productosVendidos[key].total;
+        productoMasVendido = key;
+        maxGananciaNeta = productosVendidos[key].gananciaNeta;
+        maxCostoUnitario = productosVendidos[key].costoUnitario;
       }
     }
 
     const producto = listInventarioSucursal.find(
-      (item) => item.productoId.toString() === productoMasVendido
+      (item) => item.productoId.toString() === productoMasVendido.split('_')[0]
     ) as IInventarioSucursal
 
     return {
@@ -149,7 +213,7 @@ export class DashboardServices {
     };
   }
 
-  async getProductoConMasTotalVendidoDelDia(productosVendidos, branchInventoryList:IInventarioSucursal[]) {
+  async getProductoConMasTotalTransaccionado(productosVendidos, branchInventoryList:IInventarioSucursal[], tipoTransaccion: TypeTransaction):Promise<IProductoConMasTotalVendidoDelDia> {
     let productoMasVendido = '';
     let maxCantidad = 0;
     let maxTotal = cero128;
@@ -157,18 +221,26 @@ export class DashboardServices {
     let maxCostoUnitario = cero128;
 
     for (const productoId in productosVendidos) {
+
+      let [ id, tipoTransaccionPro ] = productoId.split('_');
+      let condition = tipoTransaccionPro !== tipoTransaccion;
+
+      let key = `${id}_${tipoTransaccion}`;
+
+      if (condition) continue;
+
       //@ts-ignore
-      if (compareDecimal128(productosVendidos[productoId].total, maxTotal)) {
-        maxCantidad = productosVendidos[productoId].cantidad;
-        maxTotal = productosVendidos[productoId].total;
-        productoMasVendido = productoId;
-        maxGananciaNeta = productosVendidos[productoId].gananciaNeta;
-        maxCostoUnitario = productosVendidos[productoId].costoUnitario;
+      if (compareDecimal128(productosVendidos[key].total, maxTotal)) {
+        maxCantidad = productosVendidos[key].cantidad;
+        maxTotal = productosVendidos[key].total;
+        productoMasVendido = key;
+        maxGananciaNeta = productosVendidos[key].gananciaNeta;
+        maxCostoUnitario = productosVendidos[key].costoUnitario;
       }
     }
     
     const producto = branchInventoryList.find(
-      (item) => item.productoId.toString() === productoMasVendido
+      (item) => item.productoId.toString() === productoMasVendido.split('_')[0]
     ) as IInventarioSucursal
 
     return {
@@ -181,7 +253,7 @@ export class DashboardServices {
     };
   }
 
-  async getProductoConMasGananciaNetaDelDia(productosVendidos, branchInventoryList:IInventarioSucursal[]) {
+  async getProductoConMasGananciaNetaDelDia(productosVendidos, branchInventoryList:IInventarioSucursal[], tipoTransaccion: TypeTransaction):Promise<IProductoConMasGananciaNetaDelDia> {
     let productoMasVendido = '';
     let maxCantidad = 0;
     let maxTotal = cero128;
@@ -189,18 +261,25 @@ export class DashboardServices {
     let maxCostoUnitario = cero128;
 
     for (const productoId in productosVendidos) {
-      //@ts-ignore
-      if (compareDecimal128(productosVendidos[productoId].gananciaNeta, maxGananciaNeta)) {
-        maxCantidad = productosVendidos[productoId].cantidad;
-        maxTotal = productosVendidos[productoId].total;
-        productoMasVendido = productoId;
-        maxGananciaNeta = productosVendidos[productoId].gananciaNeta;
-        maxCostoUnitario = productosVendidos[productoId].costoUnitario;
+
+      let [ id, tipoTransaccionPro ] = productoId.split('_');
+      let condition = tipoTransaccionPro !== tipoTransaccion;
+
+      let key = `${id}_${tipoTransaccion}`;
+
+      if (condition) continue;
+
+      if (compareDecimal128(productosVendidos[key].gananciaNeta, maxGananciaNeta)) {
+        maxCantidad = productosVendidos[key].cantidad;
+        maxTotal = productosVendidos[key].total;
+        productoMasVendido = key;
+        maxGananciaNeta = productosVendidos[key].gananciaNeta;
+        maxCostoUnitario = productosVendidos[key].costoUnitario;
       }
     }
     
     const producto = branchInventoryList.find(
-      (item) => item.productoId.toString() === productoMasVendido
+      (item) => item.productoId.toString() === productoMasVendido.split('_')[0]
     ) as IInventarioSucursal
 
     return {
@@ -213,18 +292,20 @@ export class DashboardServices {
     };
   }
 
-  async getProductosVendidos(productosVendidos, branchInventoryList:IInventarioSucursal[]):Promise<IProductosMetrics> {
+  async getProductosPorTransaccion(productosVendidos, branchInventoryList:IInventarioSucursal[], tipoTransaccion: TypeTransaction):Promise<IProductosMetrics> {
     //@ts-ignore
     return branchInventoryList.map((producto) => {
       let productoId = (producto.productoId as Types.ObjectId).toString();
-      return {
+
+      let key = `${productoId}_${tipoTransaccion}`;
+      return productosVendidos[key] ? {
         //@ts-ignore
         nombre: producto.producto.nombre,
-        cantidad: productosVendidos[productoId].cantidad,
-        total: productosVendidos[productoId].total,
-        gananciaNeta: productosVendidos[productoId].gananciaNeta,
-        costoUnitario: productosVendidos[productoId].costoUnitario,
-      };
-    });
+        cantidad: productosVendidos[key].cantidad,
+        total: productosVendidos[key].total,
+        gananciaNeta: productosVendidos[key].gananciaNeta,
+        costoUnitario: productosVendidos[key].costoUnitario,
+      } : null;
+    }).filter(item => item !== null);
   }
 }

@@ -122,7 +122,7 @@ export class TransactionRepository {
     const transacciones = await Transaccion.find({
       sucursalId,
       fechaRegistro: { $gte: startDate, $lte: endDate },
-      tipoTransaccion: 'VENTA',
+      tipoTransaccion: { $in: ['VENTA', 'COMPRA'] },
       estadoTrasaccion: 'PAGADA',
     }).populate('transactionDetails');
 
