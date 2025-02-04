@@ -58,7 +58,7 @@ export interface IDescuentoAplicado {
   percentage: number;
   productId: string | null;
   groupId: string | null;
-  sucursalId: string;
+  sucursalId: string | null;
   fechaInicio: Date;
   fechaFin: Date;
   minimoCompra?: Types.Decimal128;

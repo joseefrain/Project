@@ -373,12 +373,12 @@ export class TransactionService {
             ? (
                 (
                   descuentoAplicado.descuentosProductosId as IDescuentosProductos
-                ).sucursalId as mongoose.Types.ObjectId
-              ).toString()
+                )?.sucursalId as mongoose.Types.ObjectId
+              )?.toString()
             : (
                 (descuentoAplicado.descuentoGrupoId as IDescuentoGrupo)
-                  .sucursalId as mongoose.Types.ObjectId
-              ).toString();
+                  ?.sucursalId as mongoose.Types.ObjectId
+              )?.toString();
           
           descuento = {
             id: (descuentoId._id as mongoose.Types.ObjectId).toString(),
@@ -388,7 +388,7 @@ export class TransactionService {
             type: tipoAplicacion === "Product" ? "producto" : "grupo",
             productId: productId,
             groupId: groupId,
-            sucursalId: sucursalId,
+            sucursalId: sucursalId || null,
             fechaInicio: descuentoId.fechaInicio,
             fechaFin: descuentoId.fechaFin,
             minimoCompra: descuentoId.minimoCompra,
