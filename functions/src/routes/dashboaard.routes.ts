@@ -11,5 +11,6 @@ const dashboardController = container.resolve(DashboardController);
 
 // Definir las rutas
 router.get('/product-metrics/:sucursalId/:fechaInicio/:fechaFin', dashboardController.getTransactionMetrics.bind(dashboardController));
+router.get('/returns-metrics/:sucursalId/:fechaInicio/:fechaFin', dashboardController.findReturnTransactionByBranchId.bind(dashboardController));
 
 export default router;

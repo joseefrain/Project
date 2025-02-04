@@ -31,19 +31,25 @@ export interface IProductosMetrics {
   gananciaNeta: Types.Decimal128;
   costoUnitario: Types.Decimal128;
 }
-[];
+
+interface IPurshaceMetrics {
+  productoMayorCantidad: IProductoMasVendido;
+  productoMayorTotal: IProductoConMasTotalVendidoDelDia;
+  productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
+  listaProductos: IProductosMetrics[];
+}
+
+interface ISaleMetrics {
+  productoMayorCantidad: IProductoMasVendido;
+  productoMayorTotal: IProductoConMasTotalVendidoDelDia;
+  productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
+  listaProductos: IProductosMetrics[];
+}
+
+export type IPurshaceMetricsOrNull = IPurshaceMetrics | null;
+export type ISaleMetricsOrNull = ISaleMetrics | null;
 
 export interface IResponseGetProductMetrics {
-  venta: {
-    productoMayorCantidad: IProductoMasVendido;
-    productoMayorTotal: IProductoConMasTotalVendidoDelDia;
-    productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
-    listaProductos: IProductosMetrics;
-  };
-  compra: {
-    productoMayorCantidad: IProductoMasVendido;
-    productoMayorTotal: IProductoConMasTotalVendidoDelDia;
-    productoMayorGanancia: IProductoConMasGananciaNetaDelDia;
-    listaProductos: IProductosMetrics;
-  };
+  venta: ISaleMetricsOrNull;
+  compra: IPurshaceMetricsOrNull
 }

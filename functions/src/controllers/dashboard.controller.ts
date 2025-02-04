@@ -17,4 +17,13 @@ export class DashboardController {
       next(error);
     }
   }
+  async findReturnTransactionByBranchId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { sucursalId, fechaInicio, fechaFin } = req.params;
+      const returns = await this.service.findReturnTransactionByBranchId(sucursalId, fechaInicio, fechaFin);
+      res.status(200).json(returns);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

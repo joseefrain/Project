@@ -128,4 +128,25 @@ export class TransactionRepository {
 
     return transacciones;
   }
+
+  async findReturnTransactionByBranchId(branchId: string, startDate: Date, endDate: Date): Promise<ITransaccion[]> {
+    startDate.setHours(0, 0, 0, 0);
+  
+    endDate.setHours(23, 59, 59, 999);
+  
+    const transacciones = await Transaccion.find({
+      sucursalId: branchId,
+      transaccionOrigenId: { $exists: true },
+      fechaRegistro: { $gte: startDate, $lte: endDate },
+      "transaccionOrigenId.tipoTransaccion": { $in: ['VENTA', 'COMPRA'] },
+    }).populate([{
+      path:'transaccionOrigenId',
+    }, 
+    {
+      path: 'transactionDetails',
+    }
+  ]);
+
+    return transacciones;
+  }
 }
