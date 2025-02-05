@@ -47,7 +47,7 @@ router.get(
 );
 
 router.get(
-  '/devolucion/:id/branch',
+  '/devolucion/:id/:typeTransaction/branch',
   authMiddleware,
   transactionController.getDevolucionesBySucursal.bind(transactionController)
 );

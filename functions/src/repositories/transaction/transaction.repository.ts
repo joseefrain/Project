@@ -103,26 +103,51 @@ export class TransactionRepository {
   }
 
   async findByTypeAndBranchDevolucion(
-    sucursalId: string
-  ): Promise<ITransaccion[]> {
-    const venta = await this.model
-      .find({ sucursalId: sucursalId, tipoTransaccion: 'DEVOLUCION' })
-      .populate([
-        {
-          path: 'usuarioId',
-        },
-        {
-          path: 'transactionDetails',
-          populate: {
-            path: 'productoId',
-          },
-        },
-        {
-          path: 'transaccionOrigenId',
-        },
-      ]);
+    sucursalId: string,
+    typeTransaction: TypeTransaction
+  ): Promise<Partial<ITransaccion>[]> {
+    const transacciones = await this.model.aggregate([
+      {
+        $match: {
+          sucursalId: new mongoose.Types.ObjectId(sucursalId),
+          tipoTransaccion: 'DEVOLUCION'
+        }
+      },
+      {
+        $lookup: {
+          from: 'transaccions',
+          localField: 'transaccionOrigenId',
+          foreignField: '_id',
+          as: 'transaccionOrigenId'
+        }
+      },
+      { $unwind: { path: '$transaccionOrigenId', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          'transaccionOrigenId.tipoTransaccion': { $eq: typeTransaction }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'usuarioId',
+          foreignField: '_id',
+          as: 'usuarioId'
+        }
+      },
+      { $unwind: { path: '$usuarioId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'detalletransaccions',
+          localField: 'transactionDetails',
+          foreignField: '_id',
+          as: 'transactionDetails'
+        }
+      },
+    ]);
 
-    return venta;
+
+    return transacciones;
   }
 
   async findAllVentaBySucursalIdAndUserId(

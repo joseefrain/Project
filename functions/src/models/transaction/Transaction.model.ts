@@ -22,7 +22,7 @@ export enum TypeTransactionReturn {
   COMPRA = 'COMPRA',
 };
 
-type TypePaymentMethod = 'cash' | 'credit';
+export type TypePaymentMethod = 'cash' | 'credit';
 
 export interface ITransaccion extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;
@@ -219,7 +219,7 @@ const transaccionSchema: Schema = new Schema(
       required: true,
     },
     totalAjusteACobrar: { type: Schema.Types.Decimal128, default: 0 },
-    transaccionOrigenId: { type: Schema.Types.ObjectId, default: null },
+    transaccionOrigenId: { type: Schema.Types.ObjectId,ref: 'Transaccion', default: null },
     motivoDevolucion: { type: String, default: null },
   },
   {

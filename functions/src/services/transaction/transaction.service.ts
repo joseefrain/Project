@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { TransactionRepository } from '../../repositories/transaction/transaction.repository';
 import mongoose, { Types } from 'mongoose';
-import { IDescuentoAplicado, IDevolucionesCreate, ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITransaccionNoDto, ITransaccionResponse, ITrasaccionProducto, ITrasaccionProductoResponse, TypeTransaction } from '../../models/transaction/Transaction.model';
+import { IDescuentoAplicado, IDevolucionesCreate, ITransaccion, ITransaccionCreate, ITransaccionDescuento, ITransaccionNoDto, ITransaccionResponse, ITrasaccionProducto, ITrasaccionProductoResponse, TypePaymentMethod, TypeTransaction } from '../../models/transaction/Transaction.model';
 import { ITipoDescuento, ITransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { IProducto } from '../../models/inventario/Producto.model';
@@ -254,15 +254,14 @@ export class TransactionService {
     return transactionDto;
   }
 
-  async findDevolucionesBySucursalId(sucursalId: string): Promise<ITransaccionCreate[]> {
-    const ventas = await this.repository.findByTypeAndBranchDevolucion(sucursalId);
+  async findDevolucionesBySucursalId(sucursalId: string, typeTransaction: TypeTransaction): Promise<ITransaccionCreate[]> {
+    const ventas = await this.repository.findByTypeAndBranchDevolucion(sucursalId, typeTransaction);
 
     let ventasDto: ITransaccionCreate[] = [];
   
     // Iterar sobre cada venta y obtener los detalles de venta
     for (const venta of ventas) {
-      const detalleVenta = await this.repository.findAllDetalleVentaByVentaId((venta._id as Types.ObjectId).toString());
-      const ventaDto = (await this.mapperDataReturn(venta, detalleVenta) as ITransaccionCreate);
+      const ventaDto = (await this.mapperDataReturn(venta, venta.transactionDetails as IDetalleTransaccion[]) as ITransaccionCreate);
       ventasDto.push(ventaDto);
     }
   
@@ -307,8 +306,9 @@ export class TransactionService {
     return {transaccion: venta, datalleTransaccion: detalleVenta};
   }
 
-  async mapperDataReturn(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {
+  async mapperDataReturn(venta: Partial<ITransaccion>, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {
     let products: ITrasaccionProductoResponse[] = [];
+
 
     for await (const detalle of detalleVenta) {
       let descuento:IDescuentoAplicado | null = null;
@@ -335,17 +335,17 @@ export class TransactionService {
 
     let ventaDto: ITransaccionResponse = {
       userId: (user._id as Types.ObjectId).toString(),
-      sucursalId: venta.sucursalId.toString(),
+      sucursalId: venta?.sucursalId?.toString() as string,
       subtotal: Number(venta.subtotal),
       total: Number(venta.total),
       discount: Number(venta.descuento),
       fechaRegistro: venta.fechaRegistro,
       products: products,
-      paymentMethod: venta.paymentMethod,
-      tipoTransaccion: venta.tipoTransaccion,
+      paymentMethod: venta?.paymentMethod as TypePaymentMethod,
+      tipoTransaccion: venta.tipoTransaccion as TypeTransaction,
       id: (venta._id as mongoose.Types.ObjectId).toString(),
       tipoTransaccionOrigen,
-      totalAjusteACobrar: venta.totalAjusteACobrar,
+      totalAjusteACobrar: venta?.totalAjusteACobrar as Types.Decimal128,
       username: user.username
     }
 
