@@ -16,6 +16,12 @@ export enum TypeTransaction {
   APERTURA = 'APERTURA',
   DEVOLUCION = 'DEVOLUCION',
 };
+
+export enum TypeTransactionReturn {
+  VENTA = 'VENTA',
+  COMPRA = 'COMPRA',
+};
+
 type TypePaymentMethod = 'cash' | 'credit';
 
 export interface ITransaccion extends Document {

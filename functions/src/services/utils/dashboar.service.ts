@@ -24,8 +24,9 @@ import {
   IPurshaceMetricsOrNull,
   IReturnMetricResponse,
 } from '../../interface/IDashboard';
-import { isValidDateWithFormat } from '../../utils/date';
-import { ITransaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
+import { isValidDateWithFormat, parseDate } from '../../utils/date';
+import { ITransaccion, TypeTransaction, TypeTransactionReturn } from '../../models/transaction/Transaction.model';
+import { IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 
 @injectable()
 export class DashboardServices {
@@ -358,121 +359,137 @@ export class DashboardServices {
       .filter((item) => item !== null);
   }
 
+  createInitialResponse = (): IReturnMetricResponse => ({
+    VENTA: {
+      amountReturned: cero128,
+      quantityReturned: 0,
+      listProduct: []
+    },
+    COMPRA: {
+      amountReturned: cero128,
+      quantityReturned: 0,
+      listProduct: []
+    }
+  });
+
+  updateMetric = (
+    metric: IReturnMetricResponse[TypeTransactionReturn],
+    detalle: IDetalleTransaccion,
+    inventoryItem: IInventarioSucursal
+  ) => {
+    const cantidad = detalle.cantidad;
+    const total = new Types.Decimal128(detalle.total.toString());
+    const costoUnitario = multiplicarDecimal128(
+      inventoryItem.costoUnitario,
+      new Types.Decimal128(cantidad.toString())
+    );
+    
+    // Actualizar métricas generales
+    metric.quantityReturned += cantidad;
+    metric.amountReturned = sumarDecimal128(metric.amountReturned, total);
+    
+    // Buscar o crear producto en la lista
+    const productIdStr = detalle.productoId.toString();
+    let product = metric.listProduct.find(p => 
+      p.productoId.toString() === productIdStr
+    );
+    
+    if (product) {
+      product.cantidad += cantidad;
+      product.total = sumarDecimal128(product.total, total);
+      product.costoUnitario = sumarDecimal128(product.costoUnitario, costoUnitario);
+      product.gananciaNeta = sumarDecimal128(
+        product.gananciaNeta,
+        restarDecimal128(total, costoUnitario)
+      );
+    } else {
+      metric.listProduct.push({
+        cantidad,
+        total,
+        costoUnitario,
+        gananciaNeta: restarDecimal128(total, costoUnitario),
+        //@ts-ignore
+        nombre: inventoryItem.producto.nombre,
+        productoId: productIdStr
+      });
+    }
+  };
+
   async findReturnTransactionByBranchId(
     branchId: string,
     fechaInicioStr: string,
     fechaFinStr: string
   ): Promise<IReturnMetricResponse> {
-    let fechaInicio = isValidDateWithFormat(fechaInicioStr, 'dd-MM-yyyy');
-    let fechaFin = isValidDateWithFormat(fechaFinStr, 'dd-MM-yyyy');
-
-    if (!fechaInicio || !fechaFin) throw new Error('Fecha no valida');
-
-    let returns =
-      await this.transactionRepository.findReturnTransactionByBranchId(
+    try {
+      // Validación de fechas más estricta
+      const fechaInicio = parseDate(fechaInicioStr, 'dd-MM-yyyy');
+      const fechaFin = parseDate(fechaFinStr, 'dd-MM-yyyy');
+      
+      if (fechaFin < fechaInicio) {
+        throw new Error('La fecha final debe ser posterior a la fecha inicial');
+      }
+  
+      const returns = await this.transactionRepository.findReturnTransactionByBranchId(
         branchId,
         fechaInicio.toJSDate(),
         fechaFin.toJSDate()
       );
-
-    if (returns.length === 0)
-      throw new Error('No hay devoluciones para este periodo');
-
-    let listProductoIdIdsSets = new Set<any>();
-
-    returns.forEach((transaccion) => {
-      transaccion.transactionDetails?.forEach((detalle) => {
-        listProductoIdIdsSets.add(detalle.productoId.toString()); // Agregar a Set
-      });
-    });
-
-    // Si necesitas un array al final:
-    const listProductoIdIds = Array.from(listProductoIdIdsSets);
-
-    const branchInventoryList =
-      await this.inventarioSucursalRepository.getListProductByProductIdsMetricas(
-        branchId,
-        listProductoIdIds
-      );
-
-    let response = {
-      'VENTA': {
-        amountReturned: cero128,
-        quantityReturned: 0,
-        listProduct: []
-      },
-      'COMPRA': {
-        amountReturned: cero128,
-        quantityReturned: 0,
-        listProduct: []
+  
+      if (returns.length === 0) {
+        return this.createInitialResponse(); // Mejor que lanzar error
       }
-    };
-
-    //
-    returns.forEach((singleReturn) => {
-      singleReturn.transactionDetails?.forEach((detalle) => {
-
-        let detalleCantidad128 = new Types.Decimal128(
-          detalle.cantidad.toString()
+  
+      // Obtener productos únicos
+      const uniqueProductIds = Array.from(
+        new Set(
+          returns.flatMap(t => 
+            t.transactionDetails?.map(d => d.productoId.toString()) || []
+          )
+        )
+      );
+  
+      const branchInventoryList = await this.inventarioSucursalRepository
+        .getListProductByProductIdsMetricas(
+          branchId,
+          uniqueProductIds
         );
-
-        let inventarioSucursal = branchInventoryList.find(
-          (item) => item.productoId.toString() === detalle.productoId.toString()
-        ) as IInventarioSucursal;
-
-        let costoUnitario = multiplicarDecimal128(
-          inventarioSucursal.costoUnitario,
-          detalleCantidad128
-        );
-
-        let total128 = new Types.Decimal128(detalle.total.toString());
-
-        let key = `${detalle.productoId}_${(singleReturn.transaccionOrigenId as ITransaccion).tipoTransaccion}`;
-        let keyResponse = `${(singleReturn.transaccionOrigenId as ITransaccion).tipoTransaccion}`
-
-        let tipoDevolucion = response[keyResponse]
-
-        let item = tipoDevolucion.listProduct.length > 0 ? tipoDevolucion.listProduct.find((item) => item.productoId.toString() === detalle.productoId.toString()) : null 
-
-        if (item) {
-          item.cantidad += detalle.cantidad;
-
-          tipoDevolucion.quantityReturned += detalle.cantidad;
-
-          item.total = sumarDecimal128(
-            item.total,
-            detalle.total
+  
+      const inventoryMap = new Map(
+        branchInventoryList.map(item => [
+          item.productoId.toString(),
+          item
+        ])
+      );
+  
+      const response = this.createInitialResponse();
+  
+      for (const singleReturn of returns) {
+        const transactionType = (singleReturn.transaccionOrigenId as ITransaccion)
+          .tipoTransaccion as TypeTransaction
+        
+        if (!response[transactionType]) continue; // Skip invalid types
+  
+        for (const detalle of singleReturn.transactionDetails || []) {
+          const inventoryItem = inventoryMap.get((detalle as IDetalleTransaccion).productoId.toString());
+          
+          if (!inventoryItem) {
+            console.warn(`Producto no encontrado: ${(detalle as IDetalleTransaccion).productoId}`);
+            continue;
+          }
+  
+          this.updateMetric(
+            response[transactionType],
+            detalle as IDetalleTransaccion,
+            inventoryItem
           );
-
-          tipoDevolucion.amountReturned = sumarDecimal128(tipoDevolucion.amountReturned, detalle.total);
-
-          item.costoUnitario = sumarDecimal128(
-            item.costoUnitario,
-            costoUnitario
-          );
-
-          item.gananciaNeta = sumarDecimal128(
-            item.gananciaNeta,
-            restarDecimal128(total128, costoUnitario)
-          );
-        } else {
-
-          tipoDevolucion.amountReturned = sumarDecimal128(cero128, detalle.total);
-          tipoDevolucion.quantityReturned += detalle.cantidad;
-
-          tipoDevolucion.listProduct.push({
-            cantidad: detalle.cantidad,
-            total: detalle.total,
-            costoUnitario: costoUnitario,
-            gananciaNeta: restarDecimal128(total128, costoUnitario),
-            //@ts-ignore
-            nombre: inventarioSucursal.producto.nombre,
-            productoId: detalle.productoId
-          })
         }
-      });
-    });
-
-    return response;
+      }
+  
+      return response;
+      
+    } catch (error) {
+      // Mejor manejo de errores
+      throw new Error(`Error al obtener métricas: ${error.message}`);
+    }
   }
 }

@@ -61,3 +61,9 @@ export const useSetDateRange = (startDate: Date, endDate: Date) => {
 
   return [startDateISO, endDateISO]
 };
+
+export const parseDate = (dateStr: string, format: string): DateTime => {
+  const date = DateTime.fromFormat(dateStr, format);
+  if (!date.isValid) throw new Error(`Fecha inválida: ${dateStr}`);
+  return date;
+};
