@@ -290,9 +290,7 @@ export class TransactionService {
   async getTransactionById(id: string): Promise<ITransaccionCreate | null> {
     let venta = (await this.repository.findTransaccionById(id) as ITransaccion);
 
-    let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
-
-    let ventaDto:ITransaccionCreate = (await this.mapperData(venta, detalleVenta) as ITransaccionCreate);
+    let ventaDto:ITransaccionCreate = (await this.mapperData(venta, venta.transactionDetails as IDetalleTransaccion[]) as ITransaccionCreate);
 
     return ventaDto;
   }
@@ -300,10 +298,8 @@ export class TransactionService {
   async getTransactionByIdNoDto(id: string): Promise<ITransaccionNoDto | null> {
     let venta = (await this.repository.findTransaccionById(id) as ITransaccion);
 
-    let detalleVenta = await this.repository.findAllDetalleVentaByVentaId(id);
 
-
-    return {transaccion: venta, datalleTransaccion: detalleVenta};
+    return {transaccion: venta, datalleTransaccion: venta.transactionDetails as IDetalleTransaccion[]};
   }
 
   async mapperDataReturn(venta: Partial<ITransaccion>, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {

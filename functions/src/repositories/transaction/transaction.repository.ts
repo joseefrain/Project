@@ -163,13 +163,37 @@ export class TransactionRepository {
     return venta;
   }
   async findTransaccionById(id: string): Promise<ITransaccion | null> {
-    const transaccion = await this.model.findById(id).populate('usuarioId');
+    const transaccion = await this.model.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id) // Filtrar solo por el ID específico
+        }
+      },
+      {
+        $lookup: {
+          from: 'users', // Asegúrate del nombre correcto
+          localField: 'usuarioId',
+          foreignField: '_id',
+          as: 'usuario'
+        }
+      },
+      { $unwind: { path: '$usuario', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'detalletransaccions', // Asegúrate del nombre correcto
+          localField: 'transactionDetails',
+          foreignField: '_id',
+          as: 'transactionDetails'
+        }
+      },
+    ]);
+    
 
     if (!transaccion) {
       return null;
     }
 
-    return transaccion;
+    return transaccion[0];
   }
   async update(
     id: string,
