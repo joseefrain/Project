@@ -202,6 +202,10 @@ export class TransactionRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
+  async updateDetailTransaction(id: string, data: Partial<IDetalleTransaccion>): Promise<IDetalleTransaccion | null> {
+    return this.modelDetalleTransaction.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
   async findById(id: string): Promise<ITransaccion | null> {
     return await this.model.findById(id).exec();
   }

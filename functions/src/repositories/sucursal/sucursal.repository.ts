@@ -7,9 +7,11 @@ import {
 import { Sucursal, ISucursal } from '../../models/sucursales/Sucursal.model';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
-import { ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
+import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 import { IUser, User } from '../../models/usuarios/User.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { IGrupoInventario } from '../../models/inventario/GrupoInventario.model';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class SucursalRepository {
@@ -64,12 +66,32 @@ export class SucursalRepository {
       .populate(['productoId', 'sucursalId']);
       
 
-    let newProducts: IBranchProducts[] = [];
+      let listProductoIdIdsSets = new Set<any>();
+
+      products.forEach((inventarioSucursal) => {
+        if (inventarioSucursal.deleted_at == null) {
+          let producto = inventarioSucursal.productoId as IProducto;
+
+          if (producto.deleted_at == null) {
+            listProductoIdIdsSets.add(producto._id);
+          }
+        }
+      });
+  
+      // Si necesitas un array al final:
+      const listProductoIdIds = Array.from(listProductoIdIdsSets);
+
+      let listProductoGrupos = await this.findProductGroupsByIds(listProductoIdIds, id);
+
+      let newProducts: IBranchProducts[] = [];
 
     products.forEach((inventarioSucursal) => {
       if (inventarioSucursal.deleted_at == null) {
         let producto = inventarioSucursal.productoId as IProducto;
         let sucursalId = inventarioSucursal.sucursalId as ISucursal;
+        let productoIdStr = formatObejectId(producto._id).toString();
+        let productoGrupo = listProductoGrupos.find(item => item.productoId.toString() === productoIdStr)
+        let grupoId = productoGrupo ? formatObejectId(productoGrupo?.grupoId) : undefined;
 
         if (producto.deleted_at == null) {
           newProducts.push({
@@ -86,7 +108,8 @@ export class SucursalRepository {
             update_at: producto.update_at!,
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode || "",
-            costoUnitario: inventarioSucursal.costoUnitario
+            costoUnitario: inventarioSucursal.costoUnitario,
+            grupoId: grupoId
           });
         }
       }
@@ -159,6 +182,12 @@ export class SucursalRepository {
     const query = this.modelUser.findOne({ sucursalId: branchId, role: "admin" });
 
     return await query.exec();
+  }
+
+  async findProductGroupsByIds(produstIds: string[], sucursalId: string): Promise<IProductosGrupos[]> {
+    const grupos = await this.modelProductosGrupos.find({ productoId: { $in: produstIds }, sucursalId: sucursalId, deleted_at: null });
+
+    return grupos;
   }
   
 }

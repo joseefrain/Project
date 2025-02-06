@@ -142,4 +142,10 @@ export class GrupoInventarioRepository {
       .findByIdAndUpdate(id, { deleted_at: null }, { new: true })
       .exec();
   }
+
+  async findByIds(produstIds: string[], sucursalId: string): Promise<IGrupoInventario[]> {
+    const grupos = await this.model.find({ productoId: { $in: produstIds }, sucursalId: sucursalId, deleted_at: null });
+
+    return grupos;
+  }
 }

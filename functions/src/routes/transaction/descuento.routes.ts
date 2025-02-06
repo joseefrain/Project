@@ -7,7 +7,7 @@ const router = express.Router();
 
 const descuentoController = container.resolve(DescuentoController);
 
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
 // Definir las rutas
 router.post(
@@ -16,6 +16,7 @@ router.post(
   descuentoController.create.bind(descuentoController)
 );
 router.get('/', authMiddleware, descuentoController.getAll.bind(descuentoController));
+router.get('/exist/:id/:tipo', descuentoController.findExistDescuentoAplicado.bind(descuentoController));
 router.get(
   '/:id/branch',
   authMiddleware,
@@ -36,7 +37,7 @@ router.put(
   authMiddleware,
   descuentoController.update.bind(descuentoController)
 );
-router.delete(
+router.post(
   '/:id',
   authMiddleware,
   descuentoController.delete.bind(descuentoController)

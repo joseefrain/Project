@@ -3,8 +3,14 @@ import { ISucursal, Sucursal } from '../sucursales/Sucursal.model';
 import { Entity, IEntity } from '../entity/Entity.model';
 import { ITransaccion, Transaccion } from '../transaction/Transaction.model';
 
-type TypeCredito = 'VENTA' | 'COMPRA';
-export type ModalidadCredito = 'PLAZO' | 'PAGO';
+export enum TypeCredito {
+  COMPRA = 'COMPRA',
+  VENTA = 'VENTA'
+}
+export enum ModalidadCredito {
+  PLAZO = 'PLAZO',
+  PAGO = 'PAGO'
+}
 type TypeEstadoCredito = 'ABIERTO' | 'CERRADO';
 type EstadoPagoCuota = 'PENDIENTE' | 'PAGADO' | 'ATRASADO';
 

@@ -84,4 +84,12 @@ export class UserService {
   async restoreUser(id: string): Promise<IUser | null> {
     return this.repository.restore(id);
   }
+
+  async getAdminUserOrRootInSucursal(id: string): Promise<IUser | null> {
+    const user = await this.repository.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
 }

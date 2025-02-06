@@ -3,7 +3,10 @@ import { DescuentosProductos, IDescuentosProductos } from "./DescuentosProductos
 import { DescuentoGrupo, IDescuentoGrupo } from "./DescuentoGrupo.model";
 import { ITipoDescuentoEntidad } from "./Descuento.model";
 
-export type ITipoDescuento = 'PORCENTAJE' | 'FIJO';
+export enum ITipoDescuento {
+  PORCENTAJE = 'PORCENTAJE',
+  FIJO = 'FIJO'
+}
 
 export interface ITransaccionDescuentosAplicados extends Document {
   detalleVentaId: mongoose.Types.ObjectId;
@@ -52,6 +55,19 @@ const transaccionDescuentosAplicadosSchema = new Schema<ITransaccionDescuentosAp
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updatedAt' } // Corregido a `updatedAt`
 });
+
+transaccionDescuentosAplicadosSchema.index(
+  { detalleVentaId: 1, descuentosProductosId: 1 },
+  { sparse: true, name: "idx_detalleVentaId_descuentosProductosId" }
+);
+
+transaccionDescuentosAplicadosSchema.index(
+  { detalleVentaId: 1, descuentoGrupoId: 1 },
+  { sparse: true, name: "idx_detalleVentaId_descuentoGrupoId" }
+);
+
+transaccionDescuentosAplicadosSchema.index({ descuentosProductosId: 1 }, { sparse: true });
+transaccionDescuentosAplicadosSchema.index({ descuentoGrupoId: 1 }, { sparse: true });
 
 export const TransaccionDescuentosAplicados = mongoose.model<ITransaccionDescuentosAplicados>(
   'TransaccionDescuentosAplicados',

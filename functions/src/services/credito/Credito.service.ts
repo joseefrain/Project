@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { parse } from "path";
-import { ICredito, ICuotasCredito, ModalidadCredito } from "../../models/credito/Credito.model";
+import { ICredito, ICuotasCredito, ModalidadCredito, TypeCredito } from "../../models/credito/Credito.model";
 import { IMovimientoFinanciero } from "../../models/credito/MovimientoFinanciero.model";
 import { CreditoRepository } from "../../repositories/credito/Credito.repository";
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
@@ -251,7 +251,7 @@ export class CreditoService {
         monto: Number(montoPago128),
         cambioCliente: 0,
         total: Number(montoPago128),
-        tipoTransaccion: credito.tipoCredito === TypeTransaction.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
+        tipoTransaccion: credito.tipoCredito === TypeCredito.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
         userId: userId,
         id: null
       }
@@ -383,7 +383,7 @@ export class CreditoService {
         monto: Number(montoPago128),
         cambioCliente: 0,
         total: Number(montoPago128),
-        tipoTransaccion: credito.tipoCredito === TypeTransaction.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
+        tipoTransaccion: credito.tipoCredito === TypeCredito.VENTA ? TypeTransaction.VENTA : TypeTransaction.COMPRA,
         userId: userId,
         id: null
       }

@@ -24,6 +24,7 @@ export interface IBranchProducts {
   inventarioSucursalId: mongoose.Types.ObjectId;
   barCode?: string;
   costoUnitario: mongoose.Types.Decimal128;
+  grupoId?: mongoose.Types.ObjectId;
   create_at: Date;
   update_at: Date;
 }

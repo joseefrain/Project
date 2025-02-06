@@ -26,7 +26,7 @@ import { SucursalRepository } from '../../repositories/sucursal/sucursal.reposit
 import { CustomJwtPayload } from '../../utils/jwt';
 import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshold } from '../utils/telegramServices';
 import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
-import { IHandleStockProductBranch, IInit, tipoMovimientoInventario } from '../../interface/IInventario';
+import { IHandleStockProductBranch, IInit, TipoMovimientoInventario } from '../../interface/IInventario';
 import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
@@ -466,7 +466,7 @@ export class TrasladoService {
           inventarioSucursalId: item.inventarioSucursalId._id as mongoose.Types.ObjectId,
            
           isNoSave: true,
-          tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA,
+          tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA,
         }
       );
     }
@@ -575,7 +575,7 @@ export class TrasladoService {
          
         model: inventarioSucursal,
         quantity: model.cantidad,
-        tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA
+        tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA
       }
 
       await this.inventoryManagementService.handleStockProductBranch(dataHandle);

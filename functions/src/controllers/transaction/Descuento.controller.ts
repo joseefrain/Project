@@ -86,4 +86,17 @@ export class DescuentoController {
       next(error);
     }
   }
+
+  async findExistDescuentoAplicado(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const existAplicado = await this.service.findExistDescuentoAplicado(req.params.id, req.params.tipo);
+      res.status(200).json(existAplicado);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

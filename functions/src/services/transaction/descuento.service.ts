@@ -10,6 +10,7 @@ import { DescuentoRepository } from '../../repositories/transaction/descuento.re
 import mongoose, { DeleteResult, Types } from 'mongoose';
 import { ITransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { IDescuentosProductos } from '../../models/transaction/DescuentosProductos.model';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class DescuentoService {
@@ -144,12 +145,26 @@ export class DescuentoService {
 
   async deleteDescuento({ id, sucursalId, productoId, grupoId }:IDescuentoDeleteParams) {
     let idMongoose = new Types.ObjectId(id);
-    let sucursalIdMongoose = new Types.ObjectId(sucursalId)
-    let grupoIdMongoose = new Types.ObjectId(grupoId)
-    let productIdMongoose = new Types.ObjectId(productoId)
+
+    if (!grupoId && !productoId) {
+      throw new Error('Debe especificar el producto o el grupo');
+    }
+
+    if (!id) {
+      throw new Error("Debe especificar el descuentoId");
+    }
+
 
     if (grupoId) {
+      let grupoIdMongoose = formatObejectId(grupoId)
+      let existAplicado = await this.repository.verificarDescuentoAplicado(grupoId, 'grupo')
+
+      if (existAplicado) {
+        throw new Error("El descuento actualmente se aplica a una transacción");
+      }
+
       if (sucursalId) {
+        let sucursalIdMongoose = formatObejectId(sucursalId)
         return await this.repository.deleteGroupBySucursal(idMongoose, grupoIdMongoose, sucursalIdMongoose)
       } else {
         return await this.repository.deleteGroupGeneral(idMongoose, grupoIdMongoose)
@@ -157,7 +172,15 @@ export class DescuentoService {
     }
 
     if (productoId) {
+      let productIdMongoose = formatObejectId(productoId)
+      let existAplicado = await this.repository.verificarDescuentoAplicado(productoId, 'producto')
+
+      if (existAplicado) {
+        throw new Error("El descuento actualmente se aplica a una transacción");
+      }
+      
       if (sucursalId) {
+        let sucursalIdMongoose = formatObejectId(sucursalId)
         return await this.repository.deleteProductBySucursal(idMongoose, productIdMongoose, sucursalIdMongoose)
       } else {
         return await this.repository.deleteProductGeneral(idMongoose, productIdMongoose)
@@ -175,5 +198,10 @@ export class DescuentoService {
     let descuentoAplicados = await this.repository.findDescuentosAplicadosByDTId(detalleVentaIds);
 
     return descuentoAplicados;
+  }
+
+  async findExistDescuentoAplicado(descuentoId: string, tipo: string): Promise<boolean> {
+    let existAplicado = await this.repository.verificarDescuentoAplicado(descuentoId, tipo)
+    return existAplicado;
   }
 }

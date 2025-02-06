@@ -5,6 +5,7 @@ import { DescuentosProductos, IDescuentosProductos } from '../../models/transact
 import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class DescuentoRepository {
@@ -142,15 +143,15 @@ export class DescuentoRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async deleteProductGeneral(id: Types.ObjectId, productoId:Types.ObjectId): Promise<DeleteResult> {
+  async deleteProductGeneral(id: Types.ObjectId, productId:Types.ObjectId): Promise<DeleteResult> {
     await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId});
+    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productId});
     return response
   }
 
-  async deleteProductBySucursal(id: Types.ObjectId, productoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
+  async deleteProductBySucursal(id: Types.ObjectId, productId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
     await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productoId, sucursalId});
+    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productId, sucursalId});
     return response
   }
 
@@ -204,6 +205,34 @@ export class DescuentoRepository {
 
   async updateDescuentoAplicado(id: string, data: Partial<ITransaccionDescuentosAplicados>): Promise<ITransaccionDescuentosAplicados | null> {
     return await this.modelVentaDescuentosAplicados.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
+  async verificarDescuentoAplicado (descuentoId: string, tipo: string): Promise<boolean> {
+    try {
+  
+      const query = {
+        [tipo === 'producto' ? 'descuentosProductosId' : 'descuentoGrupoId']: 
+          formatObejectId(descuentoId),
+      };
+  
+      const existe = await TransaccionDescuentosAplicados.exists(query);
+  
+      return !!existe;
+    } catch (error) {
+      throw new Error("Error al verificar si el descuento ya se aplica");
+    }
+  };
+
+  async findDescuentoPorGrupoById(id: string): Promise<IDescuentoGrupo | null> {
+    const descuento = await this.modelDescuentoGrupo.findById(id);
+
+    return descuento;
+  }
+
+  async findDescuentoPorProductoById(id: string): Promise<IDescuentosProductos | null> {
+    const descuento = await this.modelDescuentoProducto.findById(id);
+
+    return descuento;
   }
 
 }

@@ -4,7 +4,7 @@ import { InventarioSucursalRepository } from '../../repositories/inventary/inven
 import { inject, injectable } from 'tsyringe';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
-import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, tipoMovimientoInventario } from '../../interface/IInventario';
+import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, TipoMovimientoInventario } from '../../interface/IInventario';
 import { dividirDecimal128, multiplicarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
 import { getDateInManaguaTimezone } from '../../utils/date';
 
@@ -203,7 +203,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
           inventarioSucursalId: item.inventarioSucursalId,
            
           isNoSave: true,
-          tipoMovimiento: tipoMovimientoInventario.TRANSFERENCIA
+          tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA
         }
       );
     }
