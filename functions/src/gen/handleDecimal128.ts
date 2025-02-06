@@ -3,8 +3,8 @@ import Big from 'big.js';
 
 export let cero128 = new mongoose.Types.Decimal128('0.00');
 
-export const formatObejectId = (id: any): Types.ObjectId => {
-  return new Types.ObjectId(id.toString());
+export const formatObejectId = (id: any): mongoose.Types.ObjectId => {
+  return new mongoose.Types.ObjectId(id.toString());
 }
 
 export const formatDecimal128 = (decimal: any): Types.Decimal128 => {

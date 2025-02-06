@@ -32,7 +32,6 @@ export class HelperCreateTransaction {
     @inject(CreditoService) private creditoService: CreditoService,
     @inject(ResumenCajaDiarioRepository)
     private resumenRepository: ResumenCajaDiarioRepository,
-    @inject(CreditoService) private service: CreditoService
   ) {}
 
   async initInventory(venta: Partial<ITransaccionCreate>, userId: string) {
@@ -54,7 +53,7 @@ export class HelperCreateTransaction {
       fechaRegistro: getDateInManaguaTimezone(),
       tipoTransaccion: venta.tipoTransaccion,
       paymentMethod: venta.paymentMethod,
-      entidadId: formatObejectId(venta.entidadId!),
+      entidadId: venta.entidadId ? formatObejectId(venta.entidadId) : null,
       estadoTrasaccion: venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA',
       cajaId: formatObejectId(venta.cajaId!),
     });
@@ -70,7 +69,7 @@ export class HelperCreateTransaction {
           tipoAplicacion === 'Product'
             ? formatObejectId((await this.descuentoRepository.getDescuentoProductoByDescuentoId(item.discount.id))?._id)
             : formatObejectId(
-                (await this.descuentoRepository.getDescuentoGrupoByDescuentoId(item.discount.id))?.descuentoId
+                (await this.descuentoRepository.getDescuentoGrupoByDescuentoId(item.discount.id))?._id
               );
 
         if (!descuentoId) return;

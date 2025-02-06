@@ -202,7 +202,6 @@ const transaccionSchema: Schema = new Schema(
     entidadId: {
       type: Schema.Types.ObjectId,
       ref: 'Entity',
-      required: true,
     },
     transactionDetails: {
       type: [

@@ -305,6 +305,7 @@ export class HelperCreateReturned {
   ) {
     let newPriceAplyDiscount = cero128;
     let ajusteACobrar = cero128;
+    const precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, formatDecimal128(detalleTransaccionOrigen.cantidad));
     const cantidadRetenida = new Types.Decimal128((detalleTransaccionOrigen.cantidad - element.quantity).toString());
     const detalleTransaccionOrigenId = formatObejectId(detalleTransaccionOrigen._id);
 
@@ -314,6 +315,7 @@ export class HelperCreateReturned {
       const valorDescuento = new Types.Decimal128(descuento.valorDescuento.toString());
 
       if (descuento.tipoDescuento === 'porcentaje') {
+        // creo que valorDescuento es el porcentaje
         const porcentaje = new Types.Decimal128((descuento.valorDescuento / 100).toString());
         const procentajeDelTotal = multiplicarDecimal128(total, porcentaje);
         const totalConDescuento = restarDecimal128(total, procentajeDelTotal);
@@ -334,11 +336,6 @@ export class HelperCreateReturned {
 
     // Calcular ajuste si corresponde
     if (detalleTransaccionOrigen.total !== detalleTransaccionOrigen.subtotal && !element.discountApplied) {
-      const precioApplyDiscount = dividirDecimal128(
-        detalleTransaccionOrigen.total,
-        new Types.Decimal128(detalleTransaccionOrigen.cantidad.toString())
-      );
-
       const nuevoTotalSinDescuento = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
 
       const nuevoTotalConDescuento = multiplicarDecimal128(precioApplyDiscount, cantidadRetenida);
@@ -352,6 +349,7 @@ export class HelperCreateReturned {
     return {
       newPriceAplyDiscount: newPriceAplyDiscount || inventarioSucursal.precio,
       ajusteACobrar,
+      precioApplyDiscount,
     };
   }
 
@@ -375,6 +373,7 @@ export class HelperCreateReturned {
 
     // Calcular total devolución
     const totalDev = multiplicarDecimal128(precioApplyDiscount, quantity128);
+    const subTotalDev = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
 
     // Calcular nuevos totales para transacción original
     const subtotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
@@ -403,6 +402,7 @@ export class HelperCreateReturned {
 
     return {
       totalDev,
+      subTotalDev,
       newTotalRetenido,
       subtotalRetenido,
     };
@@ -480,7 +480,7 @@ export class HelperCreateReturned {
     const inventarioSucursal = this.findBranchInventory(listInventarioSucursal, element.productId);
     const quantity128 = formatDecimal128(element.quantity);
 
-    const { newPriceAplyDiscount, ajusteACobrar } = await this.handleDiscountApplication(
+    const { newPriceAplyDiscount, ajusteACobrar, precioApplyDiscount } = await this.handleDiscountApplication(
       element,
       descuento,
       descuentoAplicado,
@@ -489,7 +489,7 @@ export class HelperCreateReturned {
     );
 
     const precio = element.discountApplied ? newPriceAplyDiscount : inventarioSucursal.precio;
-    const { totalDev, newTotalRetenido, subtotalRetenido } = await this.calculateTotals(
+    const { totalDev, newTotalRetenido, subtotalRetenido, subTotalDev } = await this.calculateTotals(
       detalleTransaccionOrigen,
       element,
       inventarioSucursal,
@@ -501,10 +501,10 @@ export class HelperCreateReturned {
     let returnDetails = await this.createReturnDetail(
       newReturn,
       element,
-      precio,
+      precioApplyDiscount,
       ajusteACobrar,
-      subtotalRetenido,
-      newTotalRetenido
+      subTotalDev,
+      totalDev
     );
 
     (newReturn.transactionDetails as Types.ObjectId[]).push(formatObejectId(returnDetails._id));
