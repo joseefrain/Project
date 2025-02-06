@@ -207,15 +207,27 @@ export class DescuentoRepository {
     return await this.modelVentaDescuentosAplicados.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async verificarDescuentoAplicado (descuentoId: string, tipo: string): Promise<boolean> {
+  async verificarDescuentoAplicado (descuentoId: string, tipo: string, entidadId: string): Promise<boolean> {
     try {
-  
+
+      let descuento:IDescuentoGrupo | IDescuentosProductos | null = null;
+
+      if (tipo === 'producto') {
+        descuento = await this.modelDescuentoProducto.findOne({descuentoId, productId: entidadId})
+      } else if (tipo === 'grupo') {
+        descuento = await this.modelDescuentoGrupo.findOne({descuentoId, grupoId: entidadId})
+      }
+
+      if (!descuento) {
+        throw new Error(`Descuento por ${tipo} no encontrado`);
+      }
+        
       const query = {
         [tipo === 'producto' ? 'descuentosProductosId' : 'descuentoGrupoId']: 
-          formatObejectId(descuentoId),
+          formatObejectId(descuento._id),
       };
-  
-      const existe = await TransaccionDescuentosAplicados.exists(query);
+
+      const existe = await this.modelVentaDescuentosAplicados.exists(query);
   
       return !!existe;
     } catch (error) {

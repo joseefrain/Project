@@ -93,7 +93,7 @@ export class DescuentoController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const existAplicado = await this.service.findExistDescuentoAplicado(req.params.id, req.params.tipo);
+      const existAplicado = await this.service.findExistDescuentoAplicado(req.params.id, req.params.tipo, req.params.entidadId);
       res.status(200).json(existAplicado);
     } catch (error) {
       next(error);

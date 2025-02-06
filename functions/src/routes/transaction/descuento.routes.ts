@@ -16,7 +16,7 @@ router.post(
   descuentoController.create.bind(descuentoController)
 );
 router.get('/', authMiddleware, descuentoController.getAll.bind(descuentoController));
-router.get('/exist/:id/:tipo', descuentoController.findExistDescuentoAplicado.bind(descuentoController));
+router.get('/exist/:id/:tipo/:entidadId', descuentoController.findExistDescuentoAplicado.bind(descuentoController));
 router.get(
   '/:id/branch',
   authMiddleware,

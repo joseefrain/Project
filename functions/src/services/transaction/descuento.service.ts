@@ -157,7 +157,7 @@ export class DescuentoService {
 
     if (grupoId) {
       let grupoIdMongoose = formatObejectId(grupoId)
-      let existAplicado = await this.repository.verificarDescuentoAplicado(grupoId, 'grupo')
+      let existAplicado = await this.repository.verificarDescuentoAplicado(id, 'grupo', grupoId)
 
       if (existAplicado) {
         throw new Error("El descuento actualmente se aplica a una transacción");
@@ -173,7 +173,7 @@ export class DescuentoService {
 
     if (productoId) {
       let productIdMongoose = formatObejectId(productoId)
-      let existAplicado = await this.repository.verificarDescuentoAplicado(productoId, 'producto')
+      let existAplicado = await this.repository.verificarDescuentoAplicado(id, 'producto', productoId)
 
       if (existAplicado) {
         throw new Error("El descuento actualmente se aplica a una transacción");
@@ -200,8 +200,8 @@ export class DescuentoService {
     return descuentoAplicados;
   }
 
-  async findExistDescuentoAplicado(descuentoId: string, tipo: string): Promise<boolean> {
-    let existAplicado = await this.repository.verificarDescuentoAplicado(descuentoId, tipo)
+  async findExistDescuentoAplicado(descuentoId: string, tipo: string, entidadId: string): Promise<boolean> {
+    let existAplicado = await this.repository.verificarDescuentoAplicado(descuentoId, tipo, entidadId)
     return existAplicado;
   }
 }
