@@ -109,7 +109,7 @@ export class SucursalRepository {
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode || "",
             costoUnitario: inventarioSucursal.costoUnitario,
-            grupoId: grupoId
+            groupId: grupoId
           });
         }
       }
