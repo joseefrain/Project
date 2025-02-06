@@ -942,41 +942,41 @@ export class TransactionService {
     await this.repository.update(formatObejectId(newReturn._id).toString(), newReturn);
   }
 
-  // async createDevolucion(data: IDevolucionesCreate) {
-  //   const transaccion = await this.validateTransactionExists(data.trasaccionOrigenId);
-  //   const { sucursalId, usuarioId, cajaId } = this.getTransactionMetadata(transaccion, data);
-  //   const descuentosAplicados = await this.getAppliedDiscounts(transaccion);
-  //   const tipoTransaccionDevolucion =
-  //     transaccion.tipoTransaccion === TypeTransaction.VENTA ? TypeTransaction.COMPRA : TypeTransaction.VENTA;
+  async createDevolucion2(data: IDevolucionesCreate) {
+    const transaccion = await this.validateTransactionExists(data.trasaccionOrigenId);
+    const { sucursalId, usuarioId, cajaId } = this.getTransactionMetadata(transaccion, data);
+    const descuentosAplicados = await this.getAppliedDiscounts(transaccion);
+    const tipoTransaccionDevolucion =
+      transaccion.tipoTransaccion === TypeTransaction.VENTA ? TypeTransaction.COMPRA : TypeTransaction.VENTA;
 
-  //   const newReturn = await this.createReturnTransaction(transaccion, usuarioId, sucursalId, cajaId, cero128, cero128);
+    const newReturn = await this.createReturnTransaction(transaccion, usuarioId, sucursalId, cajaId, cero128, cero128);
 
-  //   const {
-  //     totalDevolucion128,
-  //     totalAjusteACobrar,
-  //     newTotalTransaccionOrigen,
-  //     subTotalTransaccionOrigen,
-  //     listDetailTransaction,
-  //   } = await this.processReturnProducts(data, transaccion, descuentosAplicados, sucursalId, newReturn);
+    const {
+      totalDevolucion128,
+      totalAjusteACobrar,
+      newTotalTransaccionOrigen,
+      subTotalTransaccionOrigen,
+      listDetailTransaction,
+    } = await this.processReturnProducts(data, transaccion, descuentosAplicados, sucursalId, newReturn);
 
-  //   await this.updateReturnTransaction(newReturn, totalDevolucion128, totalAjusteACobrar);
+    await this.updateReturnTransaction(newReturn, totalDevolucion128, totalAjusteACobrar);
 
-  //   await this.updateOriginalTransaction(transaccion, newTotalTransaccionOrigen, subTotalTransaccionOrigen, data);
+    await this.updateOriginalTransaction(transaccion, newTotalTransaccionOrigen, subTotalTransaccionOrigen, data);
 
-  //   await this.finalizeInventoryOperations();
+    await this.finalizeInventoryOperations();
 
-  //   const { caja, ventaActualizar } = await this.handlePaymentOperations(
-  //     transaccion,
-  //     data,
-  //     newReturn,
-  //     totalDevolucion128,
-  //     tipoTransaccionDevolucion
-  //   );
+    const { caja, ventaActualizar } = await this.handlePaymentOperations(
+      transaccion,
+      data,
+      newReturn,
+      totalDevolucion128,
+      tipoTransaccionDevolucion
+    );
 
-  //   const results = await this.getFinalResults(newReturn, transaccion, listDetailTransaction);
+    const results = await this.getFinalResults(newReturn, transaccion, listDetailTransaction);
 
-  //   return { ...results, caja };
-  // }
+    return { ...results, caja };
+  }
 
   // ----------------- Helper Functions ----------------- //
 

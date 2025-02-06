@@ -141,7 +141,18 @@ export class TransactionRepository {
           from: 'detalletransaccions',
           localField: 'transactionDetails',
           foreignField: '_id',
-          as: 'transactionDetails'
+          as: 'transactionDetails',
+          pipeline: [ // Pipeline anidado para detalletransaccions
+            {
+              $lookup: {
+                from: 'productos', // Nombre de la colección de productos
+                localField: 'productoId',
+                foreignField: '_id',
+                as: 'productoId'
+              }
+            },
+            { $unwind: { path: '$productoId', preserveNullAndEmptyArrays: true } }
+          ]
         }
       },
     ]);
@@ -183,8 +194,19 @@ export class TransactionRepository {
           from: 'detalletransaccions', // Asegúrate del nombre correcto
           localField: 'transactionDetails',
           foreignField: '_id',
-          as: 'transactionDetails'
-        }
+          as: 'transactionDetails',
+          pipeline: [ // Pipeline anidado para detalletransaccions
+            {
+              $lookup: {
+                from: 'productos', // Nombre de la colección de productos
+                localField: 'productoId',
+                foreignField: '_id',
+                as: 'producto'
+              }
+            },
+            { $unwind: { path: '$producto', preserveNullAndEmptyArrays: true } }
+          ]
+        },
       },
     ]);
     
@@ -195,6 +217,7 @@ export class TransactionRepository {
 
     return transaccion[0];
   }
+  
   async update(
     id: string,
     data: Partial<ITransaccion>
