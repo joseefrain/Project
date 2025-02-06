@@ -7,6 +7,10 @@ export const formatObejectId = (id: any): Types.ObjectId => {
   return new Types.ObjectId(id.toString());
 }
 
+export const formatDecimal128 = (decimal: any): Types.Decimal128 => {
+  return new Types.Decimal128(decimal.toString())
+}
+
 // Función para sumar con precisión usando big.js
 export function sumarDecimal128(decimal1: mongoose.Types.Decimal128, decimal2: mongoose.Types.Decimal128): mongoose.Types.Decimal128 {
     const num1 = new Big(decimal1.toString());
