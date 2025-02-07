@@ -521,6 +521,8 @@ export class HelperCreateReturned {
 
     (newReturn.transactionDetails as Types.ObjectId[]).push(formatObejectId(returnDetails._id));
 
+    returnDetails.productoId = inventarioSucursal.productoId;
+
     listDetailTransaction.push(returnDetails);
 
     return {

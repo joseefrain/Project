@@ -76,7 +76,7 @@ export class HelperMapperTransaction {
         price: Number(detalle.precio),
         ventaId: formatObejectId(venta._id).toString(),
         inventarioSucursalId: '',
-        groupId: '',
+        groupId: descuento?.groupId ?? '',
         discount: descuento,
         costoUnitario: 0,
         ajusteACobrar: cero128,
