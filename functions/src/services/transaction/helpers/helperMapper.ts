@@ -43,8 +43,8 @@ export class HelperMapperTransaction {
           let groupId = descuentogrupo ? descuentogrupo.grupoId.toString() : null;
 
           let sucursalId = descuentoProducto
-            ? formatObejectId(descuentoProducto?.sucursalId)?.toString()
-            : formatObejectId(descuentogrupo?.sucursalId)?.toString();
+            ? descuentoProducto?.sucursalId ? formatObejectId(descuentoProducto?.sucursalId)?.toString() : null
+            : descuentogrupo?.sucursalId ? formatObejectId(descuentogrupo?.sucursalId)?.toString() : null;
 
           descuento = {
             id: formatObejectId(descuentoId._id).toString(),
