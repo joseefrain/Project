@@ -177,6 +177,7 @@ export class TransactionService {
       newTotalTransaccionOrigen,
       subTotalTransaccionOrigen,
       listDetailTransaction,
+      newTotalDiscountApplied
     } = await this.helperCreateReturned.processReturnProducts(
       data,
       transaccion,
@@ -193,7 +194,8 @@ export class TransactionService {
       transaccion,
       newTotalTransaccionOrigen,
       subTotalTransaccionOrigen,
-      data
+      data,
+      newTotalDiscountApplied
     );
 
     // finalizamos las operaciones de inventario

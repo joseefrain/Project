@@ -83,7 +83,8 @@ export class HelperCreateReturned {
     transaccion: ITransaccion,
     newTotalTransaccionOrigen: Types.Decimal128,
     subTotalTransaccionOrigen: Types.Decimal128,
-    data: IDevolucionesCreate
+    data: IDevolucionesCreate,
+    newTotalDiscountApplied: Types.Decimal128
   ) {
     if (compareToCero(newTotalTransaccionOrigen)) {
       transaccion.deleted_at = getDateInManaguaTimezone();
@@ -92,9 +93,11 @@ export class HelperCreateReturned {
       await this.repository.update(formatObejectId(transaccion._id).toString(), transaccion);
     } else {
       let isAplyDiscoundTransaction = data.products?.some((item) => item.discountApplied);
+
       if (!isAplyDiscoundTransaction) {
         transaccion.descuento = cero128;
       }
+      transaccion.descuento = newTotalDiscountApplied;
       transaccion.subtotal = subTotalTransaccionOrigen;
       transaccion.total = newTotalTransaccionOrigen;
       await this.repository.update(formatObejectId(transaccion._id).toString(), transaccion);
@@ -178,7 +181,7 @@ export class HelperCreateReturned {
     totalAjusteACobrar: Types.Decimal128
   ) {
     newReturn.totalAjusteACobrar = totalAjusteACobrar;
-    newReturn.subtotal = restarDecimal128(totalDevolucion128, totalDevolucion128);
+    newReturn.subtotal = totalDevolucion128;
     newReturn.total = restarDecimal128(totalDevolucion128, totalAjusteACobrar);
 
     await this.repository.update(formatObejectId(newReturn._id).toString(), newReturn);
@@ -217,6 +220,7 @@ export class HelperCreateReturned {
     let totalAjusteACobrar = cero128;
     let newTotalTransaccionOrigen = cero128;
     let subTotalTransaccionOrigen = cero128;
+    let newTotalDiscountApplied = cero128;
 
     const productIdsByBranch = data.products?.map((d) => d.productId) as string[];
     const listInventarioSucursal = await this.getBranchInventory(
@@ -229,7 +233,7 @@ export class HelperCreateReturned {
 
     await Promise.all(
       data.products!.map(async (element) => {
-        const { totalDev, ajusteCobrar, newTotalRetenido, subtotalRetenido } = await this.processSingleProduct(
+        const { totalDev, ajusteCobrar, newTotalRetenido, subtotalRetenido, totalDiscountApplied } = await this.processSingleProduct(
           element,
           transaccion,
           descuentosAplicados,
@@ -242,6 +246,7 @@ export class HelperCreateReturned {
         totalAjusteACobrar = sumarDecimal128(totalAjusteACobrar, ajusteCobrar);
         newTotalTransaccionOrigen = sumarDecimal128(newTotalTransaccionOrigen, newTotalRetenido);
         subTotalTransaccionOrigen = sumarDecimal128(subTotalTransaccionOrigen, subtotalRetenido);
+        newTotalDiscountApplied = sumarDecimal128(newTotalDiscountApplied, totalDiscountApplied);
       })
     );
 
@@ -251,6 +256,7 @@ export class HelperCreateReturned {
       newTotalTransaccionOrigen,
       subTotalTransaccionOrigen,
       listDetailTransaction,
+      newTotalDiscountApplied
     };
   }
 
@@ -283,7 +289,7 @@ export class HelperCreateReturned {
     detalleTransaccionOrigen: IDetalleTransaccion,
     descuentosAplicados: ITransaccionDescuentosAplicados[]
   ) {
-    let descuentoAplicado = descuentosAplicados.find((item) => item.detalleVentaId === detalleTransaccionOrigen._id);
+    let descuentoAplicado = descuentosAplicados.find((item) => item.detalleVentaId.toString() === formatObejectId(detalleTransaccionOrigen._id).toString());
 
     let descuento = descuentoAplicado ? await this.findDescuentoByDescuentoAplicado(descuentoAplicado!) : null;
 
@@ -308,6 +314,8 @@ export class HelperCreateReturned {
     const precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, formatDecimal128(detalleTransaccionOrigen.cantidad));
     const cantidadRetenida = new Types.Decimal128((detalleTransaccionOrigen.cantidad - element.quantity).toString());
     const detalleTransaccionOrigenId = formatObejectId(detalleTransaccionOrigen._id);
+    let totalDiscountApplied = cero128;
+
 
     if (element.discountApplied && descuento) {
       const total = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
@@ -315,15 +323,18 @@ export class HelperCreateReturned {
       const valorDescuento = new Types.Decimal128(descuento.valorDescuento.toString());
 
       if (descuento.tipoDescuento === 'porcentaje') {
-        // creo que valorDescuento es el porcentaje
+        // esta bien por que es 0.10 y no 10% para hacer el calculo
         const porcentaje = new Types.Decimal128((descuento.valorDescuento / 100).toString());
         const procentajeDelTotal = multiplicarDecimal128(total, porcentaje);
         const totalConDescuento = restarDecimal128(total, procentajeDelTotal);
+        totalDiscountApplied = procentajeDelTotal;
 
         newPriceAplyDiscount = dividirDecimal128(totalConDescuento, cantidadRetenida);
 
         await this.descuentoRepository.updateDescuentoAplicado(descuentoAplicadoId, { monto: procentajeDelTotal });
       } else if (descuento.tipoDescuento === 'valor') {
+
+        totalDiscountApplied = valorDescuento;
         const totalConDescuento = restarDecimal128(total, valorDescuento);
         const cienporciento = new Types.Decimal128('100');
         const porcentaje = multiplicarDecimal128(dividirDecimal128(valorDescuento, total), cienporciento);
@@ -350,6 +361,7 @@ export class HelperCreateReturned {
       newPriceAplyDiscount: newPriceAplyDiscount || inventarioSucursal.precio,
       ajusteACobrar,
       precioApplyDiscount,
+      totalDiscountApplied
     };
   }
 
@@ -376,7 +388,7 @@ export class HelperCreateReturned {
     const subTotalDev = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
 
     // Calcular nuevos totales para transacción original
-    const subtotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
+    const subtotalRetenido = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
     const newTotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
 
     if (compareDecimal128(newTotalRetenido, cero128)) {
@@ -388,7 +400,7 @@ export class HelperCreateReturned {
             detalleTransaccionOrigen
           );
         } else {
-          detalleTransaccionOrigen.precio = precio;
+          // detalleTransaccionOrigen.precio = precio;
           detalleTransaccionOrigen.subtotal = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
           detalleTransaccionOrigen.total = multiplicarDecimal128(precio, cantidadRetenida);
           detalleTransaccionOrigen.cantidad = parseInt(cantidadRetenida.toString());
@@ -480,7 +492,7 @@ export class HelperCreateReturned {
     const inventarioSucursal = this.findBranchInventory(listInventarioSucursal, element.productId);
     const quantity128 = formatDecimal128(element.quantity);
 
-    const { newPriceAplyDiscount, ajusteACobrar, precioApplyDiscount } = await this.handleDiscountApplication(
+    const { newPriceAplyDiscount, ajusteACobrar, precioApplyDiscount, totalDiscountApplied } = await this.handleDiscountApplication(
       element,
       descuento,
       descuentoAplicado,
@@ -516,6 +528,7 @@ export class HelperCreateReturned {
       ajusteCobrar: ajusteACobrar,
       newTotalRetenido,
       subtotalRetenido,
+      totalDiscountApplied
     };
   }
 }
