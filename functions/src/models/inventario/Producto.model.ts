@@ -66,7 +66,7 @@ export interface IProductCreate {
   monedaId: mongoose.Types.ObjectId | IMoneda;
   deleted_at: Date | null;
   sucursalId?: mongoose.Types.ObjectId;
-  grupoId: mongoose.Types.ObjectId;
+  groupId: mongoose.Types.ObjectId;
   stock: number;
   create_at: Date;
   update_at: Date;

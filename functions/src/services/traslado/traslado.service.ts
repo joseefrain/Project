@@ -1,5 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import {
+  EstatusPedido,
   IResponseToAddCantidad,
   ISendTrasladoProducto,
   ITraslado,
@@ -28,6 +29,7 @@ import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshol
 import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
 import { IHandleStockProductBranch, IInit, TipoMovimientoInventario } from '../../interface/IInventario';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class TrasladoService {
@@ -83,6 +85,10 @@ export class TrasladoService {
       }
 
       var listItemDePedidos = await this.generateItemDePedidoByPedido(dataGenerateItemDePedidoByPedido);
+
+      traslado.detallesTraslado = listItemDePedidos.map((item:IDetalleTraslado) => (formatObejectId(item._id)));
+
+      traslado.save();
       
       let dataSubtractCantidad:ISubtractCantidadByDetalleTraslado = {
         listItems:listItemDePedidos,
@@ -165,7 +171,7 @@ export class TrasladoService {
       var trabajadorId = model.usuarioIdRecibe!;
 
       // Actualizando el pedido
-      pedido.estatusTraslado = 'Terminado';
+      pedido.estatusTraslado = EstatusPedido.Terminado;
       pedido.fechaRecepcion = getDateInManaguaTimezone();
       pedido.comentarioRecepcion = model.comentarioRecepcion!;
       pedido.usuarioIdRecibe = new mongoose.Types.ObjectId(trabajadorId);
@@ -176,7 +182,7 @@ export class TrasladoService {
         model.listDetalleTraslado?.filter((detalle) => detalle.recibido)
           .length !== listItemDePedidos.length
       ) {
-        pedido.estatusTraslado = 'Terminado incompleto';
+        pedido.estatusTraslado = EstatusPedido.TerminadoIncompleto;
       }
 
       const firmaRecepcion = model.firmaRecepcion!
@@ -210,7 +216,7 @@ export class TrasladoService {
         ) as IDetalleTraslado;
 
         if (item2.cantidad > element.cantidad) {
-          pedido.estatusTraslado = 'Terminado incompleto';
+          pedido.estatusTraslado = EstatusPedido.TerminadoIncompleto;
         }
         listResponseAdd.listDetalleTrasladoActualizado.concat(responseAdd.listDetalleTrasladoActualizado);
         listResponseAdd.listDetalleTrasladoAgregados.concat(responseAdd.listDetalleTrasladoAgregados);
@@ -403,7 +409,7 @@ export class TrasladoService {
 
     if (!traslado) throw new Error('Pedido no encontrado');
 
-    traslado.estatusTraslado = 'En Proceso';
+    traslado.estatusTraslado = EstatusPedido.EnProceso;
     traslado.fechaEnvio = getDateInManaguaTimezone();
     traslado.usuarioIdEnvia = new mongoose.Types.ObjectId(usuarioEnviaId);
 
@@ -423,7 +429,7 @@ export class TrasladoService {
     listDetalleTraslado,
     isNoSave = false,
     
-  }: IGenerateItemDePedidoByPedido): Promise<IDetalleTrasladoCreate[]> {
+  }: IGenerateItemDePedidoByPedido): Promise<IDetalleTrasladoCreate[] | IDetalleTraslado[]> {
     let listItems: IDetalleTrasladoCreate[] = [];
 
     for (const producto of listDetalleTraslado) {

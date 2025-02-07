@@ -17,7 +17,7 @@ import { IProducto } from '../../../models/inventario/Producto.model';
 import { notifyTelergramReorderThreshold } from '../../utils/telegramServices';
 import { ISucursal } from '../../../models/sucursales/Sucursal.model';
 import { ModalidadCredito, TypeCredito } from '../../../models/credito/Credito.model';
-import { ITransactionCreateCaja } from '../../../interface/ICaja';
+import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../../interface/ICaja';
 
 @injectable()
 export class HelperCreateTransaction {
@@ -54,7 +54,7 @@ export class HelperCreateTransaction {
       tipoTransaccion: venta.tipoTransaccion,
       paymentMethod: venta.paymentMethod,
       entidadId: venta.entidadId ? formatObejectId(venta.entidadId) : null,
-      estadoTrasaccion: venta.paymentMethod === 'credit' ? 'PENDIENTE' : 'PAGADA',
+      estadoTrasaccion: venta.paymentMethod === 'credit' ? TypeEstatusTransaction.PENDIENTE : TypeEstatusTransaction.PAGADA,
       cajaId: formatObejectId(venta.cajaId!),
     });
   }

@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import { ITraslado, Traslado } from '../../models/traslados/Traslado.model';
+import { EstatusPedido, ITraslado, Traslado } from '../../models/traslados/Traslado.model';
 import mongoose, { mongo } from 'mongoose';
 import {
   DetalleTraslado,
@@ -40,11 +40,7 @@ export class TrasladoRepository {
     return Traslado;
   }
 
-  async findAll(
-    filters: any = {},
-    limit: number = 10,
-    skip: number = 0
-  ): Promise<ITraslado[]> {
+  async findAll(filters: any = {}, limit: number = 10, skip: number = 0): Promise<ITraslado[]> {
     const query = this.model.find({ ...filters, deleted_at: null });
 
     return await query.limit(limit).skip(skip).exec();
@@ -56,54 +52,36 @@ export class TrasladoRepository {
     return Traslado;
   }
 
-  async update(
-    id: string,
-    data: Partial<ITraslado>,
-    
-  ): Promise<ITraslado | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { $set: data }, { new: true })
-      .exec();
+  async update(id: string, data: Partial<ITraslado>): Promise<ITraslado | null> {
+    return await this.model.findByIdAndUpdate(id, { $set: data }, { new: true }).exec();
   }
 
   async delete(id: string): Promise<ITraslado | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true })
-      .exec();
+    return await this.model.findByIdAndUpdate(id, { deleted_at: getDateInManaguaTimezone() }, { new: true }).exec();
   }
 
   async restore(id: string): Promise<ITraslado | null> {
-    return await this.model
-      .findByIdAndUpdate(id, { deleted_at: null }, { new: true })
-      .exec();
+    return await this.model.findByIdAndUpdate(id, { deleted_at: null }, { new: true }).exec();
   }
-  async saveAllDetalleTraslado(
-    data: IDetalleTrasladoCreate[],
-    
-  ): Promise<IDetalleTraslado[]> {
-     // Insertar los documentos
-  const insertedData = await this.modelDetalleTraslado.insertMany(data, );
+  async saveAllDetalleTraslado(data: IDetalleTrasladoCreate[]): Promise<IDetalleTraslado[]> {
+    // Insertar los documentos
+    const insertedData = await this.modelDetalleTraslado.insertMany(data);
 
-  // Obtener los IDs de los documentos insertados
-  const insertedIds = insertedData.map(item => (item._id as mongoose.Types.ObjectId).toString());
+    // Obtener los IDs de los documentos insertados
+    const insertedIds = insertedData.map((item) => (item._id as mongoose.Types.ObjectId).toString());
 
-  // Consultar los documentos insertados y aplicar populate
-  const populatedData = await this.modelDetalleTraslado
-    .find({ _id: { $in: insertedIds } })
-    .populate({
+    // Consultar los documentos insertados y aplicar populate
+    const populatedData = await this.modelDetalleTraslado.find({ _id: { $in: insertedIds } }).populate({
       path: 'inventarioSucursalId',
       populate: {
         path: 'productoId',
       },
     });
 
-  return populatedData; 
+    return populatedData;
   }
 
-  async updateAllDetalleTraslado(
-    data: IDetalleTraslado[],
-    
-  ): Promise<void> {
+  async updateAllDetalleTraslado(data: IDetalleTraslado[]): Promise<void> {
     const bulkOps = data.map((detalle) => ({
       updateOne: {
         filter: { _id: detalle._id },
@@ -112,14 +90,12 @@ export class TrasladoRepository {
       },
     }));
 
-    await this.modelDetalleTraslado.bulkWrite(bulkOps, );
+    await this.modelDetalleTraslado.bulkWrite(bulkOps);
   }
 
   async getLastTrasladoBySucursalId(sucursalId: string) {
     try {
-      const ultimoTraslado = await this.model
-        .findOne({ sucursalOrigenId: sucursalId })
-        .sort({ fechaRegistro: -1 });
+      const ultimoTraslado = await this.model.findOne({ sucursalOrigenId: sucursalId }).sort({ fechaRegistro: -1 });
       // Ejecuta la
 
       return ultimoTraslado;
@@ -144,14 +120,12 @@ export class TrasladoRepository {
 
   async findAllItemDePedidoByPedidoDto(pedidoId: string) {
     try {
-      const listItemDePedido = await this.modelDetalleTraslado
-        .find({ trasladoId: pedidoId })
-        .populate({
-          path: 'inventarioSucursalId',
-          populate: {
-            path: 'productoId',
-          },
-        });
+      const listItemDePedido = await this.modelDetalleTraslado.find({ trasladoId: pedidoId }).populate({
+        path: 'inventarioSucursalId',
+        populate: {
+          path: 'productoId',
+        },
+      });
 
       return listItemDePedido;
     } catch (error) {
@@ -189,12 +163,11 @@ export class TrasladoRepository {
           { path: 'sucursalDestinoId' },
         ]);
 
-        const listPedidoRecibidos = listPedidos.filter(
-          (pedido) => pedido.estatusTraslado === 'Terminado' || pedido.estatusTraslado === 'Terminado incompleto'
-        );
-  
-        return listPedidoRecibidos;
+      const listPedidoRecibidos = listPedidos.filter(
+        (pedido) => pedido.estatusTraslado === 'Terminado' || pedido.estatusTraslado === 'Terminado incompleto'
+      );
 
+      return listPedidoRecibidos;
     } catch (error) {
       console.error('Error al obtener los pedidos recibidos:', error);
       throw new Error('Error al obtener los pedidos recibidos');
@@ -212,9 +185,7 @@ export class TrasladoRepository {
           { path: 'sucursalDestinoId' },
         ]);
 
-      const listPedidoPorRecibir = listPedidos.filter(
-        (pedido) => pedido.estatusTraslado === 'En Proceso'
-      );
+      const listPedidoPorRecibir = listPedidos.filter((pedido) => pedido.estatusTraslado === 'En Proceso');
 
       return listPedidoPorRecibir;
     } catch (error) {
@@ -234,9 +205,7 @@ export class TrasladoRepository {
           { path: 'sucursalDestinoId' },
         ]);
 
-      const listPedidoEnProceso = listPedidos.filter(
-        (pedido) => pedido.estatusTraslado === 'En Proceso'
-      );
+      const listPedidoEnProceso = listPedidos.filter((pedido) => pedido.estatusTraslado === 'En Proceso');
 
       return listPedidoEnProceso;
     } catch (error) {
@@ -276,7 +245,7 @@ export class TrasladoRepository {
 
   async findAllItemsDePedidosByPedidosInTransit(pedidoIds: string[]) {
     try {
-      const listItemDePedido = await this.modelDetalleTraslado.find({  
+      const listItemDePedido = await this.modelDetalleTraslado.find({
         trasladoId: { $in: pedidoIds },
       });
 
@@ -306,5 +275,33 @@ export class TrasladoRepository {
       console.error('Error al obtener el último traslado:', error);
       throw new Error('Error al obtener el último traslado');
     }
+  }
+
+  async findTrasladosByProductId(inventarioSucursalId: string, estatusTraslado: EstatusPedido): Promise<Partial<ITraslado>[]> {
+    const traslado = await this.model.aggregate([
+      {
+        $match: {
+          estatusTraslado: estatusTraslado,
+        },
+      },
+      {
+        $lookup: {
+          from: 'detalletraslados',
+          localField: 'detallesTraslado',
+          foreignField: '_id',
+          as: 'detallesTraslado',
+        },
+      },
+      {
+        $unwind: '$detallesTraslado',
+      },
+      {
+        $match: {
+          'detallesTraslado.inventarioSucursalId': { $eq: new mongoose.Types.ObjectId(inventarioSucursalId) },
+        },
+      },
+    ]);
+
+    return traslado;
   }
 }

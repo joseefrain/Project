@@ -57,6 +57,13 @@ router.get(
   transactionController.getResumenDiarioByCashierId.bind(transactionController)
 )
 
+router.get(
+  '/producto/:id/:estadoTrasaccion',
+  authMiddleware,
+  transactionController.findTransactionsByProductId.bind(transactionController)
+);
+
+
 // router.get('/', authMiddleware, ventaController.getAll.bind(ventaController));
 // router.get(
 //   '/:id/branch',

@@ -47,7 +47,7 @@ export class ProductoRepository {
 
       const product = productExist ? productExist : new this.model(data);
       const sucursal = await this.modelSucursal.findById(data.sucursalId);
-      const grupo = await this.modelGrupoInventario.findById(data.grupoId);
+      const grupo = await this.modelGrupoInventario.findById(data.groupId);
 
       if (!sucursal) {
         throw new Error('Sucursal no encontrada');
@@ -87,7 +87,7 @@ export class ProductoRepository {
       const sucursalId = new mongoose.Types.ObjectId(
         data.sucursalId?.toString()
       );
-      let grupoId = new mongoose.Types.ObjectId(data.grupoId?.toString());
+      let groupId = new mongoose.Types.ObjectId(data.groupId?.toString());
 
       let productoCreate: IProductCreate = {
         nombre: data.nombre!,
@@ -96,7 +96,7 @@ export class ProductoRepository {
         monedaId: data.monedaId!,
         deleted_at: null,
         sucursalId,
-        grupoId,
+        groupId,
         stock: data.stock!,
         create_at: getDateInManaguaTimezone(),
         update_at: getDateInManaguaTimezone(),
@@ -119,7 +119,7 @@ export class ProductoRepository {
     try {
 
       let isProductExist = await this.findProductByName(data.nombre!);
-      let grupo = await this.modelGrupoInventario.findById(data.grupoId!);
+      let grupo = await this.modelGrupoInventario.findById(data.groupId!);
 
       if (isProductExist) {
         throw new Error('Producto ya existente');
@@ -259,11 +259,8 @@ async removeDuplicateInventario(): Promise<void> {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async delete(id: string, branchId: string): Promise<IInventarioSucursal | null> {
-    let product = (await this.modelInventarioSucursal.findOne({ productoId: id, sucursalId: branchId }) as IInventarioSucursal)
-    if (!product) {
-      throw new Error('Producto no encontrado');
-    }
+  async delete(product: IInventarioSucursal ): Promise<IInventarioSucursal | null> {
+   
 
     product.deleted_at = getDateInManaguaTimezone();
     (await product.save()).populate('productoId');

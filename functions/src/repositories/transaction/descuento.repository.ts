@@ -143,27 +143,50 @@ export class DescuentoRepository {
     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 
-  async deleteProductGeneral(id: Types.ObjectId, productId:Types.ObjectId): Promise<DeleteResult> {
-    await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productId});
+  async deleteProductGeneral(id: Types.ObjectId, productId:Types.ObjectId) {
+    // await this.model.deleteOne({ _id: id });
+    let response = await this.modelDescuentoProducto.findOne({descuentoId:id, productId});
+
+    if (response) {
+      response.deleted_at = getDateInManaguaTimezone();
+      response.save();
+    }
+
     return response
   }
 
-  async deleteProductBySucursal(id: Types.ObjectId, productId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
-    await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoProducto.deleteOne({descuentoId:id, productId, sucursalId});
+  async deleteProductBySucursal(id: Types.ObjectId, productId: Types.ObjectId, sucursalId:Types.ObjectId) {
+    // await this.model.deleteOne({ _id: id });
+    let response = await this.modelDescuentoProducto.findOne({descuentoId:id, productId, sucursalId});
+
+    if (response) {
+      response.deleted_at = getDateInManaguaTimezone();
+      response.save();
+    }
     return response
   }
 
-  async deleteGroupGeneral(id: Types.ObjectId, grupoId: Types.ObjectId): Promise<DeleteResult> {
-    await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoGrupo.deleteOne({descuentoId:id, grupoId});
+  async deleteGroupGeneral(id: Types.ObjectId, grupoId: Types.ObjectId) {
+    // await this.model.deleteOne({ _id: id });
+    let response = await this.modelDescuentoGrupo.findOne({descuentoId:id, grupoId});
+
+    if (response) {
+      response.deleted_at = getDateInManaguaTimezone();
+      response.save();
+    }
+
     return response
   }
 
-  async deleteGroupBySucursal(id: Types.ObjectId, grupoId: Types.ObjectId, sucursalId:Types.ObjectId): Promise<DeleteResult> {
-    await this.model.deleteOne({ _id: id });
-    let response = await this.modelDescuentoGrupo.deleteOne({ descuentoId:id, grupoId, sucursalId });
+  async deleteGroupBySucursal(id: Types.ObjectId, grupoId: Types.ObjectId, sucursalId:Types.ObjectId) {
+    // await this.model.deleteOne({ _id: id });
+    let response = await this.modelDescuentoGrupo.findOne({ descuentoId:id, grupoId, sucursalId });
+
+    if (response) {
+      response.deleted_at = getDateInManaguaTimezone();
+      response.save();
+    }
+
     return response
     
   }

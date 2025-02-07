@@ -11,7 +11,7 @@ import { EntityRepository } from "../../repositories/entity/Entity.repository";
 import { cero128, compareDecimal128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
 import { CashRegisterService } from "../utils/cashRegister.service";
-import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja } from "../../interface/ICaja";
+import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja, TypeEstatusTransaction } from "../../interface/ICaja";
 import { EntityService } from "../entity/Entity.service";
 import { getDateInManaguaTimezone } from "../../utils/date";
 
@@ -229,9 +229,9 @@ export class CreditoService {
 
         await this.entityRepository.updateWith(credito.entidadId.toString(), entidad);
 
-        if (venta.estadoTrasaccion === 'PENDIENTE') {
+        if (venta.estadoTrasaccion === TypeEstatusTransaction.PENDIENTE) {
           credito.estadoCredito = 'CERRADO';
-          venta.estadoTrasaccion = 'PAGADA';
+          venta.estadoTrasaccion = TypeEstatusTransaction.PAGADA;
         }
         await this.ventaRepository.update(credito.transaccionId.toString(), venta);
       }
@@ -349,7 +349,7 @@ export class CreditoService {
 
         if (venta.estadoTrasaccion === 'PENDIENTE') {
           credito.estadoCredito = 'CERRADO';
-          venta.estadoTrasaccion = 'PAGADA';
+          venta.estadoTrasaccion = TypeEstatusTransaction.PAGADA;
         }
         await this.ventaRepository.update(credito.transaccionId.toString(), venta);
       } else {

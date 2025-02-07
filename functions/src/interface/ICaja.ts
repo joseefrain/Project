@@ -25,25 +25,15 @@ export interface ICreataCashRegister {
 export type IOpenCashService = Omit<IOpenCash, 'session'>;
 
 export type ITypeCashRegisterMovement =  'VENTA' | 'INGRESO' | 'EGRESO' | 'COMPRA' | 'APERTURA' | 'DEVOLUCION';
-export type TypeEstatusTransaction = 'PENDIENTE' | 'PARCIALMENTE PAGADA' | 'EN MORA' | 'PAGADA' | 'CANCELADA' | 'DEVOLUCION';
 
-export interface ITypeEstatusSales {
-  PENDIENE: TypeEstatusTransaction,
-  PARCIALMENTE: TypeEstatusTransaction,
-  ENMORA: TypeEstatusTransaction,
-  PAGADA: TypeEstatusTransaction,
-  CANCELADA: TypeEstatusTransaction,
-  DEVOLUCION: TypeEstatusTransaction,
-}
-
-export const tipoEstatusSales:ITypeEstatusSales = {
-  PENDIENE: 'PENDIENTE',
-  PARCIALMENTE: 'PARCIALMENTE PAGADA',
-  ENMORA: 'EN MORA',
-  PAGADA: 'PAGADA',
-  CANCELADA: 'CANCELADA',
-  DEVOLUCION: 'DEVOLUCION',
-}
+export enum TypeEstatusTransaction {
+  PENDIENTE = 'PENDIENTE',
+  PARCIALMENTE = 'PARCIALMENTE PAGADA',
+  ENMORA = 'EN MORA',
+  PAGADA = 'PAGADA',
+  CANCELADA = 'CANCELADA',
+  DEVOLUCION = 'DEVOLUCION',  
+} 
 
 export interface ICashRegisterMovementObejct {
   VENTA: ITypeCashRegisterMovement;

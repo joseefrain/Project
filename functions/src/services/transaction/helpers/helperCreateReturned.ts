@@ -31,7 +31,7 @@ import {
 import { IInventarioSucursal } from '../../../models/inventario/InventarioSucursal.model';
 import { IAddQuantity, IInit, ISubtractQuantity, TipoMovimientoInventario } from '../../../interface/IInventario';
 import { IProducto } from '../../../models/inventario/Producto.model';
-import { ITransactionCreateCaja, tipoEstatusSales } from '../../../interface/ICaja';
+import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../../interface/ICaja';
 import { Types } from 'mongoose';
 import { ICaja } from '../../../models/cashRegister/CashRegister.model';
 import { IDetalleTransaccion } from '../../../models/transaction/DetailTransaction.model';
@@ -73,7 +73,7 @@ export class HelperCreateReturned {
       tipoTransaccion: 'DEVOLUCION' as TypeTransaction,
       paymentMethod: transaccion.paymentMethod,
       entidadId: transaccion.entidadId,
-      estadoTrasaccion: tipoEstatusSales.DEVOLUCION,
+      estadoTrasaccion: TypeEstatusTransaction.DEVOLUCION,
       cajaId: cajaId,
       transaccionOrigenId: formatObejectId(transaccion._id),
     });
@@ -87,7 +87,7 @@ export class HelperCreateReturned {
   ) {
     if (compareToCero(newTotalTransaccionOrigen)) {
       transaccion.deleted_at = getDateInManaguaTimezone();
-      transaccion.estadoTrasaccion = tipoEstatusSales.DEVOLUCION;
+      transaccion.estadoTrasaccion = TypeEstatusTransaction.DEVOLUCION;
 
       await this.repository.update(formatObejectId(transaccion._id).toString(), transaccion);
     } else {

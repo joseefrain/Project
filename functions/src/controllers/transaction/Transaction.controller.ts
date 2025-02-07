@@ -4,6 +4,7 @@ import { ICreateTransactionProps, TransactionService } from '../../services/tran
 import { CustomJwtPayload } from '../../utils/jwt';
 import mongoose from 'mongoose';
 import { TypeTransaction } from '../../models/transaction/Transaction.model';
+import { TypeEstatusTransaction } from '../../interface/ICaja';
 
 @injectable()
 export class TransactionController {
@@ -87,6 +88,16 @@ export class TransactionController {
     try {
       const resumenDiario = await this.service.getResumenDiarioByCashierId(req.params.id);
       res.status(200).json(resumenDiario);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async findTransactionsByProductId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let estadoTrasaccion = req.params.estadoTrasaccion as TypeEstatusTransaction;
+      const transactions = await this.service.findTransactionsByProductId(req.params.id, estadoTrasaccion);
+      res.status(200).json(transactions);
     } catch (error) {
       next(error);
     }

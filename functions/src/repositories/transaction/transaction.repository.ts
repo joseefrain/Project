@@ -4,6 +4,7 @@ import mongoose, { DeleteResult, mongo } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { getDateInManaguaTimezone, useSetDateRange, useTodayDateRange } from '../../utils/date';
+import { TypeEstatusTransaction } from '../../interface/ICaja';
 
 @injectable()
 export class TransactionRepository {
@@ -173,6 +174,39 @@ export class TransactionRepository {
 
     return venta;
   }
+
+  async findTransactionsByProductId(
+    productId: string,
+    estadoTrasaccion: TypeEstatusTransaction
+  ): Promise<Partial<ITransaccion>[]> {
+    const transacciones = await this.model.aggregate([
+      {
+        $match: {
+          estadoTrasaccion: estadoTrasaccion,
+        }
+      },
+      {
+        $lookup: {
+          from: 'detalletransaccions',
+          localField: 'transactionDetails',
+          foreignField: '_id',
+          as: 'transactionDetails',
+        },
+      },
+      {
+        $unwind: '$transactionDetails',
+      },
+      {
+        $match: {
+          'transactionDetails.productoId': { $eq: new mongoose.Types.ObjectId(productId) },
+        },
+      },
+    ]);
+
+
+    return transacciones;
+  }
+
   async findTransaccionById(id: string): Promise<ITransaccion | null> {
     const transaccion = await this.model.aggregate([
       {

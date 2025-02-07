@@ -20,6 +20,7 @@ import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.m
 import { HelperCreateTransaction } from './helpers/helperCreateTransaction';
 import { HelperCreateReturned } from './helpers/helperCreateReturned';
 import { HelperMapperTransaction } from './helpers/helperMapper';
+import { TypeEstatusTransaction } from '../../interface/ICaja';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -211,5 +212,12 @@ export class TransactionService {
     const results = await this.helperCreateReturned.getFinalResults(newReturn, transaccion, listDetailTransaction);
 
     return { ...results, caja };
+  }
+
+  async findTransactionsByProductId(
+    productId: string,
+    estadoTrasaccion: TypeEstatusTransaction
+  ): Promise<Partial<ITransaccion>[]> {
+    return this.repository.findTransactionsByProductId(productId, estadoTrasaccion);
   }
 }

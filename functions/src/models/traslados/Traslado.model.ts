@@ -1,11 +1,16 @@
-import mongoose, { Schema, Document, ObjectId } from 'mongoose';
+import mongoose, { Schema, Document, ObjectId, Types } from 'mongoose';
 import { ISucursal } from '../sucursales/Sucursal.model';
 import { IUser } from '../usuarios/User.model';
 import { IDetalleTraslado, IDetalleTrasladoCreate, IDetalleTrasladoEnvio, IDetalleTrasladoRecepcion } from './DetalleTraslado.model';
 import { IMovimientoInventario } from '../inventario/MovimientoInventario.model';
 import { IInventarioSucursal } from '../inventario/InventarioSucursal.model';
 
-type IEstatusPedido = 'Solicitado' | 'En Proceso' | 'Terminado' | 'Terminado incompleto';
+export enum EstatusPedido {
+  Solicitado = 'Solicitado',
+  EnProceso = 'En Proceso',
+  Terminado = 'Terminado',
+  TerminadoIncompleto = 'Terminado incompleto',
+}
 
 export interface ITraslado extends Document {
   nombre: string;
@@ -20,12 +25,13 @@ export interface ITraslado extends Document {
   comentarioEnvio: string;
   consecutivo?: number;
   comentarioRecepcion: string | null;
-  estatusTraslado?: IEstatusPedido;
+  estatusTraslado?: EstatusPedido;
   archivosAdjuntos: string[] | null;
   archivosAdjuntosRecibido: string[] | null;
   firmaEnvio: string;
   firmaRecepcion: string;
   deleted_at: Date | null;
+  detallesTraslado: IDetalleTraslado[] | Types.ObjectId[];
 }
 
 export interface ITrasladoDto extends ITraslado {
@@ -44,7 +50,7 @@ export interface ITrasladoEnvio {
 
 export interface ITrasladoRecepcion {
   trasladoId: string;
-  estatusTraslado?: IEstatusPedido;
+  estatusTraslado?: EstatusPedido;
   listDetalleTraslado: IDetalleTrasladoRecepcion[];
   archivosAdjuntosRecibido: string[] | null;
 
@@ -76,6 +82,7 @@ const trasladoSchema: Schema = new Schema(
     fechaRegistro: { type: Date, required: true },
     fechaEnvio: { type: Date },
     fechaRecepcion: { type: Date, default: null },
+    detallesTraslado: { type: [mongoose.Types.ObjectId], default: [], ref: 'DetalleTraslado' },
     sucursalOrigenId: {
       type: Schema.Types.ObjectId,
       ref: 'Sucursal',
