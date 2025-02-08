@@ -1,6 +1,6 @@
 import { injectable } from 'tsyringe';
 import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
-import mongoose, { DeleteResult, mongo } from 'mongoose';
+import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { getDateInManaguaTimezone, useSetDateRange, useTodayDateRange } from '../../utils/date';
@@ -327,5 +327,45 @@ export class TransactionRepository {
       transaccion.transaccionOrigenId = transaccionOrigenDeDevolucion;
     });
     return devoluciones;
+  }
+
+  async findByIds(ids: Types.ObjectId[]): Promise<ITransaccion[]> {
+    const transacciones = await this.model.aggregate([
+      {
+        $match: {
+          _id: { $in: ids },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users', // Asegúrate del nombre correcto
+          localField: 'usuarioId',
+          foreignField: '_id',
+          as: 'usuarioId'
+        }
+      },
+      { $unwind: { path: '$usuarioId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'detalletransaccions', // Asegúrate del nombre correcto
+          localField: 'transactionDetails',
+          foreignField: '_id',
+          as: 'transactionDetails',
+          pipeline: [ // Pipeline anidado para detalletransaccions
+            {
+              $lookup: {
+                from: 'productos', // Nombre de la colección de productos
+                localField: 'productoId',
+                foreignField: '_id',
+                as: 'productoId'
+              }
+            },
+            { $unwind: { path: '$productoId', preserveNullAndEmptyArrays: true } }
+          ]
+        },
+      },
+    ]);
+
+    return transacciones;
   }
 }

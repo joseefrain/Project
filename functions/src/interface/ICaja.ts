@@ -13,6 +13,7 @@ export interface ICloseCash {
   montoFinalDeclarado: string;
   usuarioArqueoId: string;
   closeWithoutCounting: boolean;
+  motivoCierre?: string;
 }
 
 export interface ICreataCashRegister {

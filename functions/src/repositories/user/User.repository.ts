@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import { IUser, User } from '../../models/usuarios/User.model';
+import { IUser, ROL, User } from '../../models/usuarios/User.model';
 import { Sucursal } from '../../models/sucursales/Sucursal.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
 
@@ -56,5 +56,10 @@ export class UserRepository {
     return await this.model
       .findByIdAndUpdate(id, { deleted_at: null }, { new: true })
       .exec();
+  }
+  async findByRole(role: ROL): Promise<IUser | null> {
+    const query = this.model.findOne({ role });
+
+    return await query.exec();
   }
 }

@@ -47,12 +47,12 @@ export class EntityService {
 
     }
 
-    if (credito.tipoCredito === 'VENTA') {
-      const saldoPendiente = credito.saldoPendiente;
+    const saldoPendiente = credito.saldoPendiente;
       const saldoAbonado = restarDecimal128(credito.saldoCredito, saldoPendiente);
 
       const clienteState = entidad.state as IClientState;
 
+    if (credito.tipoCredito === 'VENTA') {
       /* *** LOGICA DE AJUSTAR ESTADO FINANCIERO DEL CLIENTE *** */
       if (compareDecimal128(montoDevolucion, saldoPendiente)) {
         clienteState.advancesReceipts = restarDecimal128(clienteState.advancesReceipts, saldoAbonado);
@@ -60,49 +60,16 @@ export class EntityService {
       } else {
         clienteState.amountReceivable = restarDecimal128(clienteState.amountReceivable, montoDevolucion);
       }
-    
-      /*  ****** LOGICA ANTERIOR DE AJUSTAR MONTO RECIBO ****** */
-      //const ajusteAmountReceivable = restarDecimal128(saldoPendiente, nuevoSaldoPendienteCredito) // Cuánto disminuye el saldo pendiente global
-      //const nuevoAmountReceivable = restarDecimal128(clienteState.amountReceivable, ajusteAmountReceivable);
-      //clienteState.amountReceivable = nuevoAmountReceivable;
-
-
-      /*  ****** LOGICA ANTERIOR DE AJUSTAR ADVANCES RECIBOS ****** */
-      //let montoDevolucionPagada = montoDevolucion > saldoAbonado ? saldoAbonado : montoDevolucion // Solo afecta lo ya pagado
-      // let nuevoSaldoAbonadoCredito = restarDecimal128(saldoAbonado, montoDevolucionPagada)
-      // const ajusteAdvancesReceipts = restarDecimal128(saldoAbonado, nuevoSaldoAbonadoCredito) 
-      // const nuevoAdvancesReceipts = restarDecimal128(clienteState.advancesReceipts, ajusteAdvancesReceipts)
-      // clienteState.advancesReceipts = nuevoAdvancesReceipts;
 
       entidad.state = {...entidad.state,...clienteState};
     } else {
-      const saldoPendiente = credito.saldoPendiente;
-      const saldoAbonado = restarDecimal128(credito.saldoCredito, saldoPendiente);
-
-      const clienteState = entidad.state as IClientState;
-
       // Ajustar amountPayable (saldo pendiente)
-      let nuevoSaldoPendienteCredito = restarDecimal1282(saldoPendiente, montoDevolucion);
-      if (compareDecimal128(cero128, nuevoSaldoPendienteCredito)) {
-        nuevoSaldoPendienteCredito = cero128; // No puede ser negativo
+      if (compareDecimal128(montoDevolucion, saldoPendiente)) {
+        clienteState.advancesDelivered = restarDecimal128(clienteState.advancesDelivered, saldoAbonado);
+        clienteState.amountPayable = restarDecimal128(clienteState.amountPayable, saldoPendiente);
+      } else {
+        clienteState.amountPayable = restarDecimal128(clienteState.amountPayable, montoDevolucion);
       }
-
-      // Ajustar advancesDelivered (anticipos entregados)
-      let montoDevolucionPagada = montoDevolucion > saldoAbonado ? saldoAbonado : montoDevolucion // Solo afecta lo ya pagado
-      let nuevoSaldoAbonadoCredito = restarDecimal128(saldoAbonado, montoDevolucionPagada)
-      if (compareDecimal128(cero128, nuevoSaldoAbonadoCredito)) {
-        nuevoSaldoAbonadoCredito = cero128; // No puede ser negativo
-      }
-
-      // Actualizar valores globales del cliente
-      const nuevoAmountPayable = restarDecimal128(clienteState.amountPayable, restarDecimal128(saldoPendiente, nuevoSaldoPendienteCredito));
-      const nuevoAdvancesDelivered = restarDecimal128(clienteState.advancesDelivered, montoDevolucionPagada)
-
-      // Devolver los nuevos valores en Decimal128
-      clienteState.amountPayable = nuevoAmountPayable;
-      clienteState.advancesDelivered = nuevoAdvancesDelivered;
-
-      entidad.state = {...entidad.state,...clienteState};
     }
 
     await entidad.save();

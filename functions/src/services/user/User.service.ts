@@ -1,5 +1,5 @@
 import { UserRepository } from '../../repositories/user/User.repository';
-import { IResponseLogin, IUser } from '../../models/usuarios/User.model';
+import { IResponseLogin, IUser, ROL } from '../../models/usuarios/User.model';
 import { generateToken } from '../../utils/jwt';
 import mongoose, { Types } from 'mongoose';
 import { injectable, inject } from 'tsyringe';
@@ -87,6 +87,21 @@ export class UserService {
 
   async getAdminUserOrRootInSucursal(id: string): Promise<IUser | null> {
     const user = await this.repository.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async verifyUserRoot(id: string): Promise<boolean> {
+    const user = await this.repository.findById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user.role === 'ROOT';
+  }
+  async findRootUser(): Promise<IUser | null> {
+    const user = await this.repository.findByRole(ROL.ROOT);
     if (!user) {
       throw new Error('User not found');
     }

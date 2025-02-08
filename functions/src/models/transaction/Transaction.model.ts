@@ -177,12 +177,6 @@ const transaccionSchema: Schema = new Schema(
     total: { type: Schema.Types.Decimal128, required: true },
     descuento: { type: Schema.Types.Decimal128, default: 0 },
     deleted_at: { type: Date, default: null },
-    estadoVenta: {
-      type: String,
-      enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA'],
-      required: true,
-      default: 'PENDIENTE',
-    },
     estadoTrasaccion: {
       type: String,
       enum: ['PENDIENTE', 'PARCIALMENTE PAGADA', 'EN MORA', 'PAGADA', 'CANCELADA', 'DEVOLUCION'],

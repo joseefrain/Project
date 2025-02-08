@@ -21,6 +21,7 @@ import { HelperCreateTransaction } from './helpers/helperCreateTransaction';
 import { HelperCreateReturned } from './helpers/helperCreateReturned';
 import { HelperMapperTransaction } from './helpers/helperMapper';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
+import { CashRegisterService } from '../utils/cashRegister.service';
 
 export interface ICreateTransactionProps {
   venta: Partial<ITransaccionCreate>;
@@ -34,7 +35,8 @@ export class TransactionService {
     @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository,
     @inject(HelperCreateTransaction) private helperCreateTransaction: HelperCreateTransaction,
     @inject(HelperCreateReturned) private helperCreateReturned: HelperCreateReturned,
-    @inject(HelperMapperTransaction) private helperMapperTransaction: HelperMapperTransaction
+    @inject(HelperMapperTransaction) private helperMapperTransaction: HelperMapperTransaction,
+    @inject(CashRegisterService) private cashRegisterService: CashRegisterService
   ) {}
 
   async addTransactionToQueue(data: ICreateTransactionProps) {
@@ -46,6 +48,13 @@ export class TransactionService {
     const { venta, user } = data;
 
     try {
+
+      let verifyExistResumenCajaDiario = await this.cashRegisterService.verifyExistResumenCajaDiario(venta.cajaId!);
+
+      if (!verifyExistResumenCajaDiario) {
+        await this.cashRegisterService.cierreAutomatico(venta.cajaId!);
+        throw new Error("Cierre de caja automatico. No se puede crear transaccion");
+      }
       // 1️⃣ Inicializar Inventario
       await this.helperCreateTransaction.initInventory(venta, user._id);
 

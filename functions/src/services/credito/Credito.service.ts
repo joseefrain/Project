@@ -6,14 +6,16 @@ import { CreditoRepository } from "../../repositories/credito/Credito.repository
 import { MovimientoFinancieroRepository } from "../../repositories/credito/MovimientoFinanciero.repository";
 import { inject, injectable } from "tsyringe";
 import { TransactionRepository } from "../../repositories/transaction/transaction.repository";
-import { ITransaccion, TypeTransaction } from "../../models/transaction/Transaction.model";
+import { ITransaccion, ITransaccionCreate, TypeTransaction } from "../../models/transaction/Transaction.model";
 import { EntityRepository } from "../../repositories/entity/Entity.repository";
-import { cero128, compareDecimal128, dividirDecimal128, multiplicarDecimal128, restarDecimal128, sumarDecimal128 } from "../../gen/handleDecimal128";
+import { cero128, compareDecimal128, dividirDecimal128, formatObejectId, multiplicarDecimal128, restarDecimal128, restarDecimal1282, sumarDecimal128 } from "../../gen/handleDecimal128";
 import { IClientState } from "../../models/entity/Entity.model";
 import { CashRegisterService } from "../utils/cashRegister.service";
 import { IActualizarMontoEsperadoByVenta, ITransactionCreateCaja, TypeEstatusTransaction } from "../../interface/ICaja";
 import { EntityService } from "../entity/Entity.service";
 import { getDateInManaguaTimezone } from "../../utils/date";
+import { HelperMapperTransaction } from "../transaction/helpers/helperMapper";
+import { IDetalleTransaccion } from "../../models/transaction/DetailTransaction.model";
 
 export interface IHandlePagoCreditoProps {
   creditoIdStr: string;
@@ -23,15 +25,21 @@ export interface IHandlePagoCreditoProps {
   cajaId: string;
 }
 
+export interface ICreditoResponse {
+  credito: ICredito;
+  transaccion: ITransaccionCreate;
+}
+
 @injectable()
 export class CreditoService {
   constructor(
     @inject(CreditoRepository) private creditoRepository: CreditoRepository,
     @inject(MovimientoFinancieroRepository) private MovimientoRepository: MovimientoFinancieroRepository,
-    @inject(TransactionRepository) private ventaRepository: TransactionRepository,
+    @inject(TransactionRepository) private transaccionRepository: TransactionRepository,
     @inject(EntityRepository) private entityRepository: EntityRepository,
     @inject(CashRegisterService) private cashRegisterService: CashRegisterService,
     @inject(EntityService) private entityService: EntityService,
+    @inject(HelperMapperTransaction) private helperMapperTransaction: HelperMapperTransaction
   ) {}
 
   async createCredito(data: Partial<ICredito>, ): Promise<ICredito> {
@@ -122,6 +130,13 @@ export class CreditoService {
   async handlePagoCredito({ creditoIdStr, montoPago, modalidadCredito, userId, cajaId }: IHandlePagoCreditoProps): Promise<ICredito> {
     let creditoId = new mongoose.Types.ObjectId(creditoIdStr);
 
+    let verifyExistResumenCajaDiario = await this.cashRegisterService.verifyExistResumenCajaDiario(cajaId);
+
+    if (!verifyExistResumenCajaDiario) {
+      await this.cashRegisterService.cierreAutomatico(cajaId);
+      throw new Error("Cierre de caja automatico. No se puede crear transaccion");
+    }
+
     if (modalidadCredito === 'PLAZO') {
       return this.realizarPagoPlazo(creditoId, montoPago, userId, cajaId);
     } else {
@@ -145,7 +160,7 @@ export class CreditoService {
         throw new Error("Crédito no encontrado");
       }
 
-      let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
+      let venta = (await this.transaccionRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
 
       let entidad = await this.entityRepository.findById((credito.entidadId as mongoose.Types.ObjectId).toString());
 
@@ -233,7 +248,7 @@ export class CreditoService {
           credito.estadoCredito = 'CERRADO';
           venta.estadoTrasaccion = TypeEstatusTransaction.PAGADA;
         }
-        await this.ventaRepository.update(credito.transaccionId.toString(), venta);
+        await this.transaccionRepository.update(credito.transaccionId.toString(), venta);
       }
       // Guardar los cambios en la base de datos
       await this.creditoRepository.updateWith((credito._id as mongoose.Types.ObjectId).toString(), credito);
@@ -326,7 +341,7 @@ export class CreditoService {
       // Verificar si todas las cuotas han sido pagadas
       const cuotasPendientes = credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE');
       if (cuotasPendientes.length === 0) {
-        let venta = (await this.ventaRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
+        let venta = (await this.transaccionRepository.findTransaccionById(credito.transaccionId.toString()) as ITransaccion);
 
         let montoCredito = new mongoose.Types.Decimal128(`0`);
 
@@ -351,7 +366,7 @@ export class CreditoService {
           credito.estadoCredito = 'CERRADO';
           venta.estadoTrasaccion = TypeEstatusTransaction.PAGADA;
         }
-        await this.ventaRepository.update(credito.transaccionId.toString(), venta);
+        await this.transaccionRepository.update(credito.transaccionId.toString(), venta);
       } else {
         if (credito.tipoCredito === 'VENTA') {
 
@@ -421,16 +436,23 @@ export class CreditoService {
 
     let nuevoSaldoPendiente = restarDecimal128(credito.saldoPendiente, totalDevolucion);
 
+    let validacion = {
+      diferencia: restarDecimal1282(credito.saldoPendiente, totalDevolucion),
+      dineroADevolver: restarDecimal128(credito.saldoPendiente, totalDevolucion)
+    };
+
     let dineroADevolver = cero128;
 
-    if (compareDecimal128(cero128, nuevoSaldoPendiente)) {
-      dineroADevolver = nuevoSaldoPendiente;
+    if (compareDecimal128(cero128, validacion.diferencia)) {
+      dineroADevolver = validacion.dineroADevolver;
       nuevoSaldoPendiente = cero128;
-    }
 
-    credito.saldoPendiente = nuevoSaldoPendiente;
+      let transaccionActualizada = {
+        estadoTrasaccion: TypeEstatusTransaction.PAGADA,
+      }
 
-    if (credito.modalidadCredito === 'PLAZO' && compareDecimal128(nuevoSaldoPendiente, cero128)) {
+      await this.transaccionRepository.update(credito.transaccionId.toString(), transaccionActualizada);
+    } else if (credito.modalidadCredito === 'PLAZO') {
       let countCuantoPendiente = new Types.Decimal128(credito.cuotasCredito.filter(cuota => cuota.estadoPago === 'PENDIENTE').length.toString())
 
       credito.cuotaMensual = dividirDecimal128(nuevoSaldoPendiente, countCuantoPendiente);
@@ -440,19 +462,58 @@ export class CreditoService {
         }
       });
 
-    } else if (credito.modalidadCredito === 'PAGO' && compareDecimal128(nuevoSaldoPendiente, cero128)) {
+    } else if (credito.modalidadCredito === 'PAGO') {
       const porcentajePagoMinimo = new mongoose.Types.Decimal128("0.20");
       credito.pagoMinimoMensual = multiplicarDecimal128(nuevoSaldoPendiente, porcentajePagoMinimo);
     }
+
+    credito.saldoPendiente = nuevoSaldoPendiente;
 
     await credito.save();
 
     return parseInt(dineroADevolver.toString());
   }
 
-  async findCreditoBySucursalId(sucursalId: string): Promise<ICredito[] | null> {
-    const credito = await this.creditoRepository.findBySucursalId(sucursalId);
-    return credito;
+  async findCreditoBySucursalId(sucursalId: string): Promise<ICreditoResponse[] | null> {
+    const creditos = await this.creditoRepository.findBySucursalId(sucursalId) as ICredito[];
+
+    if (!creditos) {
+      throw new Error("No se encontraron creditos");
+    }
+
+    let listTransactionIdIdsSets = new Set<any>();
+
+    creditos.forEach((credito) => {
+      let id =formatObejectId((credito.transaccionId as ITransaccion)._id);
+      listTransactionIdIdsSets.add(id); // Agregar a Set
+    });
+
+    const transaccionesIds = Array.from(listTransactionIdIdsSets);
+
+    const transacciones = await this.transaccionRepository.findByIds(transaccionesIds);
+
+    let newResponse:ICreditoResponse[] = []
+
+    await Promise.all(
+      creditos.map(async (c) => {
+        let transaccionId = formatObejectId((c.transaccionId as ITransaccion)._id).toString();
+        let transaccion = transacciones.find(
+          (t) => formatObejectId(t._id).toString() === transaccionId
+        ) as ITransaccion;
+        let transaccionActualizada = await this.helperMapperTransaction.mapperData(
+          transaccion,
+          transaccion.transactionDetails as IDetalleTransaccion[]
+        );
+
+        newResponse.push({
+          credito: c,
+          transaccion: transaccionActualizada,
+        });
+      })
+    );
+    
+
+    return newResponse;
   }
 
   async findAllCreditosByEntity(entidadId: string): Promise<ICredito[]> {
