@@ -21,6 +21,8 @@ import rateLimit from 'express-rate-limit';
 import * as functions from 'firebase-functions/v2';
 import { Request, Response } from 'express';
 import { deviceDetectorMiddleWare } from './middlewares/deviceDetectorMiddleWare';
+import { DailyRegisterRouter } from './routes/DailyRegister.router';
+import { container } from './DI/container';
 
 
 const express = require('express');
@@ -78,6 +80,8 @@ app.use('/api/credito', creditoRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/coin', coinRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+const dailyRegisterRouter = container.resolve(DailyRegisterRouter);
+app.use('/api/daily-registers', dailyRegisterRouter.getRouter());
 
 // rutas de administracion de la tienda
 const serverAdapter = new ExpressAdapter();

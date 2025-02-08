@@ -16,7 +16,6 @@
     "@google-cloud/storage": "^7.13.0",
     "@slack/web-api": "^7.7.0",
     "@types/bcrypt": "^5.0.2",
-    "@types/ua-parser-js": "^0.7.39",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
     "big.js": "^6.2.2",
@@ -43,7 +42,8 @@
     "shortid": "^2.2.16",
     "tsyringe": "^4.8.0",
     "twilio": "^5.3.5",
-    "ua-parser-js": "^2.0.1"
+    "ua-parser-js": "^2.0.1",
+    "@types/ua-parser-js": "^0.7.39"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.2",
