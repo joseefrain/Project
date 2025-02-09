@@ -468,6 +468,7 @@ export class CreditoService {
     }
 
     credito.saldoPendiente = nuevoSaldoPendiente;
+    credito.saldoCredito = nuevoSaldoPendiente;
 
     await credito.save();
 

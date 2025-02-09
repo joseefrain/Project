@@ -1,28 +1,44 @@
 import { injectable } from 'tsyringe';
 import { DailyRegisterModel, IDailyRegister } from '../../models/usuarios/DailyRegister.model';
-import { Types } from 'mongoose';
-import { getDateInManaguaTimezone } from '../../utils/date';
+import mongoose, { Types, UpdateWriteOpResult } from 'mongoose';
+import { getDateInManaguaTimezone, useSetDateRange, useTodayDateRange } from '../../utils/date';
+import { IUser, User } from '../../models/usuarios/User.model';
+import { formatObejectId } from '../../gen/handleDecimal128';
+
+export interface IDailyRegisterResponse extends Partial<IUser> {
+  registers: IDailyRegister[];
+}
 
 export interface IDailyRegisterRepository {
-  create(dailyRegister: Omit<IDailyRegister, '_id'>): Promise<IDailyRegister>;
+  create(dailyRegister: Partial<IDailyRegister>): Promise<IDailyRegister>;
   findById(id: string): Promise<IDailyRegister | null>;
   findAllByUserId(userId: string): Promise<IDailyRegister[]>;
   update(id: string, data: Partial<IDailyRegister>): Promise<IDailyRegister | null>;
   delete(id: string): Promise<boolean>;
   restore(id: string): Promise<boolean>;
-  existsByUserIdAndDate(userId: string, date: Date): Promise<boolean>;
+  existsByUserIdAndDate(userId: string): Promise<boolean>;
   markExit(id: string, exitTime: Date): Promise<IDailyRegister | null>;
   findBySucursalAndDateRange(
     sucursalId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<IDailyRegister[]>;
+  ): Promise<{ [key: string]: IDailyRegisterResponse }>;
   findCheckOutTime(userId: string): Promise<IDailyRegister | null>;
+  updateDailyRegistersBySucursal(sucursalId: string, updateData: Partial<IDailyRegister>)
 }
 
 @injectable()
 export class DailyRegisterRepository implements IDailyRegisterRepository {
-  async create(dailyRegister: Omit<IDailyRegister, '_id'>): Promise<IDailyRegister> {
+
+  private model: typeof DailyRegisterModel;
+  private userModel: typeof User;
+  
+    constructor() {
+      this.model = DailyRegisterModel;
+      this.userModel = User;
+    }
+
+  async create(dailyRegister: Partial<IDailyRegister>): Promise<IDailyRegister> {
     return DailyRegisterModel.create(dailyRegister);
   }
 
@@ -36,10 +52,11 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
 
   async findCheckOutTime(userId: string): Promise<IDailyRegister | null> {
 
-    const today = getDateInManaguaTimezone();
-    today.setHours(0, 0, 0, 0);
+    const [startDateISO, endDateISO] = useTodayDateRange()
 
-    return DailyRegisterModel.findOne({ userId, deleted_at: null, date: { $gte: today }, hourExit: null });
+    const register = await DailyRegisterModel.findOne({ userId, date: { $gte: startDateISO, $lte: endDateISO }, hourExit: null, deleted_at: null });
+    return register;
+
   }
 
   async update(id: string, data: Partial<IDailyRegister>): Promise<IDailyRegister | null> {
@@ -66,8 +83,11 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
     return !!result;
   }
 
-  async existsByUserIdAndDate(userId: string, date: Date): Promise<boolean> {
-    const count = await DailyRegisterModel.countDocuments({ userId, date });
+  async existsByUserIdAndDate(userId: string): Promise<boolean> {
+
+    const [startDateISO, endDateISO] = useTodayDateRange()
+
+    const count = await DailyRegisterModel.countDocuments({ userId, date: { $gte: startDateISO, $lte: endDateISO } });
     return count > 0;
   }
 
@@ -83,25 +103,84 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
     sucursalId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<IDailyRegister[]> {
-    return DailyRegisterModel.aggregate([
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      { $unwind: '$user' },
+  ): Promise<{ [key: string]: IDailyRegisterResponse }> {
+
+    const [ startDateISO, endDateISO ] = useSetDateRange(startDate, endDate);
+
+    let registers = await this.model.aggregate([
       {
         $match: {
-          'user.sucursalId': new Types.ObjectId(sucursalId),
-          date: { $gte: startDate, $lte: endDate },
+          
+          date: { $gte: new Date(startDateISO), $lte: new Date(endDateISO) },
           deleted_at: null
+        },
+      },
+      {
+        $lookup: {
+          from: 'users', // Asegúrate del nombre correcto
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userId'
         }
       },
-      { $project: { user: 0 } } // Excluir los datos del usuario
+      { $unwind: { path: '$userId', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          'userId.sucursalId': { $eq: new Types.ObjectId(sucursalId) },
+        }
+      },
     ]);
+
+    const registrosPorUsuario:{ [key: string]: IDailyRegisterResponse } = {};
+    
+    registers.forEach((transaccion) => {
+      let key = `${transaccion.userId.username}`;
+
+      if (registrosPorUsuario[key]) {
+        registrosPorUsuario[key].registers.push(transaccion);
+      } else {
+        registrosPorUsuario[key] = {
+          ...transaccion.userId,
+          registers: [transaccion]
+        }
+      }
+    });
+
+    return registrosPorUsuario;
   }
+
+async updateDailyRegistersBySucursal(sucursalId: string, updateData: Partial<IDailyRegister>) {
+  try {
+    // 1️⃣ Buscar todos los usuarios con el `sucursalId`
+    const users = await this.userModel.find({ sucursalId: new Types.ObjectId(sucursalId) }).select("_id");
+
+    // 2️⃣ Extraer los `userId`
+    const userIds = users.map(user => (user._id as mongoose.Types.ObjectId).toString());
+
+    if (userIds.length === 0) {
+      console.log("No se encontraron usuarios para esta sucursal.");
+      return;
+    }
+
+    const [startDateISO, endDateISO] = useTodayDateRange()
+
+    // 3️⃣ Actualizar los registros en `IDailyRegister`
+    const result = await DailyRegisterModel.updateMany(
+      {
+        date: {
+          $gte: new Date(startDateISO),
+          $lt: new Date(endDateISO)
+        },
+        userId: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } 
+      },
+      { $set: updateData }           // Datos a actualizar
+    );
+
+    return result;
+
+  } catch (error) {
+    console.error("Error actualizando registros:", error);
+  }
+}
+
 }

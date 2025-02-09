@@ -232,9 +232,10 @@ export class HelperCreateReturned {
     const listDetailTransaction: IDetalleTransaccion[] = [];
 
     await Promise.all(
-      data.products!.map(async (element) => {
+      transaccion.transactionDetails.map(async (element) => {
+        let detailsDevolucion = this.findTransactionDetailReturn(data.products!, element.productoId.toString());
         const { totalDev, ajusteCobrar, newTotalRetenido, subtotalRetenido, totalDiscountApplied } = await this.processSingleProduct(
-          element,
+          detailsDevolucion,
           transaccion,
           descuentosAplicados,
           listInventarioSucursal,
@@ -275,6 +276,12 @@ export class HelperCreateReturned {
     return transaccion.transactionDetails.find(
       (item: IDetalleTransaccion) => formatObejectId((item.productoId as IProducto)._id).toString() === productId
     ) as IDetalleTransaccion;
+  }
+
+  private findTransactionDetailReturn(product: IDevolucionesProducto[], productId: string) {
+    return product.find(
+      (item: IDevolucionesProducto) => item.productId === productId
+    ) as IDevolucionesProducto;
   }
 
   async findDescuentoByDescuentoAplicado(descuentoAplicado: ITransaccionDescuentosAplicados): Promise<IDescuento> {

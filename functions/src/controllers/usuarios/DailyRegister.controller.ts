@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 import { DailyRegisterService } from '../../services/user/DailyRegister.service';
+import { formaterInManageTimezone } from '../../utils/date';
 
 @injectable()
 export class DailyRegisterController {
@@ -85,11 +86,40 @@ export class DailyRegisterController {
 
       const registers = await this.service.getBySucursalAndDateRange(
         sucursalId,
-        new Date(startDate as string),
-        new Date(endDate as string)
+        startDate as string,
+        endDate as string
       );
       
       res.json(registers);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  }
+
+  async updateWorkingHours(req: Request, res: Response) {
+    try {
+      const { sucursalId, startWork, endWork } = req.body;
+      
+      if (!sucursalId) {
+        throw new Error('Se requiere el ID de la sucursal');
+      }
+
+      if (!startWork || !endWork) {
+        throw new Error('Se requiere el inicio y el final de la hora de trabajo');
+      }
+
+      let endDate2 = new Date(endWork)
+      let startDate2 = new Date(startWork)
+
+      const startDate = new Date(startDate2.setHours(startDate2.getHours() - 6));
+      const endDate = new Date(endDate2.setHours(endDate2.getHours() - 6));
+
+      if (!startDate || !endDate) {
+        throw new Error('La fecha de inicio y la de fin no pueden ser nulas');
+      }
+
+      const result = await this.service.updateWorkingHours(sucursalId, startDate, endDate);
+      res.json(result);
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }

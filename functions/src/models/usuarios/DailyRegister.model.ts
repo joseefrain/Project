@@ -58,8 +58,8 @@ DailyRegisterSchema.path('date').validate(function(date: Date) {
   return date <= new Date();
 }, 'La fecha no puede ser en el futuro');
 
-DailyRegisterSchema.path('hourExit').validate(function(this: IDailyRegister, hourExit: Date) {
-  return hourExit > this.hourEntry;
-}, 'La hora de salida debe ser posterior a la de entrada');
+// DailyRegisterSchema.path('hourExit').validate(function(this: IDailyRegister, hourExit: Date) {
+//   return hourExit > this.hourEntry;
+// }, 'La hora de salida debe ser posterior a la de entrada');
 
 export const DailyRegisterModel = mongoose.model<IDailyRegister>('DailyRegister', DailyRegisterSchema);

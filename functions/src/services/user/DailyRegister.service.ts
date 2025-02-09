@@ -1,8 +1,9 @@
 import { inject, injectable } from 'tsyringe';
-import { IDailyRegisterRepository } from '../../repositories/user/DailyRegister.repository';
+import { IDailyRegisterRepository, IDailyRegisterResponse } from '../../repositories/user/DailyRegister.repository';
 import { IDailyRegister } from '../../models/usuarios/DailyRegister.model';
 import { formatObejectId } from '../../gen/handleDecimal128';
-import { getDateInManaguaTimezone } from '../../utils/date';
+import { formaterInManageTimezone, getDateInManaguaTimezone, isValidDateWithFormat, parseDate, useSetDateRange } from '../../utils/date';
+import { Types } from 'mongoose';
 
 @injectable()
 export class DailyRegisterService {
@@ -10,22 +11,38 @@ export class DailyRegisterService {
     @inject('IDailyRegisterRepository') private repository: IDailyRegisterRepository
   ) {}
 
-  async createDailyRegister(data: Omit<IDailyRegister, '_id' | 'lateEntry'>) {
+  async createDailyRegister(data: Partial<IDailyRegister>) {
+
+    if (!data.userId && !data.hourEntry) {
+      throw new Error("Se requiere el ID del usuario y la hora de ingreso");
+    }
+
     const exists = await this.repository.existsByUserIdAndDate(
-      data.userId.toString(),
-      data.date
+      formatObejectId(data.userId).toString()
     );
     
     if (exists) {
       throw new Error('Ya existe un registro para esta fecha');
     }
 
-    const lateEntry = data.hourEntry > data.startWork;
-    
-    return this.repository.create({
-      ...data,
-      lateEntry
-    });
+    let date = getDateInManaguaTimezone();
+    let startWork = new Date(getDateInManaguaTimezone().setHours(8, 0, 0, 0));
+    let endWork = new Date(getDateInManaguaTimezone().setHours(17, 0, 0, 0));
+
+    let hourEntry = formaterInManageTimezone(new Date(data.hourEntry!));
+
+    const lateEntry = hourEntry > startWork;
+
+    let note = lateEntry ? `La hora de ingreso fue después de las ${startWork.toLocaleTimeString()}` : '';
+
+    data.startWork = startWork;
+    data.endWork = endWork;
+    data.lateEntry = lateEntry;
+    data.note = note;
+    data.date = date;
+    data.hourEntry = hourEntry;
+
+    return this.repository.create(data);
   }
 
   async getDailyRegisterById(id: string) {
@@ -78,21 +95,41 @@ export class DailyRegisterService {
 
   async getBySucursalAndDateRange(
     sucursalId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<IDailyRegister[]> {
+    startDatesStr: string,
+    endDateStr: string
+  ): Promise<{ [key: string]: IDailyRegisterResponse }> {
+
+    let startDate = parseDate(startDatesStr, 'dd-MM-yyyy');
+    let endDate = parseDate(endDateStr, 'dd-MM-yyyy');
+
+    if (!startDate || !endDate) throw new Error('Fecha no valida');
+
     if (!sucursalId.match(/^[0-9a-fA-F]{24}$/)) {
       throw new Error('ID de sucursal inválido');
     }
     
-    if (startDate > endDate) {
+    if (startDate.toJSDate() > endDate.toJSDate()) {
       throw new Error('Fecha inicial no puede ser mayor a fecha final');
     }
 
+
     return this.repository.findBySucursalAndDateRange(
       sucursalId,
-      startDate,
-      endDate
+      startDate.toJSDate(),
+      endDate.toJSDate()
     );
+  }
+
+  async updateWorkingHours (sucursalId: string, startWork: Date, endWork: Date) {
+
+    const result = await this.repository.updateDailyRegistersBySucursal(
+      sucursalId,
+      {
+        startWork,
+        endWork
+      }
+    );
+
+    return result;
   }
 }

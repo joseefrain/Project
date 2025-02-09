@@ -19,6 +19,7 @@ export class DailyRegisterRouter {
     router.post('/:id/restore', this.controller.restore.bind(this.controller));
     router.patch('/:userId/exit', this.controller.markExit.bind(this.controller));
     router.get('/sucursal/:sucursalId', this.controller.getBySucursal.bind(this.controller));
+    router.post('/working-hours', this.controller.updateWorkingHours.bind(this.controller));
 
     return router;
   }
