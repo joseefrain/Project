@@ -43,6 +43,7 @@ export class UserService {
       id: user._id as Types.ObjectId,
       username: user.username,
       roles: user.roles as mongoose.Types.ObjectId[],
+      rol: user.role,
     });
 
     return { token, user };

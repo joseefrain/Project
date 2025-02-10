@@ -163,6 +163,14 @@ export class TransactionService {
   }
 
   async createDevolucion(data: IDevolucionesCreate) {
+
+    let verifyExistResumenCajaDiario = await this.cashRegisterService.verifyExistResumenCajaDiario(data.cajaId!);
+
+      if (!verifyExistResumenCajaDiario) {
+        await this.cashRegisterService.cierreAutomatico(data.cajaId!);
+        throw new Error("Cierre de caja automatico. No se puede crear transaccion");
+      }
+
     const transaccion = await this.helperCreateReturned.validateTransactionExists(data.trasaccionOrigenId);
     const { sucursalId, usuarioId, cajaId } = this.helperCreateReturned.getTransactionMetadata(transaccion, data);
     const descuentosAplicados = await this.helperCreateReturned.getAppliedDiscounts(transaccion);

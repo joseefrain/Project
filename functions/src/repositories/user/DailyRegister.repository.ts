@@ -22,7 +22,7 @@ export interface IDailyRegisterRepository {
     sucursalId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<{ [key: string]: IDailyRegisterResponse }>;
+  ): Promise<IDailyRegister[]>;
   findCheckOutTime(userId: string): Promise<IDailyRegister | null>;
   updateDailyRegistersBySucursal(sucursalId: string, updateData: Partial<IDailyRegister>)
 }
@@ -103,7 +103,7 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
     sucursalId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<{ [key: string]: IDailyRegisterResponse }> {
+  ): Promise<IDailyRegister[]> {
 
     const [ startDateISO, endDateISO ] = useSetDateRange(startDate, endDate);
 
@@ -131,22 +131,8 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
       },
     ]);
 
-    const registrosPorUsuario:{ [key: string]: IDailyRegisterResponse } = {};
-    
-    registers.forEach((transaccion) => {
-      let key = `${transaccion.userId.username}`;
 
-      if (registrosPorUsuario[key]) {
-        registrosPorUsuario[key].registers.push(transaccion);
-      } else {
-        registrosPorUsuario[key] = {
-          ...transaccion.userId,
-          registers: [transaccion]
-        }
-      }
-    });
-
-    return registrosPorUsuario;
+    return registers;
   }
 
 async updateDailyRegistersBySucursal(sucursalId: string, updateData: Partial<IDailyRegister>) {

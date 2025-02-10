@@ -108,11 +108,8 @@ export class DailyRegisterController {
         throw new Error('Se requiere el inicio y el final de la hora de trabajo');
       }
 
-      let endDate2 = new Date(endWork)
-      let startDate2 = new Date(startWork)
-
-      const startDate = new Date(startDate2.setHours(startDate2.getHours() - 6));
-      const endDate = new Date(endDate2.setHours(endDate2.getHours() - 6));
+      let endDate = formaterInManageTimezone(new Date(endWork))
+      let startDate = formaterInManageTimezone(new Date(startWork))
 
       if (!startDate || !endDate) {
         throw new Error('La fecha de inicio y la de fin no pueden ser nulas');

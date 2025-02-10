@@ -54,9 +54,9 @@ const DailyRegisterSchema: Schema<IDailyRegister> = new Schema({
 });
 
 // Agregar validación de fechas en el esquema
-DailyRegisterSchema.path('date').validate(function(date: Date) {
-  return date <= new Date();
-}, 'La fecha no puede ser en el futuro');
+// DailyRegisterSchema.path('date').validate(function(date: Date) {
+//   return date <= new Date();
+// }, 'La fecha no puede ser en el futuro');
 
 // DailyRegisterSchema.path('hourExit').validate(function(this: IDailyRegister, hourExit: Date) {
 //   return hourExit > this.hourEntry;

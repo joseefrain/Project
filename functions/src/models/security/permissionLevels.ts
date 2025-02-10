@@ -19,6 +19,7 @@ export enum PAGES_MODULES {
   USUARIOS = 'USUARIOS',
   CONTACTOS = 'CONTACTOS',
   ROLES = 'ROLES',
+  HORARIOS = 'HORARIOS',
 }
 
 export enum LEVEL_VALUES {
@@ -128,4 +129,13 @@ export const DEFAULT_ROLE_PAGES: IRolePrivilege[] = [
       LEVEL_VALUES.BORRAR,
     ],
   },
+  {
+    module: PAGES_MODULES.HORARIOS,
+    levels: [
+      LEVEL_VALUES.AGREGAR,
+      LEVEL_VALUES.CONSULTAR,
+      LEVEL_VALUES.EDITAR,
+      LEVEL_VALUES.BORRAR,
+    ],
+  }
 ];

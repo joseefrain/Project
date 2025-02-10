@@ -4,7 +4,7 @@ import { UserService } from '../../services/user/User.service';
 import { CashRegisterService } from '../../services/utils/cashRegister.service';
 import { Types } from 'mongoose';
 import { ICaja } from '../../models/cashRegister/CashRegister.model';
-import { ISucursal } from '../../models/sucursales/Sucursal.model';
+import { ROL } from '../../models/usuarios/User.model';
 
 @injectable()
 export class UserController {
@@ -29,6 +29,10 @@ export class UserController {
       let role = token.user.role;
 
       let cajaId: ICaja | null = null;
+
+      if (req.isMobile && role !== ROL.ROOT) {
+        throw new Error("No se puede acceder desde un dispositivo móvil"); 
+      }
 
       if(role !== "ROOT") cajaId = await this.cashRegisterService.obtenerCajasAbiertasPorUsuario((token.user._id as Types.ObjectId).toString());
       

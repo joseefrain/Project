@@ -29,7 +29,7 @@ export class DailyRegisterService {
     let startWork = new Date(getDateInManaguaTimezone().setHours(8, 0, 0, 0));
     let endWork = new Date(getDateInManaguaTimezone().setHours(17, 0, 0, 0));
 
-    let hourEntry = formaterInManageTimezone(new Date(data.hourEntry!));
+    let hourEntry = getDateInManaguaTimezone();
 
     const lateEntry = hourEntry > startWork;
 
@@ -97,7 +97,7 @@ export class DailyRegisterService {
     sucursalId: string,
     startDatesStr: string,
     endDateStr: string
-  ): Promise<{ [key: string]: IDailyRegisterResponse }> {
+  ): Promise<IDailyRegister[]> {
 
     let startDate = parseDate(startDatesStr, 'dd-MM-yyyy');
     let endDate = parseDate(endDateStr, 'dd-MM-yyyy');

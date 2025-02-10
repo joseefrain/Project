@@ -245,7 +245,7 @@ async removeDuplicateInventario(): Promise<void> {
 
 
   async findProductByName(name: string): Promise<IProducto | null> {
-    const product = await this.model.findOne({ nombre: name });
+    const product = await this.model.findOne({ nombre: name, deleted_at: null });
 
     if (!product) return null;
 
