@@ -2,8 +2,7 @@ import mongoose, { Model, mongo, Types } from 'mongoose';
 import Caja, { ICaja, ICajaHistorico } from '../../models/cashRegister/CashRegister.model';
 import { injectable } from 'tsyringe';
 import { IActualizarMontoEsperado, ICreataCashRegister, IOpenCash } from '../../interface/ICaja';
-import { cero128, restarDecimal128 } from '../../gen/handleDecimal128';
-import { hasSubscribers } from 'diagnostics_channel';
+import { cero128, restarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
 import { getDateInManaguaTimezone } from '../../utils/date';
 
 @injectable()
@@ -19,14 +18,19 @@ export class CajaRepository {
     if (!caja) throw new Error('Caja no encontrada');
     if (caja.estado === 'ABIERTA') return caja;
 
+
     let montoInicial128 = new mongoose.mongo.Decimal128(montoInicial.toString())
+    let montoConMovimiento = sumarDecimal128(caja.montoEsperado, montoInicial128);
 
     if (!caja.hasMovementCashier) {
       caja.ganancia = cero128;
       caja.montoEsperado = montoInicial128;
+    } else {
+      caja.montoEsperado = montoConMovimiento
     }
 
-    caja.montoInicial = montoInicial128;
+
+    caja.montoInicial = caja.hasMovementCashier ? montoConMovimiento : montoInicial128;
     caja.estado = 'ABIERTA';
     caja.fechaApertura = getDateInManaguaTimezone();
     caja.usuarioAperturaId = new Types.ObjectId(usuarioAperturaId);

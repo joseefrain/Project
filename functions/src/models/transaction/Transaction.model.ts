@@ -22,7 +22,10 @@ export enum TypeTransactionReturn {
   COMPRA = 'COMPRA',
 };
 
-export type TypePaymentMethod = 'cash' | 'credit';
+export enum TypePaymentMethod {
+  CASH = 'cash',
+  CREDIT = 'credit',
+}
 
 export interface ITransaccion extends Document {
   usuarioId: mongoose.Types.ObjectId | IUser;

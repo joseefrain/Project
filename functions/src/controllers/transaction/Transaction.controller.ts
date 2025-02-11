@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ICreateTransactionProps, TransactionService } from '../../services/transaction/transaction.service';
 import { CustomJwtPayload } from '../../utils/jwt';
 import mongoose from 'mongoose';
-import { TypeTransaction } from '../../models/transaction/Transaction.model';
+import { TypePaymentMethod, TypeTransaction } from '../../models/transaction/Transaction.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
 
 @injectable()
@@ -64,6 +64,28 @@ export class TransactionController {
       console.log(error.message);
       
       next(error);
+    }
+  }
+
+  async getReturnCreditBySucursal(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let id = req.params.id;
+      const ventas = await this.service.findReturnCreditBySucursal(id);
+      res.status(200).json(ventas);
+    } catch (error) {
+      console.log(error.message);
+      
+      next(error);
+    }
+  }
+
+  async findTransactionByCreditByBranch (req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let id = req.params.id;
+      const ventas = await this.service.findTransactionByCreditByBranch(id);
+      res.status(200).json(ventas);
+    } catch (error) {
+      next(error)
     }
   }
 

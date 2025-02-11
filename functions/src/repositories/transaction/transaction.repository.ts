@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transaction/Transaction.model';
+import { ITransaccion, Transaccion, TypePaymentMethod, TypeTransaction } from '../../models/transaction/Transaction.model';
 import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
@@ -77,7 +77,7 @@ export class TransactionRepository {
 
     return ventaDescuentosAplicados;
   }
-  async findByTypeAndBranch(
+  async findCashByTypeAndBranch(
     sucursalId: string,
     type: TypeTransaction
   ): Promise<ITransaccion[]> {
@@ -86,6 +86,30 @@ export class TransactionRepository {
         sucursalId: sucursalId,
         tipoTransaccion: type,
         estadoTrasaccion: 'PAGADA',
+        paymentMethod: TypePaymentMethod.CASH,
+      })
+      .populate([
+        {
+          path: 'usuarioId',
+        },
+        {
+          path: 'transactionDetails',
+          populate: {
+            path: 'productoId',
+          },
+        },
+      ]);
+
+    return venta;
+  }
+
+  async findCreditByBranch(
+    sucursalId: string,
+  ): Promise<ITransaccion[]> {
+    const venta = await this.model
+      .find({
+        sucursalId: sucursalId,
+        paymentMethod: TypePaymentMethod.CREDIT,
       })
       .populate([
         {
@@ -104,7 +128,7 @@ export class TransactionRepository {
 
   async findByTypeAndBranchDevolucion(
     sucursalId: string,
-    typeTransaction: TypeTransaction
+    typeTransaction: TypeTransaction,
   ): Promise<Partial<ITransaccion>[]> {
     const transacciones = await this.model.aggregate([
       {
@@ -124,7 +148,64 @@ export class TransactionRepository {
       { $unwind: { path: '$transaccionOrigenId', preserveNullAndEmptyArrays: true } },
       {
         $match: {
-          'transaccionOrigenId.tipoTransaccion': { $eq: typeTransaction }
+          'transaccionOrigenId.tipoTransaccion': { $eq: typeTransaction },
+          'transaccionOrigenId.paymentMethod': { $eq: TypePaymentMethod.CASH }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'usuarioId',
+          foreignField: '_id',
+          as: 'usuarioId'
+        }
+      },
+      { $unwind: { path: '$usuarioId', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'detalletransaccions',
+          localField: 'transactionDetails',
+          foreignField: '_id',
+          as: 'transactionDetails',
+          pipeline: [ // Pipeline anidado para detalletransaccions
+            {
+              $lookup: {
+                from: 'productos', // Nombre de la colección de productos
+                localField: 'productoId',
+                foreignField: '_id',
+                as: 'productoId'
+              }
+            },
+            { $unwind: { path: '$productoId', preserveNullAndEmptyArrays: true } }
+          ]
+        }
+      },
+    ]);
+
+
+    return transacciones;
+  }
+
+  async findReturnCredit(sucursalId: string): Promise<Partial<ITransaccion>[]> {
+    const transacciones = await this.model.aggregate([
+      {
+        $match: {
+          sucursalId: new mongoose.Types.ObjectId(sucursalId),
+          tipoTransaccion: 'DEVOLUCION'
+        }
+      },
+      {
+        $lookup: {
+          from: 'transaccions',
+          localField: 'transaccionOrigenId',
+          foreignField: '_id',
+          as: 'transaccionOrigenId'
+        }
+      },
+      { $unwind: { path: '$transaccionOrigenId', preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          'transaccionOrigenId.paymentMethod': { $eq: TypePaymentMethod.CREDIT }
         }
       },
       {

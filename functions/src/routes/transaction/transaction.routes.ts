@@ -53,6 +53,18 @@ router.get(
 );
 
 router.get(
+  '/credit/devolucion/:id/branch',
+  authMiddleware,
+  transactionController.getReturnCreditBySucursal.bind(transactionController)
+);
+
+router.get(
+  '/credit/:id/branch',
+  authMiddleware,
+  transactionController.findTransactionByCreditByBranch.bind(transactionController)
+)
+
+router.get(
   '/resumen/:id',
   transactionController.getResumenDiarioByCashierId.bind(transactionController)
 )

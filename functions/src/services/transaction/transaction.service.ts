@@ -7,6 +7,7 @@ import {
   ITransaccionCreate,
   ITransaccionNoDto,
   ITransaccionResponse,
+  TypePaymentMethod,
   TypeTransaction,
 } from '../../models/transaction/Transaction.model';
 import { ITransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
@@ -79,15 +80,37 @@ export class TransactionService {
 
   async findByTypeAndBranch(sucursalId: string, type: TypeTransaction): Promise<ITransaccionResponse[]> {
     // Obtener todas las ventas de la sucursal especificada
-    const transaccion = await this.repository.findByTypeAndBranch(sucursalId, type);
+    const transaccion = await this.repository.findCashByTypeAndBranch(sucursalId, type);
     let transactionDto: ITransaccionResponse[] = await this.helperMapperTransaction.mapperDataAll(transaccion);
 
     return transactionDto;
   }
 
+  async findTransactionByCreditByBranch (id:string) {
+    let result = await this.repository.findCreditByBranch(id)
+    return result
+  }
+
+  async findReturnCreditBySucursal(sucursalId: string): Promise<ITransaccionCreate[]> {
+    // Obtener todas las ventas de la sucursal especificada
+    const transaccion = await this.repository.findReturnCredit(sucursalId);
+    let ventasDto: ITransaccionCreate[] = [];
+
+    // Iterar sobre cada venta y obtener los detalles de venta
+    for (const venta of transaccion) {
+      const ventaDto = (await this.helperMapperTransaction.mapperDataReturn(
+        venta,
+        venta.transactionDetails as IDetalleTransaccion[]
+      )) as ITransaccionCreate;
+      ventasDto.push(ventaDto);
+    }
+
+    return ventasDto;
+  }
+
   async findDevolucionesBySucursalId(
     sucursalId: string,
-    typeTransaction: TypeTransaction
+    typeTransaction: TypeTransaction,
   ): Promise<ITransaccionCreate[]> {
     const ventas = await this.repository.findByTypeAndBranchDevolucion(sucursalId, typeTransaction);
 
