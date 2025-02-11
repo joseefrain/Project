@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { IDailyRegisterRepository, IDailyRegisterResponse } from '../../repositories/user/DailyRegister.repository';
 import { IDailyRegister } from '../../models/usuarios/DailyRegister.model';
 import { formatObejectId } from '../../gen/handleDecimal128';
-import { formaterInManageTimezone, getDateInManaguaTimezone, isValidDateWithFormat, parseDate, useSetDateRange } from '../../utils/date';
+import { formaterInManageTimezone, getDateInManaguaTimezone, isValidDateWithFormat, parseDate } from '../../utils/date';
 import { Types } from 'mongoose';
 
 @injectable()

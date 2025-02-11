@@ -1,5 +1,4 @@
 import { DateTime } from "luxon";
-import { format } from "path";
 
 export function getDateInManaguaTimezone(): Date {
   const hoy = new Date();
@@ -83,18 +82,11 @@ export function isValidDateWithFormat(
 export const useTodayDateRange = () => {
   const starDateJs = getDateInManaguaTimezone();
   const endDateJS = getDateInManaguaTimezone();
-  let startDateISO = new Date(starDateJs.setHours(-6, 0, 0, 0)).toISOString()
 
-  let endDateISO = new Date(endDateJS.setHours(17, 59, 59, 59)).toISOString()
+  starDateJs.setHours(0, 0, 0, 0)
+  endDateJS.setHours(23, 59, 59, 0)
 
-  return [startDateISO, endDateISO]
-};
-
-export const useSetDateRange = (startDate: Date, endDate: Date) => {
-  let startDateISO = new Date(startDate.setHours(-6, 0, 0, 0)).toISOString()
-  let endDateISO = new Date(endDate.setHours(17, 59, 59, 999)).toISOString()
-
-  return [startDateISO, endDateISO]
+  return [starDateJs, endDateJS]
 };
 
 export const parseDate = (dateStr: string, format: string): DateTime => {

@@ -2,7 +2,7 @@ import mongoose, { Model, FilterQuery, Types, mongo } from 'mongoose';
 import ResumenCajaDiario, { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 import { IAddExpenseDailySummary, IAddIncomeDailySummary } from '../../interface/ICaja';
 import { ITransaccion } from '../../models/transaction/Transaction.model';
-import { getDateInManaguaTimezone, useTodayDateRange } from '../../utils/date';
+import { getDateInManaguaTimezone,  useTodayDateRange } from '../../utils/date';
 import { DateTime } from 'luxon';
 
 export class ResumenCajaDiarioRepository {

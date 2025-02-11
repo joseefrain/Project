@@ -3,7 +3,6 @@ import { ITransaccion, Transaccion, TypeTransaction } from '../../models/transac
 import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
-import { getDateInManaguaTimezone, useSetDateRange, useTodayDateRange } from '../../utils/date';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
 
 @injectable()
@@ -272,11 +271,12 @@ export class TransactionRepository {
     startDate: Date,
     endDate: Date
   ): Promise<ITransaccion[]> {
-    const [startDateISO, endDateISO] = useSetDateRange(startDate, endDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 0);
 
     const transacciones = await Transaccion.find({
       sucursalId,
-      fechaRegistro: { $gte: startDateISO, $lte: endDateISO },
+      fechaRegistro: { $gte: startDate, $lte: endDate },
       tipoTransaccion: { $in: ['VENTA', 'COMPRA'] },
       estadoTrasaccion: 'PAGADA',
     }).populate('transactionDetails');
@@ -289,12 +289,13 @@ export class TransactionRepository {
     startDate: Date,
     endDate: Date
   ): Promise<Partial<ITransaccion>[]> {
-    const [startDateISO, endDateISO] = useSetDateRange(startDate, endDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 0);
 
     const transacciones = await Transaccion.find({
       sucursalId: branchId,
       transaccionOrigenId: { $exists: true },
-      fechaRegistro: { $gte: startDateISO, $lte: endDateISO },
+      fechaRegistro: { $gte: startDate, $lte: endDate },
       tipoTransaccion: TypeTransaction.DEVOLUCION,
     }).populate('transactionDetails');
 

@@ -17,19 +17,22 @@ export const validateMiddleware = async (
       const decoded = verifyToken(token);
       if (decoded) {
         if (decoded.rol !== ROL.ROOT) {
-          const [startDateISO, endDateISO] = useTodayDateRange();
+          const [startDate, endDate] = useTodayDateRange();
 
           const register = await DailyRegisterModel.findOne({
             userId: decoded.id,
             date: {
-              $gte: formaterInManageTimezone(new Date(startDateISO)),
-              $lte: formaterInManageTimezone(new Date(endDateISO)),
+              $gte: startDate,
+              $lte: endDate,
             },
             hourExit: null,
             deleted_at: null,
           });
 
           if (register) {
+
+            // sin lo que va despues del punt en el navegador si funciona
+            let dada = new Date(register.endWork.toString().split(".")[0]);
 
             let endWordUTC = new Date(register?.endWork!);
             const endWork = formaterInManageTimezone(new Date(endWordUTC.setHours(endWordUTC.getHours() + 6)));

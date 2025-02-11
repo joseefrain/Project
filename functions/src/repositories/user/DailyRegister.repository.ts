@@ -1,9 +1,8 @@
 import { injectable } from 'tsyringe';
 import { DailyRegisterModel, IDailyRegister } from '../../models/usuarios/DailyRegister.model';
-import mongoose, { Types, UpdateWriteOpResult } from 'mongoose';
-import { getDateInManaguaTimezone, useSetDateRange, useTodayDateRange } from '../../utils/date';
+import mongoose, { Types } from 'mongoose';
+import { getDateInManaguaTimezone, useTodayDateRange } from '../../utils/date';
 import { IUser, User } from '../../models/usuarios/User.model';
-import { formatObejectId } from '../../gen/handleDecimal128';
 
 export interface IDailyRegisterResponse extends Partial<IUser> {
   registers: IDailyRegister[];
@@ -54,8 +53,21 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
 
     const [startDateISO, endDateISO] = useTodayDateRange()
 
-    const register = await DailyRegisterModel.findOne({ userId, date: { $gte: startDateISO, $lte: endDateISO }, hourExit: null, deleted_at: null });
-    return register;
+    console.log(startDateISO, endDateISO)
+
+    let registers = await this.model.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          date: { $gte: startDateISO, $lte: endDateISO },
+          deleted_at: null,
+          hourExit: null,
+        },
+      },
+    ]);
+
+    // const register = await DailyRegisterModel.findOne({ userId, date: { $gte: new Date(startDateISO), $lte: new Date(endDateISO) }, hourExit: null, deleted_at: null });
+    return registers.length > 0 ? registers[0] : null;
 
   }
 
@@ -105,13 +117,15 @@ export class DailyRegisterRepository implements IDailyRegisterRepository {
     endDate: Date
   ): Promise<IDailyRegister[]> {
 
-    const [ startDateISO, endDateISO ] = useSetDateRange(startDate, endDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 0);
+
 
     let registers = await this.model.aggregate([
       {
         $match: {
           
-          date: { $gte: new Date(startDateISO), $lte: new Date(endDateISO) },
+          date: { $gte: startDate, $lte: endDate },
           deleted_at: null
         },
       },
@@ -154,8 +168,8 @@ async updateDailyRegistersBySucursal(sucursalId: string, updateData: Partial<IDa
     const result = await DailyRegisterModel.updateMany(
       {
         date: {
-          $gte: new Date(startDateISO),
-          $lt: new Date(endDateISO)
+          $gte: startDateISO,
+          $lte: endDateISO
         },
         userId: { $in: userIds.map(id => new mongoose.Types.ObjectId(id)) } 
       },
