@@ -151,6 +151,7 @@ export class InventarioSucursalRepository {
             productoId: 1,
             sucursalId: 1,
             stock: 1,
+            precio: 1,
             puntoReCompra: 1,
             costoUnitario: 1,
             "producto.nombre": 1, // Incluir solo el nombre del producto

@@ -80,6 +80,14 @@ export class DashboardServices {
 
     const productWithTransactions = {};
 
+    // venta
+    let totalSalesBranch = cero128
+    let totalSaleProfitBranch = cero128
+
+    // compre
+    let totalBuyBranch = cero128
+    let totalBuyProfitBranch = cero128
+
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails?.forEach((detalle) => {
         let detalleCantidad128 = new Types.Decimal128(
@@ -88,11 +96,22 @@ export class DashboardServices {
         let inventarioSucursal = branchInventoryList.find(
           (item) => item.productoId.toString() === detalle.productoId.toString()
         ) as IInventarioSucursal;
-        let costoUnitario = multiplicarDecimal128(
+
+        let totalCosto = multiplicarDecimal128(
           inventarioSucursal.costoUnitario,
           detalleCantidad128
         );
+
         let total128 = new Types.Decimal128(detalle.total.toString());
+
+        if (transaccion.tipoTransaccion === TypeTransaction.VENTA) {
+            totalSalesBranch = sumarDecimal128(totalSalesBranch, detalle.total)
+            totalSaleProfitBranch = sumarDecimal128(totalSaleProfitBranch, restarDecimal128(total128, totalCosto)
+          )
+        } else if(transaccion.tipoTransaccion === TypeTransaction.COMPRA) {
+          totalBuyBranch = sumarDecimal128(totalBuyBranch, detalle.total)
+          totalBuyProfitBranch = sumarDecimal128(totalBuyProfitBranch, restarDecimal128(total128, totalCosto))
+        }
 
         let key = `${detalle.productoId}_${transaccion.tipoTransaccion}`;
 
@@ -102,20 +121,22 @@ export class DashboardServices {
             productWithTransactions[key].total,
             detalle.total
           );
-          productWithTransactions[key].costoUnitario = sumarDecimal128(
-            productWithTransactions[key].costoUnitario,
-            costoUnitario
+          productWithTransactions[key].totalCosto = sumarDecimal128(
+            productWithTransactions[key].totalCosto,
+            totalCosto
           );
           productWithTransactions[key].gananciaNeta = sumarDecimal128(
             productWithTransactions[key].gananciaNeta,
-            restarDecimal128(total128, costoUnitario)
+            restarDecimal128(total128, totalCosto)
           );
         } else {
           productWithTransactions[key] = {
             cantidad: detalle.cantidad,
             total: detalle.total,
-            costoUnitario: costoUnitario,
-            gananciaNeta: restarDecimal128(total128, costoUnitario),
+            totalCosto: totalCosto,
+            gananciaNeta: restarDecimal128(total128, totalCosto),
+            costoUnicario: inventarioSucursal.costoUnitario,
+            precio: inventarioSucursal.precio,
           };
         }
       });
@@ -197,9 +218,13 @@ export class DashboardServices {
       };
     }
 
-    let response = {
+    let response:IResponseGetProductMetrics = {
       venta,
       compra,
+      totalBuyBranch,
+      totalBuyProfitBranch,
+      totalSalesBranch,
+      totalSaleProfitBranch
     };
 
     return response;
@@ -214,7 +239,7 @@ export class DashboardServices {
     let maxCantidad = 0;
     let maxTotal = cero128;
     let maxGananciaNeta = cero128;
-    let maxCostoUnitario = cero128;
+    let maxTotalCosto = cero128;
 
     for (const productoId in productosVendidos) {
       let [id, tipoTransaccionPro] = productoId.split('_');
@@ -229,7 +254,7 @@ export class DashboardServices {
         maxTotal = productosVendidos[key].total;
         productoMasVendido = key;
         maxGananciaNeta = productosVendidos[key].gananciaNeta;
-        maxCostoUnitario = productosVendidos[key].costoUnitario;
+        maxTotalCosto = productosVendidos[key].totalCosto;
       }
     }
 
@@ -243,7 +268,9 @@ export class DashboardServices {
       cantidad: maxCantidad,
       total: maxTotal,
       gananciaNeta: maxGananciaNeta,
-      costoUnitario: maxCostoUnitario,
+      totalCosto: maxTotalCosto,
+      costoUnicario: producto.costoUnitario,
+      precio: producto.precio,
     };
   }
 
@@ -256,7 +283,7 @@ export class DashboardServices {
     let maxCantidad = 0;
     let maxTotal = cero128;
     let maxGananciaNeta = cero128;
-    let maxCostoUnitario = cero128;
+    let maxTotalCosto = cero128;
 
     for (const productoId in productosVendidos) {
       let [id, tipoTransaccionPro] = productoId.split('_');
@@ -272,7 +299,7 @@ export class DashboardServices {
         maxTotal = productosVendidos[key].total;
         productoMasVendido = key;
         maxGananciaNeta = productosVendidos[key].gananciaNeta;
-        maxCostoUnitario = productosVendidos[key].costoUnitario;
+        maxTotalCosto = productosVendidos[key].totalCosto;
       }
     }
 
@@ -286,7 +313,9 @@ export class DashboardServices {
       cantidad: maxCantidad,
       total: maxTotal,
       gananciaNeta: maxGananciaNeta,
-      costoUnitario: maxCostoUnitario,
+      totalCosto: maxTotalCosto,
+      costoUnicario: producto.costoUnitario,
+      precio: producto.precio,
     };
   }
 
@@ -299,7 +328,7 @@ export class DashboardServices {
     let maxCantidad = 0;
     let maxTotal = cero128;
     let maxGananciaNeta = cero128;
-    let maxCostoUnitario = cero128;
+    let maxTotalCosto = cero128;
 
     for (const productoId in productosVendidos) {
       let [id, tipoTransaccionPro] = productoId.split('_');
@@ -316,7 +345,7 @@ export class DashboardServices {
         maxTotal = productosVendidos[key].total;
         productoMasVendido = key;
         maxGananciaNeta = productosVendidos[key].gananciaNeta;
-        maxCostoUnitario = productosVendidos[key].costoUnitario;
+        maxTotalCosto = productosVendidos[key].totalCosto;
       }
     }
 
@@ -330,7 +359,9 @@ export class DashboardServices {
       cantidad: maxCantidad,
       total: maxTotal,
       gananciaNeta: maxGananciaNeta,
-      costoUnitario: maxCostoUnitario,
+      totalCosto: maxTotalCosto,
+      costoUnicario: producto.costoUnitario,
+      precio: producto.precio,
     };
   }
 
@@ -352,7 +383,9 @@ export class DashboardServices {
               cantidad: productosVendidos[key].cantidad,
               total: productosVendidos[key].total,
               gananciaNeta: productosVendidos[key].gananciaNeta,
-              costoUnitario: productosVendidos[key].costoUnitario,
+              totalCosto: productosVendidos[key].totalCosto,
+              precio: productosVendidos[key].precio,
+              costoUnitario: productosVendidos[key].costoUnicario,
             }
           : null;
       })
@@ -379,7 +412,7 @@ export class DashboardServices {
   ) => {
     const cantidad = detalle.cantidad;
     const total = new Types.Decimal128(detalle.total.toString());
-    const costoUnitario = multiplicarDecimal128(
+    const totalCosto = multiplicarDecimal128(
       inventoryItem.costoUnitario,
       new Types.Decimal128(cantidad.toString())
     );
@@ -397,20 +430,22 @@ export class DashboardServices {
     if (product) {
       product.cantidad += cantidad;
       product.total = sumarDecimal128(product.total, total);
-      product.costoUnitario = sumarDecimal128(product.costoUnitario, costoUnitario);
+      product.totalCosto = sumarDecimal128(product.totalCosto, totalCosto);
       product.gananciaNeta = sumarDecimal128(
         product.gananciaNeta,
-        restarDecimal128(total, costoUnitario)
+        restarDecimal128(total, totalCosto)
       );
     } else {
       metric.listProduct.push({
         cantidad,
         total,
-        costoUnitario,
-        gananciaNeta: restarDecimal128(total, costoUnitario),
+        totalCosto: totalCosto,
+        gananciaNeta: restarDecimal128(total, totalCosto),
         //@ts-ignore
         nombre: inventoryItem.producto.nombre,
-        productoId: productIdStr
+        productoId: productIdStr,
+        costoUnicario: inventoryItem.costoUnitario,
+        precio: inventoryItem.precio,
       });
     }
   };

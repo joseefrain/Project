@@ -5,7 +5,9 @@ export interface IProductoMasVendido {
   cantidad: number;
   total: Types.Decimal128;
   gananciaNeta: Types.Decimal128;
-  costoUnitario: Types.Decimal128;
+  totalCosto: Types.Decimal128;
+  costoUnicario: Types.Decimal128;
+  precio: Types.Decimal128;
 }
 
 export interface IProductoConMasTotalVendidoDelDia {
@@ -13,7 +15,9 @@ export interface IProductoConMasTotalVendidoDelDia {
   cantidad: number;
   total: Types.Decimal128;
   gananciaNeta: Types.Decimal128;
-  costoUnitario: Types.Decimal128;
+  totalCosto: Types.Decimal128;
+  costoUnicario: Types.Decimal128;
+  precio: Types.Decimal128;
 }
 
 export interface IProductoConMasGananciaNetaDelDia {
@@ -21,7 +25,9 @@ export interface IProductoConMasGananciaNetaDelDia {
   cantidad: number;
   total: Types.Decimal128;
   gananciaNeta: Types.Decimal128;
-  costoUnitario: Types.Decimal128;
+  totalCosto: Types.Decimal128;
+  costoUnicario: Types.Decimal128;
+  precio: Types.Decimal128;
 }
 
 export interface IProductosMetrics {
@@ -29,7 +35,9 @@ export interface IProductosMetrics {
   cantidad: number;
   total: Types.Decimal128;
   gananciaNeta: Types.Decimal128;
-  costoUnitario: Types.Decimal128;
+  totalCosto: Types.Decimal128;
+  costoUnicario: Types.Decimal128;
+  precio: Types.Decimal128;
 }
 
 interface IPurshaceMetrics {
@@ -52,6 +60,10 @@ export type ISaleMetricsOrNull = ISaleMetrics | null;
 export interface IResponseGetProductMetrics {
   venta: ISaleMetricsOrNull;
   compra: IPurshaceMetricsOrNull
+  totalSalesBranch: Types.Decimal128
+  totalSaleProfitBranch: Types.Decimal128
+  totalBuyBranch:Types.Decimal128
+  totalBuyProfitBranch: Types.Decimal128
 }
 
 interface IProductResturnMetrics extends IProductosMetrics {
