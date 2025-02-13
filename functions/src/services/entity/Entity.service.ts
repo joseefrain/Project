@@ -4,19 +4,20 @@ import { EntityRepository } from '../../repositories/entity/Entity.repository';
 import mongoose, { Types } from 'mongoose';
 import { ICredito } from '../../models/credito/Credito.model';
 import { cero128, compareDecimal128, compareToCero, restarDecimal128, restarDecimal1282 } from '../../gen/handleDecimal128';
+import { TransactionRepository } from '../../repositories/transaction/transaction.repository';
 
 @injectable()
 export class EntityService {
-  constructor(@inject(EntityRepository) private repository: EntityRepository) {}
+  constructor(@inject(EntityRepository) private repository: EntityRepository, @inject(TransactionRepository) private transactionRepository: TransactionRepository) {}
 
   async createEntity(data: Partial<IEntity>): Promise<IEntity> {
-    const entityExists = await this.repository.findByIdentification(
-      data.generalInformation?.identificationNumber!
-    );
+    // const entityExists = await this.repository.findByIdentification(
+    //   data.generalInformation?.identificationNumber!
+    // );
 
-    if (entityExists) {
-      throw new Error('Entity already exists for identificationNumber');
-    }
+    // if (entityExists) {
+    //   throw new Error('Entity already exists for identificationNumber');
+    // }
 
     let state:IClientState = {
       amountReceivable: new mongoose.Types.Decimal128('0'),
@@ -95,6 +96,10 @@ export class EntityService {
   }
 
   async deleteEntity(id: string): Promise<IEntity | null> {
+    let count = await this.transactionRepository.countByEntity(id);
+    if (count) {
+      throw new Error('La entidad tiene transacciones pendientes');
+    }
     const entity = await this.repository.delete(id);
     if (!entity) {
       throw new Error('Entity not found');

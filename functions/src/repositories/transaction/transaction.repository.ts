@@ -4,6 +4,7 @@ import mongoose, { DeleteResult, mongo, Types } from 'mongoose';
 import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class TransactionRepository {
@@ -20,6 +21,15 @@ export class TransactionRepository {
   async create(data: Partial<ITransaccion>): Promise<ITransaccion> {
     const descuento = new this.model({ ...data, activo: true });
     return await descuento.save();
+  }
+
+  async countByEntity(entidadId:string): Promise<boolean> {
+    try {
+      let count = await this.model.countDocuments({ entidadId: formatObejectId(entidadId), estadoTrasaccion: TypeEstatusTransaction.PENDIENTE })
+      return count > 0
+    } catch (error) {
+      throw new Error(`Error al contar transacciones de entidad: ${error.message}`);
+    }
   }
 
   async createDetalleVenta(
