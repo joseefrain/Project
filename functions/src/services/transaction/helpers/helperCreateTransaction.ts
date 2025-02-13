@@ -18,6 +18,7 @@ import { notifyTelergramReorderThreshold } from '../../utils/telegramServices';
 import { ISucursal } from '../../../models/sucursales/Sucursal.model';
 import { ModalidadCredito, TypeCredito } from '../../../models/credito/Credito.model';
 import { ITransactionCreateCaja, TypeEstatusTransaction } from '../../../interface/ICaja';
+import { SucursalRepository } from '../../../repositories/sucursal/sucursal.repository';
 
 @injectable()
 export class HelperCreateTransaction {
@@ -32,6 +33,7 @@ export class HelperCreateTransaction {
     @inject(CreditoService) private creditoService: CreditoService,
     @inject(ResumenCajaDiarioRepository)
     private resumenRepository: ResumenCajaDiarioRepository,
+    @inject(SucursalRepository) private sucursalRepo: SucursalRepository
   ) {}
 
   async initInventory(venta: Partial<ITransaccionCreate>, userId: string) {
@@ -127,11 +129,13 @@ export class HelperCreateTransaction {
         reorderPoint: item.puntoReCompra,
       }));
 
+      let usuario = await this.sucursalRepo.findUserAdminForBranch(venta.sucursalId!);
+      let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
       notifyTelergramReorderThreshold(
-        user.username,
+        usuario?.username || 'Sin administrador',
         (listInventarioSucursal[0].sucursalId as ISucursal).nombre,
         productListReOrder,
-        user.chatId
+        puntoReCompraTelegram
       );
     }
 

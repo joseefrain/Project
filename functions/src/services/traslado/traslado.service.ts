@@ -59,13 +59,10 @@ export class TrasladoService {
       userId: model.usuarioIdEnvia!
     }
 
-    this.inventoryManagementService.init(dataInit);
-
-    
+    let inventariosSucursal = await this.inventoryManagementService.init(dataInit);
 
     try {
       
-
       let dataGeneratePedido:IGeneratePedidoHerramienta = {
         
         sucursalEnviaId: model.sucursalOrigenId!,
@@ -73,7 +70,6 @@ export class TrasladoService {
       }
 
       var traslado = await this.generatePedidoHerramienta(dataGeneratePedido );
-
 
       traslado.archivosAdjuntos =  model.archivosAdjuntos as string[] ?? [];
 
@@ -122,8 +118,8 @@ export class TrasladoService {
       let originBranch = (traslado.sucursalOrigenId as ISucursal).nombre;
       let orderId = (traslado._id as mongoose.Types.ObjectId).toString();
 
-      let pedidosChannelTelegram = "-1002348544066"
-      let puntoReCompraTelegram = "-4560332210"
+      let pedidosChannelTelegram = process.env.TELEGRAM_PEDIDOS_CHANNEL || "-1002348544066"
+      let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
 
 
       let productList = listItemDePedidos.map((item) => ({
@@ -131,21 +127,16 @@ export class TrasladoService {
         quantity: item.cantidad,
       }));
 
-      let productListReOrder = listItemDePedidos
-        .filter((item) => (item.inventarioSucursalId as IInventarioSucursal).stock < (item.inventarioSucursalId as IInventarioSucursal).puntoReCompra)
+      let productListReOrder = inventariosSucursal
+        .filter((item) => item.stock <= item.puntoReCompra)
         .map((item) => ({
-          name: ((item.inventarioSucursalId as IInventarioSucursal).productoId as IProducto).nombre,
-          currentQuantity: (item.inventarioSucursalId as IInventarioSucursal).stock,
-          reorderPoint: (item.inventarioSucursalId as IInventarioSucursal).puntoReCompra,
+          name: (item.productoId as IProducto).nombre,
+          currentQuantity: item.stock,
+          reorderPoint: item.puntoReCompra,
         }));
 
-      // notifyManagerOfIncomingProducts(username, branchName, productList, orderId, originBranch, channel);
-      // notifyReorderThreshold(username, branchName, productListReOrder, channel2);
-      // notifyWhatsappManagerOfIncomingProducts(username, branchName, productList, orderId, originBranch, user.username);
-      // listItemDePedidos.length > 0 && notifyWhatsappReorderThreshold(username, branchName, productListReOrder);
-
       notifyTelegramManagerOfIncomingProducts(username, branchName, productList, orderId, originBranch, user.username, pedidosChannelTelegram);
-      listItemDePedidos.length > 0 && notifyTelergramReorderThreshold(username, branchName, productListReOrder, puntoReCompraTelegram);
+      productListReOrder.length > 0 && notifyTelergramReorderThreshold(username, originBranch, productListReOrder, puntoReCompraTelegram);
 
       return traslado;
     } catch (error) {

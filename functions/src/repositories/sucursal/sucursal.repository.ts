@@ -8,7 +8,7 @@ import { Sucursal, ISucursal } from '../../models/sucursales/Sucursal.model';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
 import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
-import { IUser, User } from '../../models/usuarios/User.model';
+import { IUser, ROL, User } from '../../models/usuarios/User.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { IGrupoInventario } from '../../models/inventario/GrupoInventario.model';
 import { formatObejectId } from '../../gen/handleDecimal128';
@@ -179,7 +179,7 @@ export class SucursalRepository {
   }
 
   async findUserAdminForBranch(branchId: string): Promise<IUser | null> {
-    const query = this.modelUser.findOne({ sucursalId: branchId, role: "admin" });
+    const query = this.modelUser.findOne({ sucursalId: branchId, role: ROL.ADMIN });
 
     return await query.exec();
   }
