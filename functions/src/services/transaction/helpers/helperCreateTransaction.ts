@@ -133,7 +133,7 @@ export class HelperCreateTransaction {
       let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
       notifyTelergramReorderThreshold(
         usuario?.username || 'Sin administrador',
-        (listInventarioSucursal[0].sucursalId as ISucursal).nombre,
+        (usuario?.sucursalId as ISucursal).nombre || "Sin sucursal",
         productListReOrder,
         puntoReCompraTelegram
       );

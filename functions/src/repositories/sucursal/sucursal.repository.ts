@@ -179,7 +179,7 @@ export class SucursalRepository {
   }
 
   async findUserAdminForBranch(branchId: string): Promise<IUser | null> {
-    const query = this.modelUser.findOne({ sucursalId: branchId, role: ROL.ADMIN });
+    const query = this.modelUser.findOne({ sucursalId: branchId, role: ROL.ADMIN }).populate('sucursalId');
 
     return await query.exec();
   }
