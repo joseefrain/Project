@@ -58,7 +58,7 @@ const movimientoCajaSchema: Schema<IMovimientoCaja> = new Schema({
   trasaccionId: {
     type: Schema.Types.ObjectId,
     ref: 'Transaccion',
-    required: true,
+    default: null,
   },
 });
 
