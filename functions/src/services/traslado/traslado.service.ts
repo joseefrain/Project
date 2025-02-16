@@ -26,7 +26,13 @@ import { IProducto } from '../../models/inventario/Producto.model';
 import { SucursalRepository } from '../../repositories/sucursal/sucursal.repository';
 import { CustomJwtPayload } from '../../utils/jwt';
 import { notifyTelegramManagerOfIncomingProducts, notifyTelergramReorderThreshold } from '../utils/telegramServices';
-import { IAddCantidadTraslado, IGenerateItemDePedidoByPedido, IGeneratePedidoHerramienta, ISendPedidoHerramienta, ISubtractCantidadByDetalleTraslado } from '../../interface/ITraslado';
+import {
+  IAddCantidadTraslado,
+  IGenerateItemDePedidoByPedido,
+  IGeneratePedidoHerramienta,
+  ISendPedidoHerramienta,
+  ISubtractCantidadByDetalleTraslado,
+} from '../../interface/ITraslado';
 import { IHandleStockProductBranch, IInit, TipoMovimientoInventario } from '../../interface/IInventario';
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { formatObejectId } from '../../gen/handleDecimal128';
@@ -40,12 +46,8 @@ export class TrasladoService {
     @inject(SucursalRepository) private sucursalRepo: SucursalRepository
   ) {}
 
-  async postCreateEnvioProducto(
-    model: Partial<ITrasladoEnvio>,
-    user: CustomJwtPayload
-  ): Promise<ITraslado> {
-    let listDetalleTraslado: IDetalleTrasladoEnvio[] =
-      model.listDetalleTraslado!;
+  async postCreateEnvioProducto(model: Partial<ITrasladoEnvio>, user: CustomJwtPayload): Promise<ITraslado> {
+    let listDetalleTraslado: IDetalleTrasladoEnvio[] = model.listDetalleTraslado!;
 
     model.listDetalleTraslado = listDetalleTraslado;
 
@@ -53,43 +55,39 @@ export class TrasladoService {
       (detalle.inventarioSucursalId as Types.ObjectId).toString()
     );
 
-    let dataInit:IInit = {
+    let dataInit: IInit = {
       branchId: model.sucursalOrigenId!,
       listInventarioSucursalId: listInventarioSucursalIds,
-      userId: model.usuarioIdEnvia!
-    }
+      userId: model.usuarioIdEnvia!,
+    };
 
     let inventariosSucursal = await this.inventoryManagementService.init(dataInit);
 
     try {
-      
-      let dataGeneratePedido:IGeneratePedidoHerramienta = {
-        
+      let dataGeneratePedido: IGeneratePedidoHerramienta = {
         sucursalEnviaId: model.sucursalOrigenId!,
-        sucursalRecibeId: model.sucursalDestinoId!
-      }
+        sucursalRecibeId: model.sucursalDestinoId!,
+      };
 
-      var traslado = await this.generatePedidoHerramienta(dataGeneratePedido );
+      var traslado = await this.generatePedidoHerramienta(dataGeneratePedido);
 
-      traslado.archivosAdjuntos =  model.archivosAdjuntos as string[] ?? [];
+      traslado.archivosAdjuntos = (model.archivosAdjuntos as string[]) ?? [];
 
-      let dataGenerateItemDePedidoByPedido:IGenerateItemDePedidoByPedido = {
+      let dataGenerateItemDePedidoByPedido: IGenerateItemDePedidoByPedido = {
         trasladoId: (traslado._id as mongoose.Types.ObjectId).toString(),
         listDetalleTraslado: model.listDetalleTraslado,
         isNoSave: false,
-         
-      }
+      };
 
       var listItemDePedidos = await this.generateItemDePedidoByPedido(dataGenerateItemDePedidoByPedido);
 
-      traslado.detallesTraslado = listItemDePedidos.map((item:IDetalleTraslado) => (formatObejectId(item._id)));
+      traslado.detallesTraslado = listItemDePedidos.map((item: IDetalleTraslado) => formatObejectId(item._id));
 
       traslado.save();
-      
-      let dataSubtractCantidad:ISubtractCantidadByDetalleTraslado = {
-        listItems:listItemDePedidos,
-         
-      }
+
+      let dataSubtractCantidad: ISubtractCantidadByDetalleTraslado = {
+        listItems: listItemDePedidos,
+      };
       await this.subtractCantidadByDetalleTraslado(dataSubtractCantidad);
 
       //  Haciendo el envio del pedido
@@ -101,26 +99,27 @@ export class TrasladoService {
         traslado: traslado,
       };
 
-      let dataSendPedido:ISendPedidoHerramienta = {
+      let dataSendPedido: ISendPedidoHerramienta = {
         model: sendTrasladoProducto,
-         
-        usuarioEnviaId: model.usuarioIdEnvia!
-      }
+
+        usuarioEnviaId: model.usuarioIdEnvia!,
+      };
 
       await this.sendPedidoHerramienta(dataSendPedido);
 
-      let usuario = await this.sucursalRepo.findUserAdminForBranch((traslado.sucursalDestinoId._id as mongoose.Types.ObjectId).toString());
+      let usuario = await this.sucursalRepo.findUserAdminForBranch(
+        (traslado.sucursalDestinoId._id as mongoose.Types.ObjectId).toString()
+      );
 
       let username = usuario?.username || 'Sin administrador';
-      let channel = "#pedidos";
-      let channel2 = "#alertas-reorden";
+      let channel = '#pedidos';
+      let channel2 = '#alertas-reorden';
       let branchName = (traslado.sucursalDestinoId as ISucursal).nombre;
       let originBranch = (traslado.sucursalOrigenId as ISucursal).nombre;
       let orderId = (traslado._id as mongoose.Types.ObjectId).toString();
 
-      let pedidosChannelTelegram = process.env.TELEGRAM_PEDIDOS_CHANNEL || "-1002348544066"
-      let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
-
+      let pedidosChannelTelegram = process.env.TELEGRAM_PEDIDOS_CHANNEL || '-1002348544066';
+      let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || '-4560332210';
 
       let productList = listItemDePedidos.map((item) => ({
         name: ((item.inventarioSucursalId as IInventarioSucursal).productoId as IProducto).nombre,
@@ -135,25 +134,28 @@ export class TrasladoService {
           reorderPoint: item.puntoReCompra,
         }));
 
-      notifyTelegramManagerOfIncomingProducts(username, branchName, productList, orderId, originBranch, user.username, pedidosChannelTelegram);
-      productListReOrder.length > 0 && notifyTelergramReorderThreshold(username, originBranch, productListReOrder, puntoReCompraTelegram);
+      notifyTelegramManagerOfIncomingProducts(
+        username,
+        branchName,
+        productList,
+        orderId,
+        originBranch,
+        user.username,
+        pedidosChannelTelegram
+      );
+      productListReOrder.length > 0 &&
+        notifyTelergramReorderThreshold(username, originBranch, productListReOrder, puntoReCompraTelegram);
 
       return traslado;
     } catch (error) {
       console.log(error);
-
-      
-      
 
       throw new Error(error.message);
     }
   }
 
   async postRecibirPedido(model: Partial<ITrasladoRecepcion>) {
-    
-
     try {
-      
       this.inventoryManagementService.initHandleStockProductBranch(model.usuarioIdRecibe!);
 
       var pedido = (await this.trasladoRepository.findById(model.trasladoId!)) as ITraslado;
@@ -169,14 +171,11 @@ export class TrasladoService {
 
       pedido.archivosAdjuntosRecibido = model.archivosAdjuntosRecibido!;
 
-      if (
-        model.listDetalleTraslado?.filter((detalle) => detalle.recibido)
-          .length !== listItemDePedidos.length
-      ) {
+      if (model.listDetalleTraslado?.filter((detalle) => detalle.recibido).length !== listItemDePedidos.length) {
         pedido.estatusTraslado = EstatusPedido.TerminadoIncompleto;
       }
 
-      const firmaRecepcion = model.firmaRecepcion!
+      const firmaRecepcion = model.firmaRecepcion!;
 
       pedido.firmaRecepcion = firmaRecepcion;
 
@@ -186,35 +185,34 @@ export class TrasladoService {
         listDetalleTrasladoActualizado: [],
         listInventarioSucursalAgregados: [],
         listInventarioSucursalActualizado: [],
-      }
+      };
 
       for await (const element of model.listDetalleTraslado!) {
-
-        let dataAddCantidad:IAddCantidadTraslado = {
+        let dataAddCantidad: IAddCantidadTraslado = {
           model: element,
           bodegaId: (pedido.sucursalDestinoId._id as mongoose.Types.ObjectId).toString(),
           listFiles: element.archivosAdjuntosRecibido as string[],
-           
-          _detalleTralado: listItemDePedidos as IDetalleTraslado[]
-        }
 
-        let responseAdd = await this.addCantidad(dataAddCantidad);
+          _detalleTralado: listItemDePedidos as IDetalleTraslado[],
+        };
 
         var item2 = listItemDePedidos.find(
           (x) =>
-            (x.inventarioSucursalId as mongoose.Types.ObjectId).toString() ===
-            element.inventarioSucursalId.toString()
+            (x.inventarioSucursalId as mongoose.Types.ObjectId).toString() === element.inventarioSucursalId.toString()
         ) as IDetalleTraslado;
 
         if (item2.cantidad > element.cantidad) {
           pedido.estatusTraslado = EstatusPedido.TerminadoIncompleto;
         }
-        listResponseAdd.listDetalleTrasladoActualizado.concat(responseAdd.listDetalleTrasladoActualizado);
-        listResponseAdd.listDetalleTrasladoAgregados.concat(responseAdd.listDetalleTrasladoAgregados);
+
+        let responseAdd = await this.addCantidad(dataAddCantidad);
+
+        listResponseAdd.listDetalleTrasladoActualizado.push(...responseAdd.listDetalleTrasladoActualizado);
+        listResponseAdd.listDetalleTrasladoAgregados.push(...responseAdd.listDetalleTrasladoAgregados);
       }
 
-      let DTAdd = listResponseAdd.listDetalleTrasladoAgregados
-      let DTUpdate = listResponseAdd.listDetalleTrasladoActualizado
+      let DTAdd = listResponseAdd.listDetalleTrasladoAgregados;
+      let DTUpdate = listResponseAdd.listDetalleTrasladoActualizado;
 
       await this.trasladoRepository.saveAllDetalleTraslado(DTAdd);
       await this.trasladoRepository.updateAllDetalleTraslado(DTUpdate);
@@ -222,17 +220,11 @@ export class TrasladoService {
       await this.inventoryManagementService.updateAllBranchInventory();
       await this.inventoryManagementService.saveAllMovimientoInventario();
 
-      await pedido.save({});
-
-      
-      
+      await pedido.save();
 
       return pedido;
     } catch (error) {
       console.log(error);
-
-      
-      
 
       throw new Error(error.message);
     }
@@ -240,8 +232,7 @@ export class TrasladoService {
 
   async findPedidoEnviadosBySucursal(sucursalId: string) {
     try {
-      const listItemDePedidos =
-        await this.trasladoRepository.findPedidoEnviadosBySucursal(sucursalId);
+      const listItemDePedidos = await this.trasladoRepository.findPedidoEnviadosBySucursal(sucursalId);
 
       return listItemDePedidos;
     } catch (error) {
@@ -252,8 +243,7 @@ export class TrasladoService {
 
   async findPedidoRecibidosBySucursal(sucursalId: string) {
     try {
-      const listItemDePedidos =
-        await this.trasladoRepository.findPedidoRecibidosBySucursal(sucursalId);
+      const listItemDePedidos = await this.trasladoRepository.findPedidoRecibidosBySucursal(sucursalId);
 
       return listItemDePedidos;
     } catch (error) {
@@ -264,10 +254,7 @@ export class TrasladoService {
 
   async findPedidoPorRecibirBySucursal(sucursalId: string) {
     try {
-      const listItemDePedidos =
-        await this.trasladoRepository.findPedidoPorRecibirBySucursal(
-          sucursalId
-        );
+      const listItemDePedidos = await this.trasladoRepository.findPedidoPorRecibirBySucursal(sucursalId);
 
       return listItemDePedidos;
     } catch (error) {
@@ -278,8 +265,7 @@ export class TrasladoService {
 
   async findPedidoEnProcesoBySucursal(sucursalId: string) {
     try {
-      const listItemDePedidos =
-        await this.trasladoRepository.findPedidoEnProcesoBySucursal(sucursalId);
+      const listItemDePedidos = await this.trasladoRepository.findPedidoEnProcesoBySucursal(sucursalId);
 
       return listItemDePedidos;
     } catch (error) {
@@ -290,8 +276,7 @@ export class TrasladoService {
 
   async findAllItemDePedidoByPedidoDto(pedidoId: string) {
     try {
-      const listItemDePedidos =
-        await this.trasladoRepository.findAllItemDePedidoByPedidoDto(pedidoId);
+      const listItemDePedidos = await this.trasladoRepository.findAllItemDePedidoByPedidoDto(pedidoId);
 
       return listItemDePedidos;
     } catch (error) {
@@ -310,18 +295,15 @@ export class TrasladoService {
       throw new Error('Error al obtener el pedido');
     }
   }
-  async returnProductToBranch(itemDePedidoId: string, req:Request) {
-    
-
+  async returnProductToBranch(itemDePedidoId: string, req: Request) {
     try {
-
-      
-
-      const itemDePedido = (await this.trasladoRepository.findItemDePedidoById(itemDePedidoId) as IDetalleTraslado);
-      const inventarioSucursal = (await this.inventarioSucursalRepo.findById(itemDePedido.inventarioSucursalId.toString()) as IInventarioSucursal);
+      const itemDePedido = (await this.trasladoRepository.findItemDePedidoById(itemDePedidoId)) as IDetalleTraslado;
+      const inventarioSucursal = (await this.inventarioSucursalRepo.findById(
+        itemDePedido.inventarioSucursalId.toString()
+      )) as IInventarioSucursal;
 
       itemDePedido.regresado = true;
-     
+
       inventarioSucursal.stock += itemDePedido.cantidad;
       inventarioSucursal.ultimo_movimiento = getDateInManaguaTimezone();
 
@@ -342,15 +324,8 @@ export class TrasladoService {
 
       movimientoInventario.save();
 
-      
-      
-
       return inventarioSucursal;
     } catch (error) {
-
-      
-      
-
       console.error('Error al obtener el pedido:', error);
       throw new Error('Error al obtener el pedido');
     }
@@ -358,16 +333,13 @@ export class TrasladoService {
 
   // logic crear pedido
 
-  async generatePedidoHerramienta({  sucursalEnviaId, sucursalRecibeId }: IGeneratePedidoHerramienta) {
-
+  async generatePedidoHerramienta({ sucursalEnviaId, sucursalRecibeId }: IGeneratePedidoHerramienta) {
     const sucursalEnviaIdParsed = new mongoose.Types.ObjectId(sucursalEnviaId);
     const sucursalRecibeIdParsed = new mongoose.Types.ObjectId(sucursalRecibeId);
 
     const ultimoPedido = await this.trasladoRepository.getLastTrasladoBySucursalId(sucursalEnviaId);
 
-    const newConsecutivo = ultimoPedido?.consecutivo
-      ? ultimoPedido.consecutivo + 1
-      : 1;
+    const newConsecutivo = ultimoPedido?.consecutivo ? ultimoPedido.consecutivo + 1 : 1;
 
     const newPedido = new Traslado({
       estatusTraslado: 'Solicitado',
@@ -393,9 +365,7 @@ export class TrasladoService {
     let trasladoId = (traslado._id as mongoose.Types.ObjectId).toString();
 
     if (!traslado && trasladoId) {
-      traslado = (await this.trasladoRepository.findById(
-        trasladoId
-      )) as ITraslado;
+      traslado = (await this.trasladoRepository.findById(trasladoId)) as ITraslado;
     }
 
     if (!traslado) throw new Error('Pedido no encontrado');
@@ -419,28 +389,33 @@ export class TrasladoService {
     trasladoId,
     listDetalleTraslado,
     isNoSave = false,
-    
   }: IGenerateItemDePedidoByPedido): Promise<IDetalleTrasladoCreate[] | IDetalleTraslado[]> {
     let listItems: IDetalleTrasladoCreate[] = [];
 
     for (const producto of listDetalleTraslado) {
       let trasladoIdParsed = new mongoose.Types.ObjectId(trasladoId);
 
-      let archivosAdjuntosStr: string[] = (isNoSave ? producto.archivosAdjuntosRecibido : (producto as IDetalleTrasladoEnvio).archivosAdjuntos as string[]) || [];
+      let archivosAdjuntosStr: string[] =
+        (isNoSave
+          ? producto.archivosAdjuntosRecibido
+          : ((producto as IDetalleTrasladoEnvio).archivosAdjuntos as string[])) || [];
 
-
-      const archivosAdjuntos = archivosAdjuntosStr
+      const archivosAdjuntos = archivosAdjuntosStr;
 
       // Crear el objeto ItemDePedido
       const detalleTraslado: IDetalleTrasladoCreate = {
         cantidad: producto.cantidad,
         trasladoId: trasladoIdParsed,
         inventarioSucursalId: producto.inventarioSucursalId,
-        archivosAdjuntos: (isNoSave ? (producto as IDetalleTrasladoEnvio).archivosAdjuntos : archivosAdjuntos as string[]) || [],
-        archivosAdjuntosRecibido: (isNoSave ?  archivosAdjuntos : (producto as IDetalleTrasladoRecepcion).archivosAdjuntosRecibido  as string[]) || [],
+        archivosAdjuntos:
+          (isNoSave ? (producto as IDetalleTrasladoEnvio).archivosAdjuntos : (archivosAdjuntos as string[])) || [],
+        archivosAdjuntosRecibido:
+          (isNoSave
+            ? archivosAdjuntos
+            : ((producto as IDetalleTrasladoRecepcion).archivosAdjuntosRecibido as string[])) || [],
         deleted_at: null,
         comentarioEnvio: (producto as IDetalleTrasladoEnvio).comentarioEnvio,
-        comentarioRecepcion: (producto as IDetalleTrasladoRecepcion).comentarioRecibido || "",
+        comentarioRecepcion: (producto as IDetalleTrasladoRecepcion).comentarioRecibido || '',
       };
 
       listItems.push(detalleTraslado);
@@ -448,31 +423,34 @@ export class TrasladoService {
 
     // Guardar en la base de datos si `isNoSave` es falso
     if (!isNoSave) {
-     let newItems = await this.trasladoRepository.saveAllDetalleTraslado(listItems);
-     listItems = newItems;
+      let newItems = await this.trasladoRepository.saveAllDetalleTraslado(listItems);
+      listItems = newItems;
     }
 
     return listItems;
   }
 
-  async subtractCantidadByDetalleTraslado({ listItems }:ISubtractCantidadByDetalleTraslado): Promise<void> {
+  async subtractCantidadByDetalleTraslado({ listItems }: ISubtractCantidadByDetalleTraslado): Promise<void> {
     for await (const item of listItems) {
-      await this.inventoryManagementService.subtractQuantity(
-        {
-          quantity: item.cantidad,
-          inventarioSucursalId: item.inventarioSucursalId._id as mongoose.Types.ObjectId,
-           
-          isNoSave: true,
-          tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA,
-        }
-      );
+      await this.inventoryManagementService.subtractQuantity({
+        quantity: item.cantidad,
+        inventarioSucursalId: item.inventarioSucursalId._id as mongoose.Types.ObjectId,
+
+        isNoSave: true,
+        tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA,
+      });
     }
 
     await this.inventoryManagementService.updateAllBranchInventory();
     await this.inventoryManagementService.saveAllMovimientoInventario();
   }
 
-  public async addCantidad({ model, bodegaId, listFiles, _detalleTralado }: IAddCantidadTraslado): Promise<IResponseToAddCantidad> {
+  public async addCantidad({
+    model,
+    bodegaId,
+    listFiles,
+    _detalleTralado,
+  }: IAddCantidadTraslado): Promise<IResponseToAddCantidad> {
     // Inicialización del response
     const response: IResponseToAddCantidad = {
       listHistorialInventario: [],
@@ -483,20 +461,14 @@ export class TrasladoService {
     };
 
     // Validación inicial
-    const inventarioSucursalEnvia = await this.inventarioSucursalRepo.findById(
-      model.inventarioSucursalId.toString()
-    );
+    const inventarioSucursalEnvia = await this.inventarioSucursalRepo.findById(model.inventarioSucursalId.toString());
 
     if (!inventarioSucursalEnvia) {
-      throw new Error(
-        'No se encontro en el inventario de la sucursal el producto.'
-      );
+      throw new Error('No se encontro en el inventario de la sucursal el producto.');
     }
 
     const itemDePedido = _detalleTralado.find(
-      (a) =>
-        (a.inventarioSucursalId as mongoose.Types.ObjectId).toString() ===
-        model.inventarioSucursalId.toString()
+      (a) => (a.inventarioSucursalId as mongoose.Types.ObjectId).toString() === model.inventarioSucursalId.toString()
     ) as IDetalleTraslado;
 
     if (!itemDePedido) {
@@ -517,7 +489,7 @@ export class TrasladoService {
     }
 
     // Manejo de cantidades menores
-    if ((itemDePedido.cantidad > model.cantidad) && model.cantidad > 0) {
+    if (itemDePedido.cantidad > model.cantidad && model.cantidad > 0) {
       itemDePedido.recibido = false;
       itemDePedido.cantidad -= model.cantidad;
 
@@ -532,23 +504,21 @@ export class TrasladoService {
       let list: IDetalleTrasladoEnvio[] = [];
       list.push(herramientaModel);
 
-      let dataGenerateItemDePedidoByPedido:IGenerateItemDePedidoByPedido = {
+      let dataGenerateItemDePedidoByPedido: IGenerateItemDePedidoByPedido = {
         isNoSave: true,
         trasladoId: (itemDePedido.trasladoId as mongoose.Types.ObjectId).toString(),
         listDetalleTraslado: list,
-         
-      }
+      };
 
       let newItemsDePedido = await this.generateItemDePedidoByPedido(dataGenerateItemDePedidoByPedido);
 
       itemDePedido.archivosAdjuntosRecibido = newItemsDePedido[0].archivosAdjuntosRecibido as string[];
 
       newItemsDePedido.forEach((item) => (item.recibido = true));
-      newItemsDePedido.forEach((item) => (item.estadoProducto = "En Buen Estado"));
+      newItemsDePedido.forEach((item) => (item.estadoProducto = 'En Buen Estado'));
       response.listDetalleTrasladoAgregados.push(...newItemsDePedido);
     } else {
-
-      const archivosAdjuntos = listFiles
+      const archivosAdjuntos = listFiles;
 
       if (listFiles.length > 0) {
         itemDePedido.archivosAdjuntosRecibido = archivosAdjuntos;
@@ -565,15 +535,14 @@ export class TrasladoService {
         deleted_at: null,
         precio: model.precio,
         puntoReCompra: model.puntoReCompra,
-        costoUnitario: inventarioSucursalEnvia.costoUnitario
+        costoUnitario: inventarioSucursalEnvia.costoUnitario,
       });
 
-      let dataHandle:IHandleStockProductBranch = {
-         
+      let dataHandle: IHandleStockProductBranch = {
         model: inventarioSucursal,
         quantity: model.cantidad,
-        tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA
-      }
+        tipoMovimiento: TipoMovimientoInventario.TRANSFERENCIA,
+      };
 
       await this.inventoryManagementService.handleStockProductBranch(dataHandle);
     }
