@@ -97,4 +97,17 @@ export class CashRegisterController {
       next(error);
     }
   }
+
+  async findDailyCashierByCajaId(req: Request, res: Response, next: NextFunction) {
+    try {
+      const cajaId = req.params.cajaId;
+      const limit = parseInt(req.params.limit);
+      const skip = parseInt(req.params.skip);
+
+      const cajas = await this.service.findDailyCashierByCajaId(cajaId, limit, skip);
+      res.status(200).json(cajas);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -312,4 +312,8 @@ export class CashRegisterService {
   async obtenerCajasAbiertasPorUsuario(usuarioId: string): Promise<ICaja | null> {
     return await this.repository.obtenerCajasAbiertasPorUsuario(usuarioId);
   }
+
+  async findDailyCashierByCajaId(cajaId: string, limit: number = 10, skip: number = 0): Promise<IResumenCajaDiario[]> {
+    return await this.resumenRepository.findAll({ cajaId }, limit, skip);
+  }
 }

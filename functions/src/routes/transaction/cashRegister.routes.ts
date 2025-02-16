@@ -40,5 +40,7 @@ router.get('/cerradas/:id', authMiddleware, cashRegisterController.obtenerCajasC
 
 router.post('/userAndBranch', authMiddleware, cashRegisterController.obtenerCajasAbiertasPorUsuarioYSucursal.bind(cashRegisterController));
 
+router.get('/daily/:cajaId/:limit/:skip', authMiddleware, cashRegisterController.findDailyCashierByCajaId.bind(cashRegisterController));
+
 
 export default router;
