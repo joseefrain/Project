@@ -47,6 +47,19 @@ const movimientoCajaSchema: Schema<IMovimientoCaja> = new Schema({
     required: true,
     default: Date.now,
   },
+  esDineroExterno: {
+    type: Boolean,
+    default: false,
+  },
+  montoExterno: {
+    type: Schema.Types.Decimal128,
+    default: null,
+  },
+  trasaccionId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Transaccion',
+    required: true,
+  },
 });
 
 // Exportamos el modelo como `MovimientoCaja`

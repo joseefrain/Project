@@ -71,7 +71,9 @@ export interface ITransactionCreateCaja {
   cambioCliente?:number;
   tipoTransaccion: TypeTransaction;
   userId: string;
-  id: mongoose.Types.ObjectId | null
+  id: mongoose.Types.ObjectId | null;
+  esDineroExterno: boolean;
+  montoExterno?: mongoose.Types.Decimal128 | null;
 }
 
 export interface IActualizarMontoEsperado {

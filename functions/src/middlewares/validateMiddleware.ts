@@ -25,7 +25,6 @@ export const validateMiddleware = async (
               $gte: startDate,
               $lte: endDate,
             },
-            hourExit: null,
             deleted_at: null,
           });
 

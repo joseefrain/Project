@@ -5,17 +5,20 @@ import { DetalleTransaccion, IDetalleTransaccion } from '../../models/transactio
 import { ITransaccionDescuentosAplicados, TransaccionDescuentosAplicados } from '../../models/transaction/TransactionDescuentosAplicados.model';
 import { TypeEstatusTransaction } from '../../interface/ICaja';
 import { formatObejectId } from '../../gen/handleDecimal128';
+import MovimientoCaja, { IMovimientoCaja } from '../../models/cashRegister/CashRegisterMovement.model';
 
 @injectable()
 export class TransactionRepository {
   private model: typeof Transaccion;
   private modelDetalleTransaction: typeof DetalleTransaccion;
   private modelVentaDescuentosAplicados: typeof TransaccionDescuentosAplicados;
+  private modelMovimientoCaja: typeof MovimientoCaja;
 
   constructor() {
     this.model = Transaccion;
     this.modelDetalleTransaction = DetalleTransaccion;
     this.modelVentaDescuentosAplicados = TransaccionDescuentosAplicados;
+    this.modelMovimientoCaja = MovimientoCaja;
   }
 
   async create(data: Partial<ITransaccion>): Promise<ITransaccion> {
@@ -459,5 +462,13 @@ export class TransactionRepository {
     ]);
 
     return transacciones;
+  }
+
+  async findMovementCashierByTransactionId(id: string): Promise<IMovimientoCaja | null> {
+    const movimientos = await this.modelMovimientoCaja.findOne({
+      trasaccionId: formatObejectId(id),
+    });
+
+    return movimientos;
   }
 }

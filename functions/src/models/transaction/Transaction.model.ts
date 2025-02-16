@@ -142,6 +142,7 @@ export interface ITransaccionResponse {
   totalAjusteACobrar:Types.Decimal128;
   tipoTransaccionOrigen: TypeTransaction | null;
   username: string;
+  montoExterno?: Types.Decimal128 | null;
 }
 
 export interface ITransaccionNoDto {

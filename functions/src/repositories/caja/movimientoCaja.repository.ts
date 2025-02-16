@@ -12,7 +12,8 @@ export class MovimientoCajaRepository {
   async create(data: Partial<IMovimientoCaja>): Promise<IMovimientoCaja> {
     try {
       const movimiento = new this.model(data);
-      return await movimiento.save();
+      const newCreated = await movimiento.save();
+      return newCreated
     } catch (error) {
       throw new Error(`Error al crear MovimientoCaja: ${error.message}`);
     }

@@ -97,6 +97,7 @@ export class TransactionController {
       next(error);
     }
   }
+  
   async findAllVentaBySucursalIdAndUserId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const ventas = await this.service.findAllVentaBySucursalIdAndUserId(req.params.id, ((req.user as CustomJwtPayload).id as mongoose.Types.ObjectId).toString());

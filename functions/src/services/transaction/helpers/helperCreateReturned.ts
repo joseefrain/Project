@@ -125,6 +125,8 @@ export class HelperCreateReturned {
       subtotal: parseFloat(totalDevolucion128.toString()),
       monto: data.monto,
       cambioCliente: 0,
+      esDineroExterno: data.esDineroExterno,
+      montoExterno: data.montoExterno
     } as ITransactionCreateCaja;
 
     const datosActualizar = {
@@ -161,7 +163,7 @@ export class HelperCreateReturned {
 
     // let devolucionMapeada = await this.getTransactionById(formatObejectId(newReturn._id).toString());
 
-    let devolucionMapeada: ITransaccionCreate = (await this.helperMapperTransaction.mapperData(
+    let devolucionMapeada: ITransaccionCreate = (await this.helperMapperTransaction.mapperDataReturn(
       newReturn,
       listDetailTransaction
     )) as ITransaccionCreate;

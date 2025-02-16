@@ -28,6 +28,7 @@ export interface IEntity extends Document {
   state?: IClientState;
   Products?: IBranchProducts[];
   entities?: string;
+  deleted_at: Date | null;
 }
 
 export interface IClientState {
@@ -63,6 +64,11 @@ export const EntitySchema: Schema<IEntity> = new Schema({
   entities: {
     type: Schema.Types.Mixed,
   },
+  deleted_at: {
+    type: Date,
+    default: null,
+  },
+
 });
 
 export const Entity = mongoose.model<IEntity>('Entidades', EntitySchema);

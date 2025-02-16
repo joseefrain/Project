@@ -17,7 +17,7 @@ import { ArqueoCajaRepository } from '../../repositories/caja/countingCash.repos
 import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { UserService } from '../user/User.service';
-import { formatObejectId } from '../../gen/handleDecimal128';
+import { formatDecimal128, formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class CashRegisterService {
@@ -210,13 +210,12 @@ export class CashRegisterService {
     const { data } = props;
     let cajaId = data.cajaId!;
 
-    let total = new Types.Decimal128(data.total!.toString());
     let monto = new Types.Decimal128(data.monto!.toString());
     let cambio = new Types.Decimal128(data.cambioCliente!.toString());
 
     let dataAcualizacion = {
       cajaId,
-      monto: total,
+      monto,
       aumentar: data.tipoTransaccion === 'VENTA' ? true : false,
     };
 
@@ -231,7 +230,10 @@ export class CashRegisterService {
       cajaId: caja._id as Types.ObjectId,
       cambioCliente: cambio,
       trasaccionId: data.id,
+      esDineroExterno: data?.esDineroExterno ?? false,
+      montoExterno: formatDecimal128(data.montoExterno ?? 0)
     };
+
     await this.movimientoRepository.create(movimiento);
 
     return caja;

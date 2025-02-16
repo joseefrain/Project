@@ -142,6 +142,8 @@ export class HelperMapperTransaction {
       products.push(producto);
     }
 
+    let movimientoCaja = await this.repository.findMovementCashierByTransactionId(formatObejectId(venta._id).toString())
+
     let tipoTransaccionOrigen = (
       venta.transaccionOrigenId ? (venta.transaccionOrigenId as ITransaccion).tipoTransaccion : null
     ) as TypeTransaction;
@@ -161,6 +163,7 @@ export class HelperMapperTransaction {
       tipoTransaccionOrigen,
       totalAjusteACobrar: venta?.totalAjusteACobrar as Types.Decimal128,
       username: user.username,
+      montoExterno: movimientoCaja?.montoExterno
     };
 
     return ventaDto;
