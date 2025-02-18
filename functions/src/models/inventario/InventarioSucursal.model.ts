@@ -13,7 +13,10 @@ export interface IInventarioSucursal extends Document {
   costoUnitario: mongoose.Types.Decimal128;
 }
 
-export type IInventarioSucursalUpdate = Omit<IInventarioSucursal, 'deleted_at' | 'productoId' | 'sucursalId' | 'ultimo_movimiento'>;
+export interface IInventarioSucursalUpdate extends Omit<IInventarioSucursal, 'deleted_at' | 'productoId' | 'sucursalId' | 'ultimo_movimiento'> {
+  nombre?: string;
+  descripcion?: string;
+}
 
 const inventarioSucursalSchema: Schema = new Schema(
   {

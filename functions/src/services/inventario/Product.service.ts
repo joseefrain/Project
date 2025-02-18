@@ -59,11 +59,24 @@ export class ProductoService {
   async updateProduct(
     id: string,
     data: Partial<IInventarioSucursalUpdate>
-  ): Promise<IInventarioSucursal | null> {
+  ): Promise<Partial<IInventarioSucursalUpdate> | null> {
     let product = (await this.inventarioSucursalRepository.findById(id) as IInventarioSucursal);
 
     if (!product) {
       throw new Error('Product not found');
+    }
+
+    const productGeneral = await this.repository.findById(product.productoId.toString());
+
+    if (!productGeneral) {
+      throw new Error('Product not found');
+    }
+
+    productGeneral.nombre = data?.nombre ?  data?.nombre : productGeneral.nombre;
+    productGeneral.descripcion = data?.descripcion ? data?.descripcion : productGeneral.descripcion;
+
+    if (data?.nombre || data?.descripcion) {
+      productGeneral.save();
     }
 
     product.stock = data.stock as number;
@@ -76,7 +89,8 @@ export class ProductoService {
     if (!branch) {
       throw new Error('Product not found');
     }
-    return branch;
+
+    return {...branch.toJSON(), nombre: productGeneral.nombre, descripcion: productGeneral.descripcion};
   }
 
   async deleteProduct(id: string ): Promise<IInventarioSucursal | null> {
