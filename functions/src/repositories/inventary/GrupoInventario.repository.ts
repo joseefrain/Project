@@ -111,9 +111,9 @@ export class GrupoInventarioRepository {
     limit: number = 10,
     skip: number = 0
   ): Promise<IGrupoInventario[]> {
-    const query = this.model.find({ ...filters, deleted_at: null });
+    const query = this.model.find({ deleted_at: null });
 
-    return await query.limit(limit).skip(skip).exec();
+    return await query.exec();
   }
 
   async findByName(
