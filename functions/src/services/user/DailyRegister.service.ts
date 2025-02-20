@@ -27,7 +27,7 @@ export class DailyRegisterService {
 
     let date = getDateInManaguaTimezone();
     let startWork = new Date(getDateInManaguaTimezone().setHours(8, 0, 0, 0));
-    let endWork = new Date(getDateInManaguaTimezone().setHours(17, 0, 0, 0));
+    let endWork = new Date(getDateInManaguaTimezone().setHours(18, 30, 0, 0));
 
     let hourEntry = getDateInManaguaTimezone();
 

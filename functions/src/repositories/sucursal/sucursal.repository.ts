@@ -91,7 +91,7 @@ export class SucursalRepository {
         let sucursalId = inventarioSucursal.sucursalId as ISucursal;
         let productoIdStr = formatObejectId(producto._id).toString();
         let productoGrupo = listProductoGrupos.find(item => item.productoId.toString() === productoIdStr)
-        let grupoId = productoGrupo ? formatObejectId(productoGrupo?.grupoId) : undefined;
+        let grupoId = productoGrupo ? formatObejectId(productoGrupo?.grupoId._id) : undefined;
 
         if (producto.deleted_at == null) {
           newProducts.push({
@@ -109,7 +109,8 @@ export class SucursalRepository {
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode || "",
             costoUnitario: inventarioSucursal.costoUnitario,
-            groupId: grupoId
+            groupId: grupoId,
+            groupName: (productoGrupo?.grupoId as IGrupoInventario).nombre ?? ""
           });
         }
       }
@@ -185,7 +186,13 @@ export class SucursalRepository {
   }
 
   async findProductGroupsByIds(produstIds: string[], sucursalId: string): Promise<IProductosGrupos[]> {
-    const grupos = await this.modelProductosGrupos.find({ productoId: { $in: produstIds }, sucursalId: sucursalId, deleted_at: null });
+    const grupos = await this.modelProductosGrupos.find({ productoId: { $in: produstIds }, sucursalId: sucursalId, deleted_at: null }).populate('grupoId');
+
+    return grupos;
+  }
+
+  async findProductShortageGroupsByIds(produstIds: string[]): Promise<IProductosGrupos[]> {
+    const grupos = await this.modelProductosGrupos.find({ productoId: { $in: produstIds }, deleted_at: null }).populate('grupoId');
 
     return grupos;
   }

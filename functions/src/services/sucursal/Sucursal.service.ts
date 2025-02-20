@@ -2,10 +2,12 @@
 import { injectable, inject } from 'tsyringe';
 import { ISucursal } from '../../models/sucursales/Sucursal.model';
 import { SucursalRepository } from '../../repositories/sucursal/sucursal.repository';
-import { IBranchProducts } from '../../models/inventario/Producto.model';
+import { IBranchProducts, IProducto, IProductShortage } from '../../models/inventario/Producto.model';
 import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
 import { CashRegisterService } from '../utils/cashRegister.service';
+import { formatObejectId } from '../../gen/handleDecimal128';
+import { IGrupoInventario } from '../../models/inventario/GrupoInventario.model';
 
 @injectable()
 export class SucursalService {
@@ -75,7 +77,45 @@ export class SucursalService {
     return this.repository.restore(id);
   }
 
-  async searchForStockProductsAtBranch(branchId: string): Promise<IInventarioSucursal[]> {
-    return this.repository.searchForStockProductsAtBranch(branchId);
+  async searchForStockProductsAtBranch(branchId: string): Promise<IProductShortage[]> {
+    const products = await this.repository.searchForStockProductsAtBranch(branchId);
+
+    let listProductoIdIdsSets = new Set<any>();
+
+      products.forEach((inventarioSucursal) => {
+        if (inventarioSucursal.deleted_at == null) {
+          let producto = inventarioSucursal.productoId as IProducto;
+
+          if (producto.deleted_at == null) {
+            listProductoIdIdsSets.add(producto._id);
+          }
+        }
+      });
+  
+      // Si necesitas un array al final:
+      const listProductoIdIds = Array.from(listProductoIdIdsSets);
+
+      let listProductoGrupos = await this.repository.findProductShortageGroupsByIds(listProductoIdIds);
+
+      let newProducts: IProductShortage[] = [];
+
+    products.forEach((inventarioSucursal) => {
+      if (inventarioSucursal.deleted_at == null) {
+        let producto = inventarioSucursal.productoId as IProducto;
+        let productoIdStr = formatObejectId(producto._id).toString();
+        let productoGrupo = listProductoGrupos.find(item => item.productoId.toString() === productoIdStr)
+        let grupoId = productoGrupo ? formatObejectId(productoGrupo?.grupoId._id) : undefined;
+
+        if (producto.deleted_at == null) {
+          newProducts.push({
+            ...inventarioSucursal.toObject(),
+            groupName: (productoGrupo?.grupoId as IGrupoInventario).nombre ?? "",
+            grupoId: grupoId
+          });
+        }
+      }
+    });
+
+    return newProducts;
   }
 }

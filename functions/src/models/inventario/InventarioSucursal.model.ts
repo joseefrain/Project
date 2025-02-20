@@ -16,6 +16,7 @@ export interface IInventarioSucursal extends Document {
 export interface IInventarioSucursalUpdate extends Omit<IInventarioSucursal, 'deleted_at' | 'productoId' | 'sucursalId' | 'ultimo_movimiento'> {
   nombre?: string;
   descripcion?: string;
+  barCode?: string;
 }
 
 const inventarioSucursalSchema: Schema = new Schema(

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IMoneda } from '../moneda/Moneda.model';
+import { IInventarioSucursal } from './InventarioSucursal.model';
 
 export interface IProducto extends Document {
   nombre: string;
@@ -27,20 +28,12 @@ export interface IBranchProducts {
   groupId?: mongoose.Types.ObjectId;
   create_at: Date;
   update_at: Date;
+  groupName?: string;
 }
 
-export interface IProductShortage {
-  nombre: string;
-  descripcion: string;
-  monedaId: mongoose.Types.ObjectId | IMoneda;
-  grupoId: mongoose.Types.ObjectId;
-  grupoNombre: string;
-  deleted_at: Date | null;
-  id: mongoose.Types.ObjectId;
-  barCode: string;
-  costoUnitario: mongoose.Types.Decimal128;
-  create_at: Date;
-  update_at: Date;
+export interface IProductShortage extends Partial<IInventarioSucursal> {
+  grupoId?: mongoose.Types.ObjectId;
+  groupName?: string;
 }
 
 export interface IProductInTransit {

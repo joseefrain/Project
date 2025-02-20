@@ -74,6 +74,7 @@ export class ProductoService {
 
     productGeneral.nombre = data?.nombre ?  data?.nombre : productGeneral.nombre;
     productGeneral.descripcion = data?.descripcion ? data?.descripcion : productGeneral.descripcion;
+    productGeneral.barCode = data?.barCode ? data?.barCode : productGeneral.barCode;
 
     if (data?.nombre || data?.descripcion) {
       productGeneral.save();
