@@ -13,7 +13,7 @@ export class ResumenCajaDiarioRepository {
   }
 
   // Método para crear un nuevo resumen de caja diario
-  async create(cajaId:Types.ObjectId, sucursalId: Types.ObjectId): Promise<IResumenCajaDiario> {
+  async create(cajaId:Types.ObjectId, sucursalId: Types.ObjectId, montoInicial: Types.Decimal128): Promise<IResumenCajaDiario> {
     try {
       let fecha  = getDateInManaguaTimezone();
       fecha.setHours(0, 0, 0, 0);
@@ -28,10 +28,10 @@ export class ResumenCajaDiarioRepository {
         sucursalId,
         totalVentas: new Types.Decimal128('0'),
         totalCompras: new Types.Decimal128('0'),
-        montoFinalSistema: new Types.Decimal128('0'),
+        montoFinalSistema: montoInicial,
         fecha,
         cajaId: cajaId,
-        totalIngresos: new Types.Decimal128('0'),
+        totalIngresos: montoInicial,
         totalEgresos: new Types.Decimal128('0'),
         ventas: [],
         compras: []

@@ -75,7 +75,7 @@ export class CashRegisterService {
 
       await this.movimientoRepository.create(movimiento);
 
-      await this.resumenRepository.create(caja._id as Types.ObjectId, sucursalId);
+      await this.resumenRepository.create(caja._id as Types.ObjectId, sucursalId, formatDecimal128(montoInicial));
 
       return caja;
     } catch (error) {
