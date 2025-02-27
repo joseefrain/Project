@@ -212,10 +212,13 @@ export class CashRegisterService {
 
     let monto = new Types.Decimal128(data.monto!.toString());
     let cambio = new Types.Decimal128(data.cambioCliente!.toString());
+    let total = new Types.Decimal128(data.total!.toString());
+
+    let montoAumentar = data.esDineroExterno ? monto : total;
 
     let dataAcualizacion = {
       cajaId,
-      monto,
+      monto: montoAumentar,
       aumentar: data.tipoTransaccion === 'VENTA' ? true : false,
     };
 
