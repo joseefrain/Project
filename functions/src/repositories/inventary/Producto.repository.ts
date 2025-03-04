@@ -9,8 +9,9 @@ import { ISucursal, Sucursal } from '../../models/sucursales/Sucursal.model';
 import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario/InventarioSucursal.model';
 import mongoose from 'mongoose';
 import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
-import { GrupoInventario } from '../../models/inventario/GrupoInventario.model';
+import { GrupoInventario, IGrupoInventario } from '../../models/inventario/GrupoInventario.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { formatObejectId } from '../../gen/handleDecimal128';
 
 @injectable()
 export class ProductoRepository {
@@ -296,12 +297,32 @@ async removeDuplicateInventario(): Promise<void> {
       .find({ deleted_at: null })
       .populate([{ path: 'productoId' }, { path: 'sucursalId' }]);
 
+
+      let listProductoIdIdsSets = new Set<any>();
+
+      products.forEach((inventarioSucursal) => {
+        if (inventarioSucursal.deleted_at == null) {
+          let producto = inventarioSucursal.productoId as IProducto;
+
+          if (producto.deleted_at == null) {
+            listProductoIdIdsSets.add(producto._id);
+          }
+        }
+      });
+  
+      // Si necesitas un array al final:
+      const listProductoIdIds = Array.from(listProductoIdIdsSets);
+
+      let listProductoGrupos = await this.findProductGroupsByIds(listProductoIdIds);
+
     let newProducts: IBranchProductsAll[] = [];
 
     products.forEach((inventarioSucursal) => {
       if (inventarioSucursal.deleted_at == null) {
         let producto = inventarioSucursal.productoId as IProducto;
         let sucursalId = inventarioSucursal.sucursalId as ISucursal;
+        let productoIdStr = formatObejectId(producto._id).toString();
+        let productoGrupo = listProductoGrupos.find(item => item.productoId.toString() === productoIdStr)
 
         if (producto.deleted_at == null) {
           newProducts.push({
@@ -320,7 +341,8 @@ async removeDuplicateInventario(): Promise<void> {
             nombreSucursal: sucursalId.nombre,
             puntoReCompra: inventarioSucursal.puntoReCompra,
             barCode: producto.barCode || "",
-            costoUnitario: inventarioSucursal.costoUnitario
+            costoUnitario: inventarioSucursal.costoUnitario,
+            groupName: (productoGrupo?.grupoId as IGrupoInventario).nombre ?? "",
           });
         }
       }
@@ -344,5 +366,11 @@ async removeDuplicateInventario(): Promise<void> {
     });
 
     return productos;
+  }
+
+  async findProductGroupsByIds(produstIds: string[]): Promise<IProductosGrupos[]> {
+    const grupos = await this.modelProductoGrupo.find({ productoId: { $in: produstIds }, deleted_at: null }).populate('grupoId');
+
+    return grupos;
   }
 }

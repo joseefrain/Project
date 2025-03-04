@@ -61,6 +61,7 @@ export class CashRegisterService {
       let caja = await this.repository.abrirCaja(dataOpenCash);
 
       if (caja.hasMovementCashier) {
+        await this.resumenRepository.addIncomeDailySummary({ cajaId, sucursalId: sucursalIdStr, ingreso: montoInicial });
         return caja;
       }
 
