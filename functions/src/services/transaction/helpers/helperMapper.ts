@@ -24,7 +24,7 @@ export class HelperMapperTransaction {
   async mapperData(venta: ITransaccion, detalleVenta: IDetalleTransaccion[]): Promise<ITransaccionResponse> {
     let products: ITrasaccionProductoResponse[] = [];
 
-    for await (const detalle of detalleVenta) {
+    for await (const detalle of detalleVenta.filter((element:IDetalleTransaccion) => element.deleted_at === null)) {
       let descuento: IDescuentoAplicado | null = null;
 
       if (!compareToCero(detalle.descuento)) {
@@ -120,7 +120,7 @@ export class HelperMapperTransaction {
   ): Promise<ITransaccionResponse> {
     let products: ITrasaccionProductoResponse[] = [];
 
-    for await (const detalle of detalleVenta) {
+    for await (const detalle of detalleVenta.filter((detalle) => detalle.cantidad !== 0)) {
       let descuento: IDescuentoAplicado | null = null;
 
       let productoDetalle = detalle.productoId as IProducto;

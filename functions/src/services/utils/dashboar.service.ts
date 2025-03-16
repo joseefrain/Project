@@ -10,6 +10,7 @@ import { IInventarioSucursal } from '../../models/inventario/InventarioSucursal.
 import {
   cero128,
   compareDecimal128,
+  formatObejectId,
   multiplicarDecimal128,
   restarDecimal128,
   sumarDecimal128,
@@ -27,6 +28,7 @@ import {
 import { isValidDateWithFormat, parseDate } from '../../utils/date';
 import { ITransaccion, TypeTransaction, TypeTransactionReturn } from '../../models/transaction/Transaction.model';
 import { IDetalleTransaccion } from '../../models/transaction/DetailTransaction.model';
+import { ResumenCajaDiarioRepository } from '../../repositories/caja/DailyCashSummary.repository';
 
 @injectable()
 export class DashboardServices {
@@ -38,7 +40,7 @@ export class DashboardServices {
     private transactionRepository: TransactionRepository,
     @inject(InventarioSucursalRepository)
     private inventarioSucursalRepository: InventarioSucursalRepository,
-    @inject(ProductoRepository) private productoRepository: ProductoRepository
+    @inject(ResumenCajaDiarioRepository) private resumenRepository: ResumenCajaDiarioRepository
   ) {}
 
   async getTransactionMetrics(
@@ -51,76 +53,80 @@ export class DashboardServices {
 
     if (!fechaInicio || !fechaFin) throw new Error('Fecha no valida');
 
-    const transacciones =
-      await this.transactionRepository.findPaidTransactionsDayBySucursalId(
-        sucursalId,
-        fechaInicio.toJSDate(),
-        fechaFin.toJSDate()
-      );
+    const resumenesDiarios = await this.resumenRepository.findByBranchId(sucursalId, fechaInicio, fechaFin);
 
-    if (transacciones.length === 0)
-      throw new Error('No hay transacciones para el día');
+    let listTransactionIdIdsSets = new Set<any>();
+
+    resumenesDiarios.forEach((resumen) => {
+      resumen.ventas?.forEach((venta) => {
+        listTransactionIdIdsSets.add(venta); // Agregar a Set
+      });
+    });
+
+    resumenesDiarios.forEach((resumen) => {
+      resumen.compras?.forEach((compra) => {
+        listTransactionIdIdsSets.add(compra); // Agregar a Set
+      });
+    });
+
+    // Si necesitas un array al final:
+    const listTransactionIdIds = Array.from(listTransactionIdIdsSets);
+
+
+    const transacciones = await this.transactionRepository.findByIds(listTransactionIdIds);
+
+    if (transacciones.length === 0) throw new Error('No hay transacciones para el día');
 
     let listProductoIdIdsSets = new Set<any>();
 
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails?.forEach((detalle) => {
-        listProductoIdIdsSets.add(detalle.productoId.toString()); // Agregar a Set
+        listProductoIdIdsSets.add(detalle.productoId._id.toString()); // Agregar a Set
       });
     });
 
     // Si necesitas un array al final:
     const listProductoIdIds = Array.from(listProductoIdIdsSets);
 
-    const branchInventoryList =
-      await this.inventarioSucursalRepository.getListProductByProductIdsMetricas(
-        sucursalId,
-        listProductoIdIds
-      );
+    const branchInventoryList = await this.inventarioSucursalRepository.getListProductByProductIdsMetricas(
+      sucursalId,
+      listProductoIdIds
+    );
 
     const productWithTransactions = {};
 
     // venta
-    let totalSalesBranch = cero128
-    let totalSaleProfitBranch = cero128
+    let totalSalesBranch = cero128;
+    let totalSaleProfitBranch = cero128;
 
     // compre
-    let totalBuyBranch = cero128
-    let totalBuyProfitBranch = cero128
+    let totalBuyBranch = cero128;
+    let totalBuyProfitBranch = cero128;
 
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails?.forEach((detalle) => {
-        let detalleCantidad128 = new Types.Decimal128(
-          detalle.cantidad.toString()
-        );
+        let detalleCantidad128 = new Types.Decimal128(detalle.cantidad.toString());
         let inventarioSucursal = branchInventoryList.find(
-          (item) => item.productoId.toString() === detalle.productoId.toString()
+          (item) => item.productoId.toString() === detalle.productoId._id.toString()
         ) as IInventarioSucursal;
 
-        let totalCosto = multiplicarDecimal128(
-          inventarioSucursal.costoUnitario,
-          detalleCantidad128
-        );
+        let totalCosto = multiplicarDecimal128(inventarioSucursal.costoUnitario, detalleCantidad128);
 
         let total128 = new Types.Decimal128(detalle.total.toString());
 
         if (transaccion.tipoTransaccion === TypeTransaction.VENTA) {
-            totalSalesBranch = sumarDecimal128(totalSalesBranch, detalle.total)
-            totalSaleProfitBranch = sumarDecimal128(totalSaleProfitBranch, restarDecimal128(total128, totalCosto)
-          )
-        } else if(transaccion.tipoTransaccion === TypeTransaction.COMPRA) {
-          totalBuyBranch = sumarDecimal128(totalBuyBranch, detalle.total)
-          totalBuyProfitBranch = sumarDecimal128(totalBuyProfitBranch, restarDecimal128(total128, totalCosto))
+          totalSalesBranch = sumarDecimal128(totalSalesBranch, detalle.total);
+          totalSaleProfitBranch = sumarDecimal128(totalSaleProfitBranch, restarDecimal128(total128, totalCosto));
+        } else if (transaccion.tipoTransaccion === TypeTransaction.COMPRA) {
+          totalBuyBranch = sumarDecimal128(totalBuyBranch, detalle.total);
+          totalBuyProfitBranch = sumarDecimal128(totalBuyProfitBranch, restarDecimal128(total128, totalCosto));
         }
 
-        let key = `${detalle.productoId}_${transaccion.tipoTransaccion}`;
+        let key = `${detalle.productoId._id.toString()}_${transaccion.tipoTransaccion}`;
 
         if (productWithTransactions[key]) {
           productWithTransactions[key].cantidad += detalle.cantidad;
-          productWithTransactions[key].total = sumarDecimal128(
-            productWithTransactions[key].total,
-            detalle.total
-          );
+          productWithTransactions[key].total = sumarDecimal128(productWithTransactions[key].total, detalle.total);
           productWithTransactions[key].totalCosto = sumarDecimal128(
             productWithTransactions[key].totalCosto,
             totalCosto
@@ -145,11 +151,7 @@ export class DashboardServices {
     let venta: ISaleMetricsOrNull = null;
     let compra: IPurshaceMetricsOrNull = null;
 
-    if (
-      transacciones.some(
-        (transaccion) => transaccion.tipoTransaccion === TypeTransaction.VENTA
-      )
-    ) {
+    if (transacciones.some((transaccion) => transaccion.tipoTransaccion === TypeTransaction.VENTA)) {
       // Ventas
       let productoMasVendido = await this.getProductoMasTransaccionado(
         productWithTransactions,
@@ -161,18 +163,16 @@ export class DashboardServices {
         branchInventoryList,
         TypeTransaction.VENTA
       );
-      let productoConMasTotalVenidioDelDia =
-        await this.getProductoConMasTotalTransaccionado(
-          productWithTransactions,
-          branchInventoryList,
-          TypeTransaction.VENTA
-        );
-      let productoConMasGananciaNetaDelDia =
-        await this.getProductoConMasGananciaNetaDelDia(
-          productWithTransactions,
-          branchInventoryList,
-          TypeTransaction.VENTA
-        );
+      let productoConMasTotalVenidioDelDia = await this.getProductoConMasTotalTransaccionado(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.VENTA
+      );
+      let productoConMasGananciaNetaDelDia = await this.getProductoConMasGananciaNetaDelDia(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.VENTA
+      );
 
       venta = {
         productoMayorCantidad: productoMasVendido,
@@ -182,11 +182,7 @@ export class DashboardServices {
       };
     }
 
-    if (
-      transacciones.some(
-        (transaccion) => transaccion.tipoTransaccion === TypeTransaction.COMPRA
-      )
-    ) {
+    if (transacciones.some((transaccion) => transaccion.tipoTransaccion === TypeTransaction.COMPRA)) {
       let productoMasComprado = await this.getProductoMasTransaccionado(
         productWithTransactions,
         branchInventoryList,
@@ -197,18 +193,16 @@ export class DashboardServices {
         branchInventoryList,
         TypeTransaction.COMPRA
       );
-      let productoConMasTotalComprado =
-        await this.getProductoConMasTotalTransaccionado(
-          productWithTransactions,
-          branchInventoryList,
-          TypeTransaction.COMPRA
-        );
-      let productoRentableComprado =
-        await this.getProductoConMasGananciaNetaDelDia(
-          productWithTransactions,
-          branchInventoryList,
-          TypeTransaction.COMPRA
-        );
+      let productoConMasTotalComprado = await this.getProductoConMasTotalTransaccionado(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.COMPRA
+      );
+      let productoRentableComprado = await this.getProductoConMasGananciaNetaDelDia(
+        productWithTransactions,
+        branchInventoryList,
+        TypeTransaction.COMPRA
+      );
 
       compra = {
         productoMayorCantidad: productoMasComprado,
@@ -218,13 +212,13 @@ export class DashboardServices {
       };
     }
 
-    let response:IResponseGetProductMetrics = {
+    let response: IResponseGetProductMetrics = {
       venta,
       compra,
       totalBuyBranch,
       totalBuyProfitBranch,
       totalSalesBranch,
-      totalSaleProfitBranch
+      totalSaleProfitBranch,
     };
 
     return response;
@@ -338,9 +332,7 @@ export class DashboardServices {
 
       if (condition) continue;
 
-      if (
-        compareDecimal128(productosVendidos[key].gananciaNeta, maxGananciaNeta)
-      ) {
+      if (compareDecimal128(productosVendidos[key].gananciaNeta, maxGananciaNeta)) {
         maxCantidad = productosVendidos[key].cantidad;
         maxTotal = productosVendidos[key].total;
         productoMasVendido = key;
@@ -396,13 +388,13 @@ export class DashboardServices {
     VENTA: {
       amountReturned: cero128,
       quantityReturned: 0,
-      listProduct: []
+      listProduct: [],
     },
     COMPRA: {
       amountReturned: cero128,
       quantityReturned: 0,
-      listProduct: []
-    }
+      listProduct: [],
+    },
   });
 
   updateMetric = (
@@ -412,29 +404,21 @@ export class DashboardServices {
   ) => {
     const cantidad = detalle.cantidad;
     const total = new Types.Decimal128(detalle.total.toString());
-    const totalCosto = multiplicarDecimal128(
-      inventoryItem.costoUnitario,
-      new Types.Decimal128(cantidad.toString())
-    );
-    
+    const totalCosto = multiplicarDecimal128(inventoryItem.costoUnitario, new Types.Decimal128(cantidad.toString()));
+
     // Actualizar métricas generales
     metric.quantityReturned += cantidad;
     metric.amountReturned = sumarDecimal128(metric.amountReturned, total);
-    
+
     // Buscar o crear producto en la lista
     const productIdStr = detalle.productoId.toString();
-    let product = metric.listProduct.find(p => 
-      p.productoId.toString() === productIdStr
-    );
-    
+    let product = metric.listProduct.find((p) => p.productoId.toString() === productIdStr);
+
     if (product) {
       product.cantidad += cantidad;
       product.total = sumarDecimal128(product.total, total);
       product.totalCosto = sumarDecimal128(product.totalCosto, totalCosto);
-      product.gananciaNeta = sumarDecimal128(
-        product.gananciaNeta,
-        restarDecimal128(total, totalCosto)
-      );
+      product.gananciaNeta = sumarDecimal128(product.gananciaNeta, restarDecimal128(total, totalCosto));
     } else {
       metric.listProduct.push({
         cantidad,
@@ -459,69 +443,53 @@ export class DashboardServices {
       // Validación de fechas más estricta
       const fechaInicio = parseDate(fechaInicioStr, 'dd-MM-yyyy');
       const fechaFin = parseDate(fechaFinStr, 'dd-MM-yyyy');
-      
+
       if (fechaFin < fechaInicio) {
         throw new Error('La fecha final debe ser posterior a la fecha inicial');
       }
-  
+
       const returns = await this.transactionRepository.findReturnTransactionByBranchId(
         branchId,
         fechaInicio.toJSDate(),
         fechaFin.toJSDate()
       );
-  
+
       if (returns.length === 0) {
         return this.createInitialResponse(); // Mejor que lanzar error
       }
-  
+
       // Obtener productos únicos
       const uniqueProductIds = Array.from(
-        new Set(
-          returns.flatMap(t => 
-            t.transactionDetails?.map(d => d.productoId.toString()) || []
-          )
-        )
+        new Set(returns.flatMap((t) => t.transactionDetails?.map((d) => d.productoId.toString()) || []))
       );
-  
-      const branchInventoryList = await this.inventarioSucursalRepository
-        .getListProductByProductIdsMetricas(
-          branchId,
-          uniqueProductIds
-        );
-  
-      const inventoryMap = new Map(
-        branchInventoryList.map(item => [
-          item.productoId.toString(),
-          item
-        ])
+
+      const branchInventoryList = await this.inventarioSucursalRepository.getListProductByProductIdsMetricas(
+        branchId,
+        uniqueProductIds
       );
-  
+
+      const inventoryMap = new Map(branchInventoryList.map((item) => [item.productoId.toString(), item]));
+
       const response = this.createInitialResponse();
-  
+
       for (const singleReturn of returns) {
-        const transactionType = (singleReturn.transaccionOrigenId as ITransaccion)
-          .tipoTransaccion as TypeTransaction
-        
+        const transactionType = (singleReturn.transaccionOrigenId as ITransaccion).tipoTransaccion as TypeTransaction;
+
         if (!response[transactionType]) continue; // Skip invalid types
-  
+
         for (const detalle of singleReturn.transactionDetails || []) {
           const inventoryItem = inventoryMap.get((detalle as IDetalleTransaccion).productoId.toString());
-          
+
           if (!inventoryItem) {
             console.warn(`Producto no encontrado: ${(detalle as IDetalleTransaccion).productoId}`);
             continue;
           }
-  
-          this.updateMetric(
-            response[transactionType],
-            detalle as IDetalleTransaccion,
-            inventoryItem
-          );
+
+          this.updateMetric(response[transactionType], detalle as IDetalleTransaccion, inventoryItem);
         }
       }
-  
+
       return response;
-      
     } catch (error) {
       // Mejor manejo de errores
       throw new Error(`Error al obtener métricas: ${error.message}`);

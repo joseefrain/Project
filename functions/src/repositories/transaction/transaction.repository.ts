@@ -100,6 +100,7 @@ export class TransactionRepository {
         tipoTransaccion: type,
         estadoTrasaccion: 'PAGADA',
         paymentMethod: TypePaymentMethod.CASH,
+        deleted_at: null,
       })
       .populate([
         {
@@ -123,6 +124,7 @@ export class TransactionRepository {
       .find({
         sucursalId: sucursalId,
         paymentMethod: TypePaymentMethod.CREDIT,
+        deleted_at: null,
       })
       .populate([
         {
@@ -335,6 +337,11 @@ export class TransactionRepository {
           ]
         },
       },
+      {
+        $match: {
+          'transactionDetails.deleted_at': { $eq: null },
+        }
+      },
     ]);
     
 
@@ -342,7 +349,10 @@ export class TransactionRepository {
       return null;
     }
 
-    return transaccion[0];
+    const transaccionResponse = transaccion[0] as ITransaccion;
+    transaccionResponse.transactionDetails = (transaccionResponse.transactionDetails as IDetalleTransaccion[]).filter((item) => item.deleted_at === null);
+
+    return transaccionResponse;
   }
   
   async update(

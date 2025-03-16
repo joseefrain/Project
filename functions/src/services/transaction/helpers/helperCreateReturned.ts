@@ -25,9 +25,7 @@ import {
 } from '../../../gen/handleDecimal128';
 import { getDateInManaguaTimezone } from '../../../utils/date';
 import { IDescuento } from '../../../models/transaction/Descuento.model';
-import {
-  ITransaccionDescuentosAplicados,
-} from '../../../models/transaction/TransactionDescuentosAplicados.model';
+import { ITransaccionDescuentosAplicados } from '../../../models/transaction/TransactionDescuentosAplicados.model';
 import { IInventarioSucursal } from '../../../models/inventario/InventarioSucursal.model';
 import { IAddQuantity, IInit, ISubtractQuantity, TipoMovimientoInventario } from '../../../interface/IInventario';
 import { IProducto } from '../../../models/inventario/Producto.model';
@@ -126,7 +124,7 @@ export class HelperCreateReturned {
       monto: data.monto,
       cambioCliente: 0,
       esDineroExterno: data.esDineroExterno,
-      montoExterno: data.montoExterno
+      montoExterno: data.montoExterno,
     } as ITransactionCreateCaja;
 
     const datosActualizar = {
@@ -159,7 +157,15 @@ export class HelperCreateReturned {
     transaccion: ITransaccion,
     listDetailTransaction: IDetalleTransaccion[]
   ) {
-    await this.resumenRepository.addTransactionDailySummary(newReturn);
+    let quitarTransaccion = transaccion.deleted_at ? true : false;
+
+    await this.resumenRepository.devolucionDailySummary(
+      newReturn.total,
+      newReturn.cajaId as Types.ObjectId,
+      transaccion.tipoTransaccion,
+      quitarTransaccion,
+      transaccion._id as Types.ObjectId
+    );
 
     // let devolucionMapeada = await this.getTransactionById(formatObejectId(newReturn._id).toString());
 
@@ -224,7 +230,9 @@ export class HelperCreateReturned {
     let subTotalTransaccionOrigen = cero128;
     let newTotalDiscountApplied = cero128;
 
-    const productIdsByBranch = data.products?.map((d) => d.productId) as string[];
+    const productIdsByBranch = transaccion.transactionDetails.map((d) =>
+      formatObejectId(d.productoId).toString()
+    ) as string[];
     const listInventarioSucursal = await this.getBranchInventory(
       data.userId!,
       sucursalId.toString(),
@@ -236,14 +244,20 @@ export class HelperCreateReturned {
     await Promise.all(
       transaccion.transactionDetails.map(async (element) => {
         let detailsDevolucion = this.findTransactionDetailReturn(data.products!, element.productoId.toString());
-        const { totalDev, ajusteCobrar, newTotalRetenido, subtotalRetenido, totalDiscountApplied } = await this.processSingleProduct(
-          detailsDevolucion,
-          transaccion,
-          descuentosAplicados,
-          listInventarioSucursal,
-          newReturn,
-          listDetailTransaction
-        );
+
+        if (compareToCero((element as IDetalleTransaccion).descuento)) {
+          detailsDevolucion.discountApplied = false;
+        }
+
+        const { totalDev, ajusteCobrar, newTotalRetenido, subtotalRetenido, totalDiscountApplied } =
+          await this.processSingleProduct(
+            detailsDevolucion,
+            transaccion,
+            descuentosAplicados,
+            listInventarioSucursal,
+            newReturn,
+            listDetailTransaction
+          );
 
         totalDevolucion128 = sumarDecimal128(totalDevolucion128, totalDev);
         totalAjusteACobrar = sumarDecimal128(totalAjusteACobrar, ajusteCobrar);
@@ -259,7 +273,7 @@ export class HelperCreateReturned {
       newTotalTransaccionOrigen,
       subTotalTransaccionOrigen,
       listDetailTransaction,
-      newTotalDiscountApplied
+      newTotalDiscountApplied,
     };
   }
 
@@ -281,9 +295,15 @@ export class HelperCreateReturned {
   }
 
   private findTransactionDetailReturn(product: IDevolucionesProducto[], productId: string) {
-    return product.find(
-      (item: IDevolucionesProducto) => item.productId === productId
-    ) as IDevolucionesProducto;
+    let producto = product.find((item: IDevolucionesProducto) => item.productId === productId) as IDevolucionesProducto;
+
+    let notProduct: IDevolucionesProducto = {
+      productId,
+      quantity: 0,
+      discountApplied: true,
+    };
+
+    return producto ? producto : notProduct;
   }
 
   async findDescuentoByDescuentoAplicado(descuentoAplicado: ITransaccionDescuentosAplicados): Promise<IDescuento> {
@@ -298,7 +318,9 @@ export class HelperCreateReturned {
     detalleTransaccionOrigen: IDetalleTransaccion,
     descuentosAplicados: ITransaccionDescuentosAplicados[]
   ) {
-    let descuentoAplicado = descuentosAplicados.find((item) => item.detalleVentaId.toString() === formatObejectId(detalleTransaccionOrigen._id).toString());
+    let descuentoAplicado = descuentosAplicados.find(
+      (item) => item.detalleVentaId.toString() === formatObejectId(detalleTransaccionOrigen._id).toString()
+    );
 
     let descuento = descuentoAplicado ? await this.findDescuentoByDescuentoAplicado(descuentoAplicado!) : null;
 
@@ -320,11 +342,13 @@ export class HelperCreateReturned {
   ) {
     let newPriceAplyDiscount = cero128;
     let ajusteACobrar = cero128;
-    const precioApplyDiscount = dividirDecimal128(detalleTransaccionOrigen.total, formatDecimal128(detalleTransaccionOrigen.cantidad));
+    const precioApplyDiscount = dividirDecimal128(
+      detalleTransaccionOrigen.total,
+      formatDecimal128(detalleTransaccionOrigen.cantidad)
+    );
     const cantidadRetenida = new Types.Decimal128((detalleTransaccionOrigen.cantidad - element.quantity).toString());
     const detalleTransaccionOrigenId = formatObejectId(detalleTransaccionOrigen._id);
     let totalDiscountApplied = cero128;
-
 
     if (element.discountApplied && descuento) {
       const total = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
@@ -342,7 +366,6 @@ export class HelperCreateReturned {
 
         await this.descuentoRepository.updateDescuentoAplicado(descuentoAplicadoId, { monto: procentajeDelTotal });
       } else if (descuento.tipoDescuento === 'valor') {
-
         totalDiscountApplied = valorDescuento;
         const totalConDescuento = restarDecimal128(total, valorDescuento);
         const cienporciento = new Types.Decimal128('100');
@@ -370,7 +393,7 @@ export class HelperCreateReturned {
       newPriceAplyDiscount: newPriceAplyDiscount || inventarioSucursal.precio,
       ajusteACobrar,
       precioApplyDiscount,
-      totalDiscountApplied
+      totalDiscountApplied,
     };
   }
 
@@ -400,7 +423,7 @@ export class HelperCreateReturned {
     const subtotalRetenido = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
     const newTotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
 
-    if (compareDecimal128(newTotalRetenido, cero128)) {
+    if (compareToCero(newTotalRetenido)) {
       if (detalleTransaccionOrigen) {
         if (detalleTransaccionOrigen.cantidad === element.quantity) {
           detalleTransaccionOrigen.deleted_at = getDateInManaguaTimezone();
@@ -410,6 +433,11 @@ export class HelperCreateReturned {
           );
         } else {
           // detalleTransaccionOrigen.precio = precio;
+        }
+      }
+    } else {
+      if (detalleTransaccionOrigen) {
+        if (detalleTransaccionOrigen.cantidad !== element.quantity) {
           detalleTransaccionOrigen.subtotal = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
           detalleTransaccionOrigen.total = multiplicarDecimal128(precio, cantidadRetenida);
           detalleTransaccionOrigen.cantidad = parseInt(cantidadRetenida.toString());
@@ -501,13 +529,14 @@ export class HelperCreateReturned {
     const inventarioSucursal = this.findBranchInventory(listInventarioSucursal, element.productId);
     const quantity128 = formatDecimal128(element.quantity);
 
-    const { newPriceAplyDiscount, ajusteACobrar, precioApplyDiscount, totalDiscountApplied } = await this.handleDiscountApplication(
-      element,
-      descuento,
-      descuentoAplicado,
-      detalleTransaccionOrigen,
-      inventarioSucursal
-    );
+    const { newPriceAplyDiscount, ajusteACobrar, precioApplyDiscount, totalDiscountApplied } =
+      await this.handleDiscountApplication(
+        element,
+        descuento,
+        descuentoAplicado,
+        detalleTransaccionOrigen,
+        inventarioSucursal
+      );
 
     const precio = element.discountApplied ? newPriceAplyDiscount : inventarioSucursal.precio;
     const { totalDev, newTotalRetenido, subtotalRetenido, subTotalDev } = await this.calculateTotals(
@@ -539,7 +568,7 @@ export class HelperCreateReturned {
       ajusteCobrar: ajusteACobrar,
       newTotalRetenido,
       subtotalRetenido,
-      totalDiscountApplied
+      totalDiscountApplied,
     };
   }
 }
