@@ -92,10 +92,10 @@ serverAdapter.setBasePath('/admin/queues'); // Ruta del tablero
 // Middleware de manejo de errores
 app.use(errorHandler);
 
-// export const api = functions.https.onRequest(app);
+export const api = functions.https.onRequest(app);
 
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// });
