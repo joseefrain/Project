@@ -124,7 +124,7 @@ export class HelperCreateTransaction {
 
     if (listInventarioSucursal.length > 0) {
       const productListReOrder = listInventarioSucursal.map((item) => ({
-        name: (item.productoId as IProducto).nombre,
+        name: (item.productoId as IProducto)?.nombre || 'Desconocido',
         currentQuantity: item.stock,
         reorderPoint: item.puntoReCompra,
       }));
@@ -133,7 +133,7 @@ export class HelperCreateTransaction {
       let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
       notifyTelergramReorderThreshold(
         usuario?.username || 'Sin administrador',
-        (usuario?.sucursalId as ISucursal).nombre || "Sin sucursal",
+        (usuario?.sucursalId as ISucursal)?.nombre || "Sin sucursal",
         productListReOrder,
         puntoReCompraTelegram
       );

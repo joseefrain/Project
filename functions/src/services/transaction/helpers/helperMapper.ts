@@ -71,7 +71,7 @@ export class HelperMapperTransaction {
       let producto: ITrasaccionProductoResponse = {
         productId: formatObejectId(productoDetalle._id).toString(),
         clientType: detalle.tipoCliente,
-        productName: (detalle.productoId as IProducto).nombre,
+        productName: (detalle.productoId as IProducto)?.nombre ?? "Desconocido",
         quantity: detalle.cantidad,
         price: Number(detalle.precio),
         ventaId: formatObejectId(venta._id).toString(),
@@ -128,7 +128,7 @@ export class HelperMapperTransaction {
       let producto: ITrasaccionProductoResponse = {
         productId: formatObejectId(productoDetalle._id).toString(),
         clientType: detalle.tipoCliente,
-        productName: productoDetalle.nombre,
+        productName: productoDetalle?.nombre ?? "Desconocido",
         quantity: detalle.cantidad,
         price: Number(detalle.precio),
         ventaId: formatObejectId(venta._id).toString(),
