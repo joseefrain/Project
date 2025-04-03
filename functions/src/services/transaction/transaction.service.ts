@@ -50,12 +50,12 @@ export class TransactionService {
 
     try {
 
-      // let verifyExistResumenCajaDiario = await this.cashRegisterService.verifyExistResumenCajaDiario(venta.cajaId!);
+      let verifyExistResumenCajaDiario = await this.cashRegisterService.verifyExistResumenCajaDiario(venta.cajaId!);
 
-      // if (!verifyExistResumenCajaDiario) {
-      //   await this.cashRegisterService.cierreAutomatico(venta.cajaId!);
-      //   throw new Error("Cierre de caja automatico. No se puede crear transaccion");
-      // }
+      if (!verifyExistResumenCajaDiario) {
+        await this.cashRegisterService.cierreAutomatico(venta.cajaId!);
+        throw new Error("Cierre de caja automatico. No se puede crear transaccion");
+      }
       // 1️⃣ Inicializar Inventario
       await this.helperCreateTransaction.initInventory(venta, user._id);
 
