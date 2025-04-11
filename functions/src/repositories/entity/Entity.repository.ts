@@ -31,8 +31,8 @@ export class EntityRepository {
     limit: number = 10,
     skip: number = 0
   ): Promise<IEntity[]> {
-    const query = this.model.find({ ...filters, deleted_at: null });
-    return await query.limit(limit).skip(skip).exec();
+    const query = this.model.find({ deleted_at: null });
+    return await query.exec();
   }
 
   async update(id: string, data: Partial<IEntity>): Promise<IEntity | null> {

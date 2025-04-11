@@ -81,7 +81,9 @@ export class DashboardServices {
 
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails?.forEach((detalle) => {
-        listProductoIdIdsSets.add(detalle.productoId._id.toString()); // Agregar a Set
+        if (detalle.deleted_at === null && detalle.cantidad > 0) {
+          listProductoIdIdsSets.add(detalle.productoId._id.toString()); // Agregar a Set
+        }
       });
     });
 
@@ -105,45 +107,48 @@ export class DashboardServices {
 
     transacciones.forEach((transaccion) => {
       transaccion.transactionDetails?.forEach((detalle) => {
-        let detalleCantidad128 = new Types.Decimal128(detalle.cantidad.toString());
-        let inventarioSucursal = branchInventoryList.find(
-          (item) => item.productoId.toString() === detalle.productoId._id.toString()
-        ) as IInventarioSucursal;
 
-        let totalCosto = multiplicarDecimal128(inventarioSucursal.costoUnitario, detalleCantidad128);
+        if (detalle.deleted_at === null && detalle.cantidad > 0) {
+          let detalleCantidad128 = new Types.Decimal128(detalle.cantidad.toString());
+          let inventarioSucursal = branchInventoryList.find(
+            (item) => item.productoId.toString() === detalle.productoId._id.toString()
+          ) as IInventarioSucursal;
 
-        let total128 = new Types.Decimal128(detalle.total.toString());
+          let totalCosto = multiplicarDecimal128(inventarioSucursal.costoUnitario, detalleCantidad128);
 
-        if (transaccion.tipoTransaccion === TypeTransaction.VENTA) {
-          totalSalesBranch = sumarDecimal128(totalSalesBranch, detalle.total);
-          totalSaleProfitBranch = sumarDecimal128(totalSaleProfitBranch, restarDecimal128(total128, totalCosto));
-        } else if (transaccion.tipoTransaccion === TypeTransaction.COMPRA) {
-          totalBuyBranch = sumarDecimal128(totalBuyBranch, detalle.total);
-          totalBuyProfitBranch = sumarDecimal128(totalBuyProfitBranch, restarDecimal128(total128, totalCosto));
-        }
+          let total128 = new Types.Decimal128(detalle.total.toString());
 
-        let key = `${detalle.productoId._id.toString()}_${transaccion.tipoTransaccion}`;
+          if (transaccion.tipoTransaccion === TypeTransaction.VENTA) {
+            totalSalesBranch = sumarDecimal128(totalSalesBranch, detalle.total);
+            totalSaleProfitBranch = sumarDecimal128(totalSaleProfitBranch, restarDecimal128(total128, totalCosto));
+          } else if (transaccion.tipoTransaccion === TypeTransaction.COMPRA) {
+            totalBuyBranch = sumarDecimal128(totalBuyBranch, detalle.total);
+            totalBuyProfitBranch = sumarDecimal128(totalBuyProfitBranch, restarDecimal128(total128, totalCosto));
+          }
 
-        if (productWithTransactions[key]) {
-          productWithTransactions[key].cantidad += detalle.cantidad;
-          productWithTransactions[key].total = sumarDecimal128(productWithTransactions[key].total, detalle.total);
-          productWithTransactions[key].totalCosto = sumarDecimal128(
-            productWithTransactions[key].totalCosto,
-            totalCosto
-          );
-          productWithTransactions[key].gananciaNeta = sumarDecimal128(
-            productWithTransactions[key].gananciaNeta,
-            restarDecimal128(total128, totalCosto)
-          );
-        } else {
-          productWithTransactions[key] = {
-            cantidad: detalle.cantidad,
-            total: detalle.total,
-            totalCosto: totalCosto,
-            gananciaNeta: restarDecimal128(total128, totalCosto),
-            costoUnicario: inventarioSucursal.costoUnitario,
-            precio: inventarioSucursal.precio,
-          };
+          let key = `${detalle.productoId._id.toString()}_${transaccion.tipoTransaccion}`;
+
+          if (productWithTransactions[key]) {
+            productWithTransactions[key].cantidad += detalle.cantidad;
+            productWithTransactions[key].total = sumarDecimal128(productWithTransactions[key].total, detalle.total);
+            productWithTransactions[key].totalCosto = sumarDecimal128(
+              productWithTransactions[key].totalCosto,
+              totalCosto
+            );
+            productWithTransactions[key].gananciaNeta = sumarDecimal128(
+              productWithTransactions[key].gananciaNeta,
+              restarDecimal128(total128, totalCosto)
+            );
+          } else {
+            productWithTransactions[key] = {
+              cantidad: detalle.cantidad,
+              total: detalle.total,
+              totalCosto: totalCosto,
+              gananciaNeta: restarDecimal128(total128, totalCosto),
+              costoUnicario: inventarioSucursal.costoUnitario,
+              precio: inventarioSucursal.precio,
+            };
+          }
         }
       });
     });

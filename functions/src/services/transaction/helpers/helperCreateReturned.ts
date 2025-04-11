@@ -338,7 +338,6 @@ export class HelperCreateReturned {
     descuento: IDescuento | null,
     descuentoAplicado: ITransaccionDescuentosAplicados | undefined,
     detalleTransaccionOrigen: IDetalleTransaccion,
-    inventarioSucursal: IInventarioSucursal
   ) {
     let newPriceAplyDiscount = cero128;
     let ajusteACobrar = cero128;
@@ -351,7 +350,7 @@ export class HelperCreateReturned {
     let totalDiscountApplied = cero128;
 
     if (element.discountApplied && descuento) {
-      const total = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+      const total = multiplicarDecimal128(detalleTransaccionOrigen.precio, cantidadRetenida);
       const descuentoAplicadoId = formatObejectId(descuentoAplicado?._id).toString();
       const valorDescuento = new Types.Decimal128(descuento.valorDescuento.toString());
 
@@ -379,7 +378,7 @@ export class HelperCreateReturned {
 
     // Calcular ajuste si corresponde
     if (detalleTransaccionOrigen.total !== detalleTransaccionOrigen.subtotal && !element.discountApplied) {
-      const nuevoTotalSinDescuento = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+      const nuevoTotalSinDescuento = multiplicarDecimal128(detalleTransaccionOrigen.precio, cantidadRetenida);
 
       const nuevoTotalConDescuento = multiplicarDecimal128(precioApplyDiscount, cantidadRetenida);
 
@@ -390,7 +389,7 @@ export class HelperCreateReturned {
     }
 
     return {
-      newPriceAplyDiscount: newPriceAplyDiscount || inventarioSucursal.precio,
+      newPriceAplyDiscount: newPriceAplyDiscount || detalleTransaccionOrigen.precio,
       ajusteACobrar,
       precioApplyDiscount,
       totalDiscountApplied,
@@ -400,12 +399,11 @@ export class HelperCreateReturned {
   private async calculateTotals(
     detalleTransaccionOrigen: IDetalleTransaccion,
     element: { productId: string; quantity: number },
-    inventarioSucursal: IInventarioSucursal,
     precio: Types.Decimal128,
     quantity128: Types.Decimal128
   ) {
     // Validaciones iniciales
-    if (!detalleTransaccionOrigen || !inventarioSucursal) {
+    if (!detalleTransaccionOrigen) {
       throw new Error('Datos incompletos para cálculo de totales');
     }
 
@@ -417,10 +415,10 @@ export class HelperCreateReturned {
 
     // Calcular total devolución
     const totalDev = multiplicarDecimal128(precioApplyDiscount, quantity128);
-    const subTotalDev = multiplicarDecimal128(inventarioSucursal.precio, quantity128);
+    const subTotalDev = multiplicarDecimal128(detalleTransaccionOrigen.precio, quantity128);
 
     // Calcular nuevos totales para transacción original
-    const subtotalRetenido = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+    const subtotalRetenido = multiplicarDecimal128(detalleTransaccionOrigen.precio, cantidadRetenida);
     const newTotalRetenido = multiplicarDecimal128(precio, cantidadRetenida);
 
     if (compareToCero(newTotalRetenido)) {
@@ -438,7 +436,7 @@ export class HelperCreateReturned {
     } else {
       if (detalleTransaccionOrigen) {
         if (detalleTransaccionOrigen.cantidad !== element.quantity) {
-          detalleTransaccionOrigen.subtotal = multiplicarDecimal128(inventarioSucursal.precio, cantidadRetenida);
+          detalleTransaccionOrigen.subtotal = multiplicarDecimal128(detalleTransaccionOrigen.precio, cantidadRetenida);
           detalleTransaccionOrigen.total = multiplicarDecimal128(precio, cantidadRetenida);
           detalleTransaccionOrigen.cantidad = parseInt(cantidadRetenida.toString());
           await this.repository.updateDetailTransaction(
@@ -535,14 +533,12 @@ export class HelperCreateReturned {
         descuento,
         descuentoAplicado,
         detalleTransaccionOrigen,
-        inventarioSucursal
       );
 
-    const precio = element.discountApplied ? newPriceAplyDiscount : inventarioSucursal.precio;
+    const precio = element.discountApplied ? newPriceAplyDiscount : detalleTransaccionOrigen.precio;
     const { totalDev, newTotalRetenido, subtotalRetenido, subTotalDev } = await this.calculateTotals(
       detalleTransaccionOrigen,
       element,
-      inventarioSucursal,
       precio,
       quantity128
     );

@@ -431,6 +431,7 @@ export class TransactionRepository {
       devoluciones.push({...transaccion.toJSON() , transaccionOrigenId: (transaccionOrigenDeDevolucion as ITransaccion)});
       transaccion.transaccionOrigenId = transaccionOrigenDeDevolucion;
     });
+    
     return devoluciones;
   }
 
