@@ -74,8 +74,8 @@ export class InventoryManagementService implements IManageHerramientaModel {
 
     inventarioSucursal.stock -= quantity;
     
-    if (inventarioSucursal.stock === 0)
-      inventarioSucursal.deleted_at = getDateInManaguaTimezone();
+    // if (inventarioSucursal.stock === 0)
+    //   inventarioSucursal.deleted_at = getDateInManaguaTimezone();
 
     inventarioSucursal.ultimo_movimiento = getDateInManaguaTimezone();
 
