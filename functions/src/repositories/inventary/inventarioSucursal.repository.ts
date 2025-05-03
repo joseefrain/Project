@@ -3,11 +3,13 @@ import { IInventarioSucursal, InventarioSucursal } from '../../models/inventario
 import mongoose, { mongo, Types } from 'mongoose';
 import { IMovimientoInventario, MovimientoInventario } from '../../models/inventario/MovimientoInventario.model';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { IProductosGrupos, ProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 
 @injectable()
 export class InventarioSucursalRepository {
   private model: typeof InventarioSucursal;
   private movimientoInventarioModel: typeof MovimientoInventario;
+  private modelProductoGrupo: typeof ProductosGrupos;
 
   constructor() {
     this.model = InventarioSucursal;
@@ -17,6 +19,21 @@ export class InventarioSucursalRepository {
   async create(data: Partial<IInventarioSucursal>): Promise<IInventarioSucursal> {
     const inventarioSucursal = new this.model(data);
     return inventarioSucursal;
+  }
+
+  async createProductoGrupo(data: Partial<IProductosGrupos>): Promise<IProductosGrupos | null> {
+    const productoGrupo = new this.modelProductoGrupo(data);
+    return productoGrupo;
+  }
+
+  async getProductoGrupoByProductoId(productoId: string): Promise<IProductosGrupos | null> {
+    const productoGrupo = await this.modelProductoGrupo.findOne({ productoId: productoId });
+
+    if (!productoGrupo) {
+      return null;
+    }
+
+    return productoGrupo;
   }
 
   async createWith(data: Partial<IInventarioSucursal>, ): Promise<IInventarioSucursal> {

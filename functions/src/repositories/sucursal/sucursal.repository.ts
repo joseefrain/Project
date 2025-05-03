@@ -110,7 +110,7 @@ export class SucursalRepository {
             barCode: producto.barCode || "",
             costoUnitario: inventarioSucursal.costoUnitario,
             groupId: grupoId,
-            groupName: (productoGrupo?.grupoId as IGrupoInventario).nombre ?? ""
+            groupName: (productoGrupo?.grupoId as IGrupoInventario)?.nombre ?? ""
           });
         }
       }

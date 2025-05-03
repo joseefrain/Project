@@ -7,6 +7,7 @@ import { IMovimientoInventario, MovimientoInventario } from '../../models/invent
 import { IAddQuantity, ICreateInventarioSucursal, IHandleStockProductBranch, IInit, IManageHerramientaModel, ISubtractQuantity, ISubtractQuantityLoop, TipoMovimientoInventario } from '../../interface/IInventario';
 import { dividirDecimal128, multiplicarDecimal128, sumarDecimal128 } from '../../gen/handleDecimal128';
 import { getDateInManaguaTimezone } from '../../utils/date';
+import { IProductosGrupos } from '../../models/inventario/ProductosGrupo.model';
 
 @injectable()
 export class InventoryManagementService implements IManageHerramientaModel {
@@ -167,6 +168,7 @@ export class InventoryManagementService implements IManageHerramientaModel {
 
   async handleStockProductBranch({  model, quantity, tipoMovimiento }: IHandleStockProductBranch): Promise<void> {
     const inventarioSucursal = await this.inventarioSucursalRepo.findBySucursalIdAndProductId(model.sucursalId.toString(), model.productoId.toString());
+    const productoGrupo = await this.inventarioSucursalRepo.getProductoGrupoByProductoId(model.productoId.toString()) as IProductosGrupos ;
 
     let dataAddQuantity:IAddQuantity = {
       quantity: quantity,
@@ -179,6 +181,16 @@ export class InventoryManagementService implements IManageHerramientaModel {
       inventarioSucursal: model,
        
       isNoSave: true
+   }
+
+   if (!inventarioSucursal && productoGrupo) {
+    let productoGrupoSave = await this.inventarioSucursalRepo.createProductoGrupo({
+      productoId: model.productoId,
+      grupoId: productoGrupo.grupoId,
+      sucursalId: model.sucursalId,
+    });
+
+    await productoGrupoSave?.save();
    }
 
     inventarioSucursal ? await this.addQuantity(dataAddQuantity) : await this.createInventarioSucursal(dataCretaeInventarioSucursal);
