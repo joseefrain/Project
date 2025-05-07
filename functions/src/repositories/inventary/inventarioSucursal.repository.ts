@@ -14,6 +14,7 @@ export class InventarioSucursalRepository {
   constructor() {
     this.model = InventarioSucursal;
     this.movimientoInventarioModel = MovimientoInventario;
+    this.modelProductoGrupo = ProductosGrupos;
   }
 
   async create(data: Partial<IInventarioSucursal>): Promise<IInventarioSucursal> {
