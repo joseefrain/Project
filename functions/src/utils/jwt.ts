@@ -4,7 +4,7 @@ import { Types } from 'mongoose'; // Para manejar ObjectId
 import { IRole } from '../models/security/Role.model';
 
 const jwtOptions: SignOptions = {
-  expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  expiresIn: process.env.JWT_EXPIRES_IN || '3d',
   algorithm: (process.env.JWT_ALGORITHM as jwt.Algorithm) || 'HS256',
 };
 
