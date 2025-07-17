@@ -18,6 +18,7 @@ import { IResumenCajaDiario } from '../../models/cashRegister/DailyCashSummary.m
 import { getDateInManaguaTimezone } from '../../utils/date';
 import { UserService } from '../user/User.service';
 import { formatDecimal128, formatObejectId } from '../../gen/handleDecimal128';
+import { ISucursal } from '../../models/sucursales/Sucursal.model';
 
 @injectable()
 export class CashRegisterService {
@@ -103,6 +104,16 @@ export class CashRegisterService {
       console.log(error);
 
       throw new Error(error.message);
+    }
+  }
+
+  async cierreAutomaticoCronJob(){
+    let cajas = await this.obtenerCajasAbierta() as ICaja[];
+
+    for (let caja of cajas) {
+
+      console.log(`cerrando caja de ${(caja.sucursalId as ISucursal).nombre} numero #${caja.consecutivo}`);
+      await this.cierreAutomatico((caja._id as Types.ObjectId).toString());
     }
   }
 
@@ -201,6 +212,10 @@ export class CashRegisterService {
 
   async obtenerCajasAbiertaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
     return await this.repository.obtenerCajasAbiertaPorSucursal(sucursalId);
+  }
+
+  async obtenerCajasAbierta(): Promise<ICaja[] | null> {
+    return await this.repository.obtenerCajasAbierta();
   }
 
   async obtenerCajasCerradaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {

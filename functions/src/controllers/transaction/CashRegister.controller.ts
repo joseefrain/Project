@@ -31,6 +31,15 @@ export class CashRegisterController {
     }
   }
 
+  async closeCashRegisterCronJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await this.service.cierreAutomaticoCronJob();
+      res.status(200).json({ message: 'Cajas cerradas' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getBySucursalId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = req.params.id;

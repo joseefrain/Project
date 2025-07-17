@@ -131,12 +131,12 @@ export class HelperCreateTransaction {
 
       let usuario = await this.sucursalRepo.findUserAdminForBranch(venta.sucursalId!);
       let puntoReCompraTelegram = process.env.TELEGRAM_REORDER_POIN || "-4560332210"
-      notifyTelergramReorderThreshold(
-        usuario?.username || 'Sin administrador',
-        (usuario?.sucursalId as ISucursal)?.nombre || "Sin sucursal",
-        productListReOrder,
-        puntoReCompraTelegram
-      );
+      // notifyTelergramReorderThreshold(
+      //   usuario?.username || 'Sin administrador',
+      //   (usuario?.sucursalId as ISucursal)?.nombre || "Sin sucursal",
+      //   productListReOrder,
+      //   puntoReCompraTelegram
+      // );
     }
 
     return listInventarioSucursal;

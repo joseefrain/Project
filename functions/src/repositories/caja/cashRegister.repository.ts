@@ -105,6 +105,10 @@ export class CajaRepository {
     return await this.cajaModel.find({ sucursalId, estado: 'ABIERTA' }).populate('usuarioAperturaId');
   }
 
+  async obtenerCajasAbierta(): Promise<ICaja[] | null> {
+    return await this.cajaModel.find({ estado: 'ABIERTA' }).populate('sucursalId');
+  }
+
   async obtenerCajasCerradaPorSucursal(sucursalId: string): Promise<ICaja[] | null> {
     return await this.cajaModel.find({ sucursalId, estado: 'CERRADA' });
   }

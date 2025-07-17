@@ -24,6 +24,8 @@ router.get(
 
 router.post('/create', authMiddleware, cashRegisterController.createCashRegister.bind(cashRegisterController));
 
+router.get('/close/cron', authMiddleware, cashRegisterController.closeCashRegisterCronJob.bind(cashRegisterController));
+
 router.post(
   '/',
   authMiddleware,
